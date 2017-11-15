@@ -1,10 +1,10 @@
-KiCad Action Plugin(s)
-=====
+# KiCad Action Plugin(s)
+
 
 This repo contains Kicad pcbnew Action Plugins()
 
-Replicate layout
------------
+## Replicate layout
+
 This plugin has been tested on Windows 7 Kicad nightly 2017-09-19 revision dddaa7e69. 
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
@@ -32,3 +32,6 @@ Example of replication of only contained tracks and zones
 Example of replication including intersecting zones and tracks
 
 ![Replication including intersecting zones and tracks](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Intersecting.gif)
+
+### Wishlist/TODO
+1. Add option to update (or automatically remove/add again) complete layout
