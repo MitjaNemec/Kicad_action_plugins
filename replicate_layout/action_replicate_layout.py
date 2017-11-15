@@ -62,6 +62,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
         # if exactly one module is selected
         if len(selected_names) == 1:
+            process_canceled = False
             # this is a pivot module
             pivot_module_reference = selected_names[0]
 
@@ -70,55 +71,58 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             # show dialog to get x and y offsets - should be done with two windows
             caption = 'Replicate Layout'
             message = "Enter x offset in mm"
-            dlg = wx.TextEntryDialog(_pcbnew_frame, message, caption, '0.0')
-            if dlg.ShowModal() == wx.ID_OK:
+            dlg_x_offset = wx.TextEntryDialog(_pcbnew_frame, message, caption, '0.0')
+            if dlg_x_offset.ShowModal() == wx.ID_OK:
                 try:
-                    x_offset = float(dlg.GetValue())
+                    x_offset = float(dlg_x_offset.GetValue())
                 except:
                     x_offset = None
             else:
-                x_offset = None
-            dlg.Destroy()
-
-            caption = 'Replicate Layout'
-            message = "Enter y offset in mm"
-            dlg = wx.TextEntryDialog(_pcbnew_frame, message, caption, '0.0')
-            if dlg.ShowModal() == wx.ID_OK:
-                try:
-                    y_offset = float(dlg.GetValue())
-                except:
-                    y_offset = None
-            else:
-                y_offset = None
-            dlg.Destroy()
+                x_offset = float(dlg_x_offset.GetValue())
+                process_canceled = True
+            dlg_x_offset.Destroy()
             
-            # ask if we want to replicate also tracks and zones that are not completely within the bounding box
-            caption = 'Replicate Layout'
-            message = "Do you want to replicate also interesecting zones and tracks?"
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption,
-                                   wx.YES_NO | wx.ICON_QUESTION)
-            if dlg.ShowModal() == wx.ID_OK:
-                replicate_contining_only = True                
-            else:
-                replicate_contining_only = False    
-            dlg.Destroy()
-
-            # execute replicate_layout
-            if (x_offset != None) and (y_offset != None):
-                # prepare to replicate
-                replicator = replicatelayout.Replicator(pcbnew.GetBoard(),
-                                                        pivot_module_reference,
-                                                        replicate_contining_only)
-                # replicate now
-                replicator.replicate_layout(x_offset, y_offset)
-
-                pcbnew.Refresh()
-            else:
+            if process_canceled == False:
                 caption = 'Replicate Layout'
-                message = "error parsing x offset and/or y offset input values" % (x_offset, y_offset)
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-                dlg.ShowModal()
-                dlg.Destroy()
+                message = "Enter y offset in mm"
+                dlg_y_offset = wx.TextEntryDialog(_pcbnew_frame, message, caption, '0.0')
+                if dlg_y_offset.ShowModal() == wx.ID_OK:
+                    try:
+                        y_offset = float(dlg_y_offset.GetValue())
+                    except:
+                        y_offset = None
+                else:
+                    y_offset = float(dlg_y_offset.GetValue())
+                    process_canceled = True
+                dlg_y_offset.Destroy()
+                
+                if process_canceled == False:
+                    # ask if we want to replicate also tracks and zones that are not completely within the bounding box
+                    replicate_containing_only = True
+                    caption = 'Replicate Layout'
+                    message = "Do you want to replicate also interesecting zones and tracks?"
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption,
+                                           wx.YES_NO | wx.ICON_QUESTION)
+                    if dlg.ShowModal() == wx.ID_YES:
+                        replicate_containing_only = False                
+                    dlg.Destroy()
+
+                    # execute replicate_layout
+                    if (x_offset != None) and (y_offset != None):
+                        # prepare to replicate
+                        replicator = replicatelayout.Replicator(pcbnew.GetBoard(),
+                                                                pivot_module_reference,
+                                                                replicate_containing_only)
+                        # replicate now
+                        replicator.replicate_layout(x_offset, y_offset)
+
+                        pcbnew.Refresh()
+                    else:
+                        caption = 'Replicate Layout'
+                        message = "error parsing x offset and/or y offset input values"
+                        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+                        dlg.ShowModal()
+                        dlg.Destroy()
 
         # if more or less than one show only a messagebox
         else:
