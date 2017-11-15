@@ -7,7 +7,11 @@ Replicate layout
 -----------
 This plugin has been tested on Windows 7 Kicad nightly 2017-09-19 revision dddaa7e69. 
 
-While the action plugin works within pcbnew, the `replicatelayout` module can be used also in pcbnew scripting console or even without pcbnew running. For example look at lines 210, 211 in `replicatelayout.py`. Aditionally the `replicatelayout.py` module if run standalon will test itself aginst known correct layouts. This is to ease testing if pcbnew API changes in the future. The `replicatelayout` module does not work with Kicad 4.0.7 as the Python API lacks certain methods.
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
+
+within the plugin folder only *.py files are required for operation.
+
+While the action plugin works within pcbnew, the `replicatelayout` module can be used also in pcbnew scripting console or even without pcbnew running. For example look at lines 210, 211 in `replicatelayout.py`. Aditionally the `replicatelayout.py` module if run standalon will test itself aginst known correct layouts (provided within the plugin folder). This is to ease testing if pcbnew API changes in the future. The `replicatelayout` module does not work with Kicad 4.0.7 as the Python API lacks certain methods.
 
 This plugin replicates layout section. The replication is based upon hiearchical sheets.
 Basic erquirement for replication is that the section for replication is completely contained within one hiearchical sheet, and replicated sections are just a copy of the same sheet. The example can be seen in this two pictures.
