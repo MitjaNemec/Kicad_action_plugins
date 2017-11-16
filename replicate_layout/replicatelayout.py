@@ -38,6 +38,29 @@ def get_sheet_id(module):
     sheet_id = "/".join(module_path[0:-1])
     return sheet_id
 
+def get_bounding_box(module_list):
+    top = None
+    bottom = None
+    left = None
+    right = None
+    for mod in module_list:
+        if top == None:
+            bounding_box = mod.GetBoundingBox()
+            top = bounding_box.GetTop()
+            bottom = bounding_box.GetBottom()
+            left = bounding_box.GetLeft()
+            right = bounding_box.GetRight()
+        else:
+            mod_box = mod.GetBoundingBox()
+            top = min(top, mod_box.GetTop())
+            bottom = max(bottom, mod_box.GetBottom())
+            left = min(left, mod_box.GetLeft())
+            right = max(right, mod_box.GetRight())
+
+    position = pcbnew.wxPoint(left, top)
+    size = pcbnew.wxSize(right - left, bottom - top)
+    bounding_box = pcbnew.EDA_RECT(position, size)
+    return bounding_box
 
 # this function was made by Miles Mccoo
 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
@@ -57,6 +80,8 @@ class Replicator:
             pcbnew.PCB_LAYER_ID_COUNT = pcbnew.LAYER_ID_COUNT
 
         self.board = board
+
+        self.only_within_bbox = only_within_boundingbox
 
         # load all modules
         self.modules = board.GetModules()
@@ -185,6 +210,52 @@ class Replicator:
 
         return net_pairs_clean, net_dict
 
+    def remove_zones_tracks(self):
+        for sheet in self.sheets_to_clone:
+            # get modules on a sheet
+            mod_sheet = []
+            for mod in self.modules:
+                sheet_id = get_sheet_id(mod)
+                # if module is on selected sheet
+                if sheet_id == sheet:
+                    mod_sheet.append(mod)
+            # get bounding box
+            bounding_box = get_bounding_box(mod_sheet)
+            # get tracks in bounding box
+            all_tracks = self.board.GetTracks()
+            # keep only tracks that are within our bounding box
+            bb_tracks = []
+            for track in all_tracks:
+                track_bb = track.GetBoundingBox()
+                if self.only_within_bbox:
+                    if bounding_box.Contains(track_bb):
+                        bb_tracks.append(track)
+                else:
+                    if bounding_box.Intersects(track_bb):
+                        bb_tracks.append(track)
+            # remove tracks
+            for track in bb_tracks:
+                self.board.RemoveNative(track)
+
+            # get tracks in bounding box
+            all_zones = []
+            for zoneid in range(self.board.GetAreaCount()):
+                all_zones.append(self.board.GetArea(zoneid))
+            # keep only tracks that are within our bounding box
+            bb_zones = []
+            for zone in all_zones:
+                zone_bb = zone.GetBoundingBox()
+                if self.only_within_bbox:
+                    if self.pivot_bounding_box.Contains(zone_bb):
+                        bb_zones.append(zone)
+                else:
+                    if self.pivot_bounding_box.Intersects(zone_bb):
+                        bb_zones.append(zone)
+            # remove tracks
+            for zone in bb_zones:
+                self.board.RemoveNative(zone)
+            # get and remove zones in bounding box
+
     def replicate_modules(self, x_offset, y_offset):
         global SCALE
         """ method which replicates modules"""
@@ -192,9 +263,8 @@ class Replicator:
             sheet_index = self.sheets_to_clone.index(sheet) + 1
             # begin with modules
             for mod in self.modules:
-                module_path = mod.GetPath().split('/')
-                module_id = "/".join(module_path[-1:])
-                sheet_id = "/".join(module_path[0:-1])
+                module_id = get_module_id(mod)
+                sheet_id = get_sheet_id(mod)
                 # if module is on selected sheet
                 if sheet_id == sheet:
                     # find which is the corresponding pivot module
@@ -297,8 +367,12 @@ class Replicator:
                     newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE), pt[1] + int(sheet_index*y_offset*SCALE))
                 newzone.Hatch()
 
-    def replicate_layout(self, x_offset, y_offset):
+    def replicate_layout(self, x_offset, y_offset, remove_existing_nets_zones):
+        if remove_existing_nets_zones:
+            self.remove_zones_tracks()
         self.replicate_modules(x_offset, y_offset)
+        if remove_existing_nets_zones:
+            self.remove_zones_tracks()
         self.replicate_tracks(x_offset, y_offset)
         self.replicate_zones(x_offset, y_offset)
 
@@ -311,7 +385,7 @@ def main():
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
     replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=True)
-    replicator.replicate_layout(22.860, 0.0)
+    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=True)
     # save the board
     saved = pcbnew.SaveBoard('unit_test_only_within.kicad_pcb', board)
 
@@ -350,7 +424,7 @@ def main():
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
     replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=False)
-    replicator.replicate_layout(22.860, 0.0)
+    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=False)
     # save the board
     saved = pcbnew.SaveBoard('unit_test_all.kicad_pcb', board)
     # compare files

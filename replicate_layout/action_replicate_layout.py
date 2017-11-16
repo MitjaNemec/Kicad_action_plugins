@@ -29,9 +29,9 @@ ___version___ = "1.0"
 class ReplicateLayoutDialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Replicate layout", pos=wx.DefaultPosition,
-                           size=wx.Size(260, 190), style=wx.DEFAULT_DIALOG_STYLE)
+                           size=wx.Size(260, 200), style=wx.DEFAULT_DIALOG_STYLE)
 
-        #self.SetSizeHints(wx.Size(260, 190), wx.Size(260, 190))
+        # self.SetSizeHints(wx.Size(-1, -1), wx.Size(-1, -1))
 
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
@@ -41,7 +41,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.lbl_x.Wrap(-1)
         bSizer2.Add(self.lbl_x, 0, wx.ALL, 5)
 
-        self.val_x = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.val_x = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
         bSizer2.Add(self.val_x, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer2, 1, wx.EXPAND, 5)
@@ -52,7 +52,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.lbl_y.Wrap(-1)
         bSizer3.Add(self.lbl_y, 0, wx.ALL, 5)
 
-        self.val_y = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
+        self.val_y = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
         bSizer3.Add(self.val_y, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer3, 1, wx.EXPAND, 5)
@@ -63,14 +63,25 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer8 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.btn_ok = wx.Button(self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.btn_ok.SetDefault()
-        bSizer8.Add(self.btn_ok, 0, wx.ALL, 5)
+        self.chkbox_remove = wx.CheckBox(self, wx.ID_ANY, u"Remove existing tracks/zones", wx.DefaultPosition,
+                                         wx.DefaultSize, 0)
+        self.chkbox_remove.SetToolTipString(
+            u"Remove existing track and zones in the bounding box before and after module placement")
 
-        self.btn_cancel = wx.Button(self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer8.Add(self.btn_cancel, 0, wx.ALL, 5)
+        bSizer8.Add(self.chkbox_remove, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer8, 1, wx.EXPAND, 5)
+
+        bSizer5 = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.btn_ok = wx.Button(self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.btn_ok.SetDefault()
+        bSizer5.Add(self.btn_ok, 0, wx.ALL, 5)
+
+        self.btn_cancel = wx.Button(self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer5.Add(self.btn_cancel, 0, wx.ALL, 5)
+
+        bSizer1.Add(bSizer5, 1, wx.EXPAND, 5)
 
         self.SetSizer(bSizer1)
         self.Layout()
@@ -134,6 +145,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                 except:
                     y_offset = None
                 replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
+                remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
             if res == wx.ID_CANCEL:
                 process_canceled = True
 
@@ -145,7 +157,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                                                             pivot_module_reference,
                                                             replicate_containing_only)
                     # replicate now
-                    replicator.replicate_layout(x_offset, y_offset)
+                    replicator.replicate_layout(x_offset, y_offset, remove_existing_nets_zones)
 
                     pcbnew.Refresh()
                 else:
