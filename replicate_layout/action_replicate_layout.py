@@ -29,9 +29,7 @@ ___version___ = "1.0"
 class ReplicateLayoutDialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Replicate layout", pos=wx.DefaultPosition,
-                           size=wx.Size(260, 200), style=wx.DEFAULT_DIALOG_STYLE)
-
-        # self.SetSizeHints(wx.Size(-1, -1), wx.Size(-1, -1))
+                           size=wx.Size(260, 245), style=wx.DEFAULT_DIALOG_STYLE)
 
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
@@ -57,31 +55,49 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer1.Add(bSizer3, 1, wx.EXPAND, 5)
 
-        self.chkbox_intersecting = wx.CheckBox(self, wx.ID_ANY, u"Replicate intersecting tracks/zones",
-                                               wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer1.Add(self.chkbox_intersecting, 0, wx.ALL, 5)
-
         bSizer8 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.chkbox_remove = wx.CheckBox(self, wx.ID_ANY, u"Remove existing tracks/zones", wx.DefaultPosition,
-                                         wx.DefaultSize, 0)
-        self.chkbox_remove.SetToolTipString(
-            u"Remove existing track and zones in the bounding box before and after module placement")
-
-        bSizer8.Add(self.chkbox_remove, 0, wx.ALL, 5)
+        self.chkbox_tracks = wx.CheckBox(self, wx.ID_ANY, u"Replicate tracks", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.chkbox_tracks.SetValue(True)
+        bSizer8.Add(self.chkbox_tracks, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer8, 1, wx.EXPAND, 5)
 
         bSizer5 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.btn_ok = wx.Button(self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.btn_ok.SetDefault()
-        bSizer5.Add(self.btn_ok, 0, wx.ALL, 5)
-
-        self.btn_cancel = wx.Button(self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer5.Add(self.btn_cancel, 0, wx.ALL, 5)
+        self.chkbox_zones = wx.CheckBox(self, wx.ID_ANY, u"Replicate zones", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.chkbox_zones.SetValue(True)
+        bSizer5.Add(self.chkbox_zones, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer5, 1, wx.EXPAND, 5)
+
+        bSizer10 = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.chkbox_intersecting = wx.CheckBox(self, wx.ID_ANY, u"Replicate intersecting tracks/zones",
+                                               wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer10.Add(self.chkbox_intersecting, 0, wx.ALL, 5)
+
+        bSizer1.Add(bSizer10, 1, wx.EXPAND, 5)
+
+        bSizer11 = wx.BoxSizer(wx.VERTICAL)
+
+        self.chkbox_remove = wx.CheckBox(self, wx.ID_ANY, u"Remove existing tracks/zones", wx.DefaultPosition,
+                                         wx.DefaultSize, 0)
+
+        bSizer11.Add(self.chkbox_remove, 0, wx.ALL, 5)
+
+        bSizer1.Add(bSizer11, 1, wx.EXPAND, 5)
+
+        bSizer12 = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.btn_ok = wx.Button(self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.btn_ok.SetDefault()
+        bSizer12.Add(self.btn_ok, 0, wx.ALL, 5)
+
+        self.btn_cancel = wx.Button(self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer12.Add(self.btn_cancel, 0, wx.ALL, 5)
+
+        bSizer1.Add(bSizer12, 1, wx.EXPAND, 5)
 
         self.SetSizer(bSizer1)
         self.Layout()
@@ -146,7 +162,9 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                     y_offset = None
                 replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
                 remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
-            if res == wx.ID_CANCEL:
+                rep_tracks = dlg.chkbox_tracks.GetValue()
+                rep_zones = dlg.chkbox_zones.GetValue()
+            else:
                 process_canceled = True
 
             if process_canceled == False:
@@ -157,7 +175,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                                                             pivot_module_reference,
                                                             replicate_containing_only)
                     # replicate now
-                    replicator.replicate_layout(x_offset, y_offset, remove_existing_nets_zones)
+                    replicator.replicate_layout(x_offset, y_offset, remove_existing_nets_zones, rep_tracks, rep_zones)
 
                     pcbnew.Refresh()
                 else:

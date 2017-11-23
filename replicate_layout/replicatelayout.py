@@ -367,15 +367,20 @@ class Replicator:
                     newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE), pt[1] + int(sheet_index*y_offset*SCALE))
                 newzone.Hatch()
 
-    def replicate_layout(self, x_offset, y_offset, remove_existing_nets_zones):
+    def replicate_layout(self, x_offset, y_offset,
+                         remove_existing_nets_zones,
+                         replicate_tracks,
+                         replicate_zones):
+
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
         self.replicate_modules(x_offset, y_offset)
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
-        self.replicate_tracks(x_offset, y_offset)
-        self.replicate_zones(x_offset, y_offset)
-
+        if replicate_tracks:
+            self.replicate_tracks(x_offset, y_offset)
+        if replicate_zones:
+            self.replicate_zones(x_offset, y_offset)
 
 def main():
     # required for file comparison
