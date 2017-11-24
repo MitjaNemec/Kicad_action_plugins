@@ -38,6 +38,17 @@ def get_sheet_id(module):
     sheet_id = "/".join(module_path[0:-1])
     return sheet_id
 
+
+def get_module_text_items(module):
+    list_of_items = [module.Reference(), module.Value()]
+
+    module_items = module.GraphicalItemsList()
+    for item in module_items:
+        if type(item) is pcbnew.TEXTE_MODULE:
+            list_of_items.append(item)
+    return list_of_items
+
+
 def get_bounding_box(module_list):
     top = None
     bottom = None
@@ -286,6 +297,19 @@ class Replicator:
                         if (mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.IsFlipped()):
                             mod.Flip(mod.GetPosition())
 
+                        # replicate also text layout
+                        # get pivot_module_text
+                        pivot_mod_text_items = get_module_text_items(mod_to_clone)
+                        # get module text
+                        mod_text_items = get_module_text_items(mod)
+                        # replicate each text item
+                        for text_item in pivot_mod_text_items:
+                            index = pivot_mod_text_items.index(text_item)
+                            pivot_text_position = text_item.GetPosition()
+                            newposition = (int(pivot_text_position[0] + sheet_index * x_offset * SCALE),
+                                           int(pivot_text_position[1] + sheet_index * y_offset * SCALE))
+                            mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
+
     def replicate_tracks(self, x_offset, y_offset):
         """ method which replicates tracks"""
         global SCALE
@@ -390,7 +414,7 @@ def main():
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
     replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=True)
-    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=True)
+    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=True, replicate_tracks=True, replicate_zones=True)
     # save the board
     saved = pcbnew.SaveBoard('unit_test_only_within.kicad_pcb', board)
 
@@ -429,7 +453,7 @@ def main():
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
     replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=False)
-    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=False)
+    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=False, replicate_tracks=True, replicate_zones=True)
     # save the board
     saved = pcbnew.SaveBoard('unit_test_all.kicad_pcb', board)
     # compare files
