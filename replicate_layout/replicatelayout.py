@@ -330,9 +330,6 @@ class Replicator:
                 # this came from Miles Mccoo
                 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
                 if track.GetClass() == "VIA":
-                    oldvia = self.board.GetViaByPosition(track.GetPosition())
-                    if oldvia is None:
-                        continue
                     newvia = pcbnew.VIA(self.board)
                     # need to add before SetNet will work, so just doing it first
                     self.board.Add(newvia)
@@ -346,8 +343,8 @@ class Replicator:
                     newvia.SetLayerPair(toplayer, bottomlayer)
                     newvia.SetPosition(pcbnew.wxPoint(track.GetPosition().x + sheet_index*x_offset*SCALE,
                                                       track.GetPosition().y + sheet_index*y_offset*SCALE))
-                    newvia.SetViaType(oldvia.GetViaType())
-                    newvia.SetWidth(oldvia.GetWidth())
+                    newvia.SetViaType(track.GetViaType())
+                    newvia.SetWidth(track.GetWidth())
                     newvia.SetNet(to_net)
                 else:
                     newtrack = pcbnew.TRACK(self.board)
