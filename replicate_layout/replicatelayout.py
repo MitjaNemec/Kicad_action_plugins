@@ -331,6 +331,8 @@ class Replicator:
                 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
                 if track.GetClass() == "VIA":
                     oldvia = self.board.GetViaByPosition(track.GetPosition())
+                    if oldvia is None:
+                        continue
                     newvia = pcbnew.VIA(self.board)
                     # need to add before SetNet will work, so just doing it first
                     self.board.Add(newvia)
