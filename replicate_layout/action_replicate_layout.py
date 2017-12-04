@@ -204,7 +204,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                 if (x_offset != None) and (y_offset != None):
                     # are we replicating in polar coordinate system
                     polar = False
-                    if dlg.coordinate_system.GetSelection() == 2:
+                    if dlg.coordinate_system.GetSelection() != 0:
                         polar = True
 
                     # prepare to replicate
