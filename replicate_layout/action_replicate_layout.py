@@ -29,35 +29,48 @@ ___version___ = "1.0"
 class ReplicateLayoutDialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Replicate layout", pos=wx.DefaultPosition,
-                           size=wx.Size(260, 245), style=wx.DEFAULT_DIALOG_STYLE)
+                           size=wx.Size(270, 387), style=wx.DEFAULT_DIALOG_STYLE)
+
+        #self.SetSizeHints(wx.Size(-1, -1), wx.Size(-1, -1))
 
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
+        bSizer9 = wx.BoxSizer(wx.VERTICAL)
+
+        coordinate_systemChoices = [u"Cartesian", u"Polar"]
+        self.coordinate_system = wx.RadioBox(self, wx.ID_ANY, u"Coordinate system", wx.DefaultPosition,
+                                             wx.Size(250, -1), coordinate_systemChoices, 2, wx.RA_SPECIFY_COLS)
+        self.coordinate_system.SetSelection(0)
+        bSizer9.Add(self.coordinate_system, 0, wx.ALL, 5)
+
+        bSizer1.Add(bSizer9, 1, wx.EXPAND, 5)
+
         bSizer2 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.lbl_x = wx.StaticText(self, wx.ID_ANY, u"x offset (mm)", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.lbl_x.Wrap(-1)
-        bSizer2.Add(self.lbl_x, 0, wx.ALL, 5)
+        self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"x offset (mm)", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.lbl_x_mag.Wrap(-1)
+        bSizer2.Add(self.lbl_x_mag, 0, wx.ALL, 5)
 
-        self.val_x = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer2.Add(self.val_x, 0, wx.ALL, 5)
+        self.val_x_mag = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer2.Add(self.val_x_mag, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer2, 1, wx.EXPAND, 5)
 
         bSizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.lbl_y = wx.StaticText(self, wx.ID_ANY, u"y offset (mm)", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.lbl_y.Wrap(-1)
-        bSizer3.Add(self.lbl_y, 0, wx.ALL, 5)
+        self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"y offset (mm)", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.lbl_y_angle.Wrap(-1)
+        bSizer3.Add(self.lbl_y_angle, 0, wx.ALL, 5)
 
-        self.val_y = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer3.Add(self.val_y, 0, wx.ALL, 5)
+        self.val_y_angle = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer3.Add(self.val_y_angle, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer3, 1, wx.EXPAND, 5)
 
         bSizer8 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.chkbox_tracks = wx.CheckBox(self, wx.ID_ANY, u"Replicate tracks", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.chkbox_tracks = wx.CheckBox(self, wx.ID_ANY, u"Replicate tracks", wx.DefaultPosition, wx.DefaultSize,
+                                         0)
         self.chkbox_tracks.SetValue(True)
         bSizer8.Add(self.chkbox_tracks, 0, wx.ALL, 5)
 
@@ -103,6 +116,19 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.Layout()
 
         self.Centre(wx.BOTH)
+
+        # Connect Events
+        self.coordinate_system.Bind(wx.EVT_RADIOBOX, self.coordinate_system_changed)
+
+    def coordinate_system_changed(self, event):
+        # if cartesian
+        if self.coordinate_system.GetSelection() == 0:
+            self.lbl_x_mag.SetLabelText(u"x offset (mm)")
+            self.lbl_y_angle.SetLabelText(u"y offset (mm)")
+        else:
+            self.lbl_x_mag.SetLabelText(u"radius (mm)")
+            self.lbl_y_angle.SetLabelText(u"angle (deg)")
+        pass
 
 
 class ReplicateLayout(pcbnew.ActionPlugin):
@@ -150,14 +176,20 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             y_offset = None
             dlg = ReplicateLayoutDialog(_pcbnew_frame)
             res = dlg.ShowModal()
+
+            replicate_containing_only = False
+            remove_existing_nets_zones = False
+            rep_tracks = False
+            rep_zones = False
+
             if res == wx.ID_OK:
                 process_canceled = False
                 try:
-                    x_offset = float(dlg.val_x.GetValue())
+                    x_offset = float(dlg.val_x_mag.GetValue())
                 except:
                     x_offset = None
                 try:
-                    y_offset = float(dlg.val_y.GetValue())
+                    y_offset = float(dlg.val_y_angle.GetValue())
                 except:
                     y_offset = None
                 replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
@@ -170,12 +202,21 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             if process_canceled == False:
                 # execute replicate_layout
                 if (x_offset != None) and (y_offset != None):
+                    # are we replicating in polar coordinate system
+                    polar = False
+                    if dlg.coordinate_system.GetSelection() == 2:
+                        polar = True
+
                     # prepare to replicate
                     replicator = replicatelayout.Replicator(pcbnew.GetBoard(),
                                                             pivot_module_reference,
                                                             replicate_containing_only)
                     # replicate now
-                    replicator.replicate_layout(x_offset, y_offset, remove_existing_nets_zones, rep_tracks, rep_zones)
+                    replicator.replicate_layout(x_offset, y_offset,
+                                                remove_existing_nets_zones,
+                                                rep_tracks,
+                                                rep_zones,
+                                                polar)
 
                     pcbnew.Refresh()
                 else:

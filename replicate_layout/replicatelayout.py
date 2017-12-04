@@ -20,8 +20,9 @@
 #
 import pcbnew
 from sets import Set
+import math
 
-SCALE = 1000000
+SCALE = 1000000.0
 
 # helper functions
 
@@ -38,6 +39,24 @@ def get_sheet_id(module):
     sheet_id = "/".join(module_path[0:-1])
     return sheet_id
 
+
+def rotate(coordinates, angle):
+    new_x = coordinates[0] * math.cos(2 * math.pi * angle/360)\
+          - coordinates[1] * math.sin(2 * math.pi * angle/360)
+    new_y = coordinates[0] * math.sin(2 * math.pi * angle/360)\
+          + coordinates[1] * math.cos(2 * math.pi * angle/360)
+    return new_x, new_y
+
+
+def get_new_position(old_position, pivot_point, angle):
+    # get relative position to pivot point
+    rel_x = old_position[0] - pivot_point[0]
+    rel_y = old_position[1] - pivot_point[1]
+    # rotate around
+    new_rel_x, new_rel_y = rotate((rel_x, rel_y), angle)
+    # get absolute position
+    new_position = (new_rel_x + pivot_point[0], new_rel_y + pivot_point[1])
+    return new_position
 
 def get_module_text_items(module):
     list_of_items = [module.Reference(), module.Value()]
@@ -142,6 +161,16 @@ class Replicator:
         position = pcbnew.wxPoint(left, top)
         size = pcbnew.wxSize(right - left, bottom - top)
         self.pivot_bounding_box = pcbnew.EDA_RECT(position, size)
+
+        # get radius for polar replication
+        middle = (right + left)/2
+        self.polar_center = (middle, bottom)
+
+        # get recomended radius
+        number_of_all_sheets = 1 + len(self.sheets_to_clone)
+        width_of_sheet = (right - left) / SCALE
+        circumference = number_of_all_sheets * width_of_sheet
+        self.minimum_radius = circumference / (2 * math.pi)
 
         # find all tracks within the pivot bounding box
         all_tracks = board.GetTracks()
@@ -267,7 +296,7 @@ class Replicator:
                 self.board.RemoveNative(zone)
             # get and remove zones in bounding box
 
-    def replicate_modules(self, x_offset, y_offset):
+    def replicate_modules(self, x_offset, y_offset, polar):
         global SCALE
         """ method which replicates modules"""
         for sheet in self.sheets_to_clone:
@@ -283,19 +312,34 @@ class Replicator:
                         # get coresponding pivot module and its position
                         index = self.pivot_modules_id.index(module_id)
                         mod_to_clone = self.pivot_modules[index]
-                        pivod_mod_position = mod_to_clone.GetPosition()
-                        pivod_mod_orientation = mod_to_clone.GetOrientation()
+                        pivot_mod_position = mod_to_clone.GetPosition()
+                        pivot_mod_orientation = mod_to_clone.GetOrientationDegrees()
                         pivot_mod_flipped = mod_to_clone.IsFlipped()
 
-                        # get new position
-                        newposition = (int(pivod_mod_position[0] + sheet_index * x_offset * SCALE),
-                                       int(pivod_mod_position[1] + sheet_index * y_offset * SCALE))
+                        if polar:
+                            # get the pivot point
+                            pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                            newposition = get_new_position(pivot_mod_position, pivot_point, sheet_index * y_offset)
+                        else:
+                            # get new position - cartesian
+                            newposition = (pivot_mod_position[0] + sheet_index * x_offset * SCALE,
+                                           pivot_mod_position[1] + sheet_index * y_offset * SCALE)
 
+                        #convert to tuple of integers
+                        newposition = [int(x) for x in newposition]
                         # place current module
                         mod.SetPosition(pcbnew.wxPoint(*newposition))
-                        mod.SetOrientation(pivod_mod_orientation)
+
                         if (mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.IsFlipped()):
                             mod.Flip(mod.GetPosition())
+
+                        # check foo orientation wraparound
+                        new_orientation = pivot_mod_orientation - sheet_index * y_offset
+                        if new_orientation > 360.0:
+                            new_orientation = new_orientation - 360
+                        if new_orientation < 0.0:
+                            new_orientation = new_orientation + 360
+                        mod.SetOrientationDegrees(new_orientation)
 
                         # replicate also text layout
                         # get pivot_module_text
@@ -306,11 +350,18 @@ class Replicator:
                         for text_item in pivot_mod_text_items:
                             index = pivot_mod_text_items.index(text_item)
                             pivot_text_position = text_item.GetPosition()
-                            newposition = (int(pivot_text_position[0] + sheet_index * x_offset * SCALE),
-                                           int(pivot_text_position[1] + sheet_index * y_offset * SCALE))
+                            if polar:
+                                pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                                newposition = get_new_position(pivot_text_position, pivot_point, sheet_index * y_offset)
+                            else:
+                                newposition = (pivot_text_position[0] + sheet_index * x_offset * SCALE,
+                                               pivot_text_position[1] + sheet_index * y_offset * SCALE)
+
+                            # convert to tuple of integers
+                            newposition = [int(x) for x in newposition]
                             mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
 
-    def replicate_tracks(self, x_offset, y_offset):
+    def replicate_tracks(self, x_offset, y_offset, polar):
         """ method which replicates tracks"""
         global SCALE
         # start cloning
@@ -341,8 +392,21 @@ class Replicator:
                         toplayer = max(toplayer, l)
                         bottomlayer = min(bottomlayer, l)
                     newvia.SetLayerPair(toplayer, bottomlayer)
-                    newvia.SetPosition(pcbnew.wxPoint(track.GetPosition().x + sheet_index*x_offset*SCALE,
-                                                      track.GetPosition().y + sheet_index*y_offset*SCALE))
+                    if polar:
+                        # get the pivot point
+                        pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+
+                        newposition = get_new_position((track.GetPosition().x, track.GetPosition().y),
+                                                       pivot_point, sheet_index * y_offset)
+                    else:
+                        newposition = (track.GetPosition().x + sheet_index*x_offset*SCALE,
+                                       track.GetPosition().y + sheet_index*y_offset*SCALE)
+
+                    #convert to tuple of integers
+                    newposition = [int(x) for x in newposition]
+
+                    newvia.SetPosition(pcbnew.wxPoint(*newposition))
+
                     newvia.SetViaType(track.GetViaType())
                     newvia.SetWidth(track.GetWidth())
                     newvia.SetNet(to_net)
@@ -350,10 +414,25 @@ class Replicator:
                     newtrack = pcbnew.TRACK(self.board)
                     # need to add before SetNet will work, so just doing it first
                     self.board.Add(newtrack)
-                    newtrack.SetStart(pcbnew.wxPoint(track.GetStart().x + sheet_index*x_offset*SCALE,
-                                                     track.GetStart().y + sheet_index*y_offset*SCALE))
-                    newtrack.SetEnd(pcbnew.wxPoint(track.GetEnd().x + sheet_index*x_offset*SCALE,
-                                                   track.GetEnd().y + sheet_index*y_offset*SCALE))
+                    if polar:
+                        # get the pivot point
+                        pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                        newposition = get_new_position((track.GetStart().x, track.GetStart().y),
+                                                       pivot_point, sheet_index * y_offset)
+                        # convert to tuple of integers
+                        newposition = [int(x) for x in newposition]
+                        newtrack.SetStart(pcbnew.wxPoint(*newposition))
+
+                        newposition = get_new_position((track.GetEnd().x, track.GetEnd().y),
+                                                       pivot_point, sheet_index * y_offset)
+                        # convert to tuple of integers
+                        newposition = [int(x) for x in newposition]
+                        newtrack.SetEnd(pcbnew.wxPoint(*newposition))
+                    else:
+                        newtrack.SetStart(pcbnew.wxPoint(track.GetStart().x + sheet_index*x_offset*SCALE,
+                                                         track.GetStart().y + sheet_index*y_offset*SCALE))
+                        newtrack.SetEnd(pcbnew.wxPoint(track.GetEnd().x + sheet_index*x_offset*SCALE,
+                                                       track.GetEnd().y + sheet_index*y_offset*SCALE))
                     newtrack.SetWidth(track.GetWidth())
                     newtrack.SetLayer(track.GetLayer())
 
@@ -393,40 +472,55 @@ class Replicator:
     def replicate_layout(self, x_offset, y_offset,
                          remove_existing_nets_zones,
                          replicate_tracks,
-                         replicate_zones):
+                         replicate_zones,
+                         polar):
 
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
-        self.replicate_modules(x_offset, y_offset)
+        self.replicate_modules(x_offset, y_offset, polar)
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
         if replicate_tracks:
-            self.replicate_tracks(x_offset, y_offset)
-        if replicate_zones:
+            self.replicate_tracks(x_offset, y_offset, polar)
+        # zone replication does not work in polar mode
+        if replicate_zones and not polar:
             self.replicate_zones(x_offset, y_offset)
 
-def main():
-    # required for file comparison
+
+def test_replicate(x, y, within, polar):
     import difflib
 
     # load test board
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
-    replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=True)
-    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=True, replicate_tracks=True, replicate_zones=True)
+    replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=within)
+    replicator.replicate_layout(x,y,
+                                remove_existing_nets_zones=True,
+                                replicate_tracks=True,
+                                replicate_zones=True,
+                                polar=polar)
     # save the board
-    saved = pcbnew.SaveBoard('unit_test_only_within.kicad_pcb', board)
+    saved = pcbnew.SaveBoard('test_board_temp.kicad_pcb', board)
 
     # compare files
-    errnum_within = 0
-    with open('test_board_only_within.kicad_pcb', 'r') as correct_board:
-        with open('unit_test_only_within.kicad_pcb', 'r') as tested_board:
+    errnum = 0
+    with open('test_board_temp.kicad_pcb', 'r') as correct_board:
+        if within is True and polar is False:
+            filename = 'test_board_only_within.kicad_pcb'
+        if within is False and polar is False:
+            filename = 'test_board_all.kicad_pcb'
+        if within is False and polar is True:
+            filename = 'test_board_polar.kicad_pcb'
+        with open(filename, 'r') as tested_board:
             diff = difflib.unified_diff(
                 correct_board.readlines(),
                 tested_board.readlines(),
                 fromfile='correct_board',
                 tofile='tested_board',
                 n=0)
+    # remove temp file
+    # TODO
+
     # only timestamps on zones and file version information should differ
     diffstring = []
     for line in diff:
@@ -446,52 +540,24 @@ def main():
                 pass
             else:
                 # this is a problem
-                errnum_within = errnum_within + 1
+                errnum = errnum + 1
+    return errnum
 
-    # load test board
-    board = pcbnew.LoadBoard('test_board.kicad_pcb')
-    # run the replicator
-    replicator = Replicator(board=board, pivot_module_reference='Q2002', only_within_boundingbox=False)
-    replicator.replicate_layout(22.860, 0.0, remove_existing_nets_zones=False, replicate_tracks=True, replicate_zones=True)
-    # save the board
-    saved = pcbnew.SaveBoard('unit_test_all.kicad_pcb', board)
-    # compare files
-    errnum_all = 0
-    with open('test_board_all.kicad_pcb', 'r') as correct_board:
-        with open('unit_test_all.kicad_pcb', 'r') as tested_board:
-            diff = difflib.unified_diff(
-                correct_board.readlines(),
-                tested_board.readlines(),
-                fromfile='correct_board',
-                tofile='tested_board',
-                n=0)
-    # only timestamps on zones and file version information should differ
-    diffstring = []
-    for line in diff:
-        diffstring.append(line)
-    # get rid of diff information
-    del diffstring[0]
-    del diffstring[0]
-    # walktrough diff list and check for any significant differences
-    for line in diffstring:
-        index = diffstring.index(line)
-        if '@@' in line:
-            if  ((('version' in diffstring[index + 1]) and
-                 ('version' in diffstring[index + 2])) or
-                (('tstamp' in diffstring[index + 1]) and
-                 ('tstamp' in diffstring[index + 2]))):
-                # this is not a problem
-                pass
-            else:
-                # this is a problem
-                errnum_all = errnum_all + 1
-    if errnum_all == 0 and errnum_within == 0:
+
+def main():
+    errnum_all = test_replicate(22.860, 0.0, within=True, polar=False)
+    errnum_within = test_replicate(22.860, 0.0, within=False, polar=False)
+    errnum_polar = test_replicate(20, 60, within=False, polar=True)
+
+    if errnum_all == 0 and errnum_within == 0 and errnum_polar == 0:
         print "passed all tests"
-    if errnum_all == 0 and errnum_within != 0:
-        print "failed replicating only containing sheet"
-    if errnum_all != 0 and errnum_within == 0:
-        print "failed replicating complete (with intersections) sheet"
-    if errnum_all != 0 and errnum_within != 0:
+    if errnum_all == 0 and errnum_within != 0 and errnum_polar == 0:
+        print "failed replicating only containing"
+    if errnum_all != 0 and errnum_within == 0 and errnum_polar == 0:
+        print "failed replicating complete (with intersections)"
+    if errnum_all == 0 and errnum_within == 0 and errnum_polar != 0:
+        print "failed replicating polar"
+    if errnum_all != 0 and errnum_within != 0 and errnum_polar != 0:
         print "failed all tests"
 
 # for testing purposes only

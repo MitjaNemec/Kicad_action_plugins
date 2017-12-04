@@ -199,7 +199,7 @@
     (tags "capacitor 1206")
     (path /59F8DC05/59F96458)
     (attr smd)
-    (fp_text reference C2001 (at 0 -1.75) (layer F.SilkS)
+    (fp_text reference C2001 (at 4.675 0) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value 100n (at 0 2) (layer F.Fab) hide
@@ -230,7 +230,7 @@
   )
 
   (module Passives:RC1206M (layer B.Cu) (tedit 59F954E2) (tstamp 5A0AA90C)
-    (at 198.985 134.62)
+    (at 57.38 173.99)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F8EC5A/59F96458)
@@ -266,7 +266,7 @@
   )
 
   (module Passives:RC1206M (layer B.Cu) (tedit 59F954E2) (tstamp 5A0AA91D)
-    (at 198.12 139.7)
+    (at 56.515 179.07)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F8EC5A/59F96502)
@@ -302,7 +302,7 @@
   )
 
   (module Passives:RC1206M (layer F.Cu) (tedit 59F954E2) (tstamp 5A0AA92E)
-    (at 198.12 142.875)
+    (at 56.515 182.245)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F957AF/59F96458)
@@ -338,7 +338,7 @@
   )
 
   (module Passives:RC1206M (layer F.Cu) (tedit 59F954E2) (tstamp 5A0AA93F)
-    (at 199.39 128.905)
+    (at 57.785 168.275)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F957AF/59F96502)
@@ -379,13 +379,13 @@
     (tags "Diode Mini-MELF")
     (path /59F8DC05/59F96588)
     (attr smd)
-    (fp_text reference D2001 (at 0 -2 270) (layer F.SilkS)
+    (fp_text reference D2001 (at 0 1.905 270) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value LL4148 (at 0 1.75 270) (layer F.Fab) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
-    (fp_text user %R (at 0 -2 270) (layer F.Fab)
+    (fp_text user %R (at 0 1.905 270) (layer F.Fab)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_line (start 1.75 -1) (end -2.55 -1) (layer F.SilkS) (width 0.12))
@@ -418,7 +418,7 @@
   )
 
   (module Discretes:D_MiniMELF (layer F.Cu) (tedit 59F95434) (tstamp 5A0AA993)
-    (at 209.4611 132.9436)
+    (at 67.8561 172.3136)
     (descr "Diode Mini-MELF")
     (tags "Diode Mini-MELF")
     (path /59F8EC5A/59F96588)
@@ -462,7 +462,7 @@
   )
 
   (module Discretes:D_MiniMELF (layer F.Cu) (tedit 59F95434) (tstamp 5A0AA9AC)
-    (at 209.4611 132.9436)
+    (at 67.8561 172.3136)
     (descr "Diode Mini-MELF")
     (tags "Diode Mini-MELF")
     (path /59F957AF/59F96588)
@@ -506,7 +506,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AA9DF)
-    (at 182.245 128.27)
+    (at 40.64 167.64)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /5A0AAC30)
@@ -549,7 +549,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AA9F9)
-    (at 171.45 135.89)
+    (at 29.845 175.26)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /5A0AAAD8)
@@ -592,7 +592,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AAA13)
-    (at 170.815 149.225)
+    (at 29.21 188.595)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /5A0AAD6E)
@@ -725,7 +725,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AAA7B)
-    (at 171.45 128.905)
+    (at 29.845 168.275)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /59F8EC5A/59F8DC38)
@@ -770,7 +770,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AAA95)
-    (at 159.385 126.365)
+    (at 17.78 165.735)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /59F8EC5A/59F8DCB8)
@@ -815,7 +815,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AAAAF)
-    (at 158.75 132.08)
+    (at 17.145 171.45)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /59F957AF/59F8DC38)
@@ -860,7 +860,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5A0AAAC9)
-    (at 158.75 137.795)
+    (at 17.145 177.165)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /59F957AF/59F8DCB8)
@@ -977,7 +977,7 @@
   )
 
   (module Passives:RC1206M (layer F.Cu) (tedit 59F954E2) (tstamp 5A0AAB30)
-    (at 209.4611 132.9436)
+    (at 67.8561 172.3136)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F8EC5A/5A07F2EF)
@@ -1013,7 +1013,7 @@
   )
 
   (module Passives:RC1206M (layer F.Cu) (tedit 59F954E2) (tstamp 5A0AAB41)
-    (at 209.4611 132.9436)
+    (at 67.8561 172.3136)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F8EC5A/59F96420)
@@ -1049,7 +1049,7 @@
   )
 
   (module Passives:RC1206M (layer F.Cu) (tedit 59F954E2) (tstamp 5A0AAB52)
-    (at 209.4611 132.9436)
+    (at 67.8561 172.3136)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F957AF/5A07F2EF)
@@ -1085,7 +1085,7 @@
   )
 
   (module Passives:RC1206M (layer F.Cu) (tedit 59F954E2) (tstamp 5A0AAB63)
-    (at 209.4611 132.9436)
+    (at 67.8561 172.3136)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /59F957AF/59F96420)
@@ -1121,7 +1121,7 @@
   )
 
   (module TI_modules:28379D_launchpad (layer F.Cu) (tedit 59F1F489) (tstamp 5A0AAC9F)
-    (at 75.565 74.295 270)
+    (at 19.685 48.895 270)
     (descr "28379D launchpad")
     (tags DEV)
     (path /5A0AAF31)
@@ -1430,7 +1430,7 @@
     (tags "SOIC 1.27")
     (path /59F8DC05/59F8DD08)
     (attr smd)
-    (fp_text reference U2001 (at 0 -3.5 90) (layer F.SilkS)
+    (fp_text reference U2001 (at -5.08 -3.81 90) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value IR2181 (at 0 3.5 90) (layer F.Fab) hide
@@ -1479,7 +1479,7 @@
   )
 
   (module ICs:SO8 (layer F.Cu) (tedit 58CD0CDA) (tstamp 5A0AACD9)
-    (at 187.325 144.145)
+    (at 45.72 183.515)
     (descr "8-Lead Plastic Small Outline (SN) - Narrow, 3.90 mm Body [SOIC] (see Microchip Packaging Specification 00000049BS.pdf)")
     (tags "SOIC 1.27")
     (path /59F8EC5A/59F8DD08)
@@ -1533,7 +1533,7 @@
   )
 
   (module ICs:SO8 (layer F.Cu) (tedit 58CD0CDA) (tstamp 5A0AACF6)
-    (at 204.31 152.4)
+    (at 62.705 191.77)
     (descr "8-Lead Plastic Small Outline (SN) - Narrow, 3.90 mm Body [SOIC] (see Microchip Packaging Specification 00000049BS.pdf)")
     (tags "SOIC 1.27")
     (path /59F957AF/59F8DD08)
