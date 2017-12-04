@@ -439,7 +439,7 @@ class Replicator:
                     newtrack.SetNet(to_net)
                 pass
 
-    def replicate_zones(self, x_offset, y_offset):
+    def replicate_zones(self, x_offset, y_offset, polar):
         """ method which replicates zones"""
         global SCALE
         # start cloning
@@ -455,18 +455,39 @@ class Replicator:
                 to_net = net_dict[to_net_name]
 
                 # now I can finally make a copy of a zone
-                # this came from Miles Mccoo
+                # this came partially from Miles Mccoo. I only extended it with polar support
                 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
                 coords = coordsFromPolySet(zone.Outline())
-                newzone = self.board.InsertArea(to_net.GetNet(),
-                                                0,
-                                                zone.GetLayer(),
-                                                coords[0][0] + int(sheet_index*x_offset*SCALE),
-                                                coords[0][1] + int(sheet_index*y_offset*SCALE),
-                                                pcbnew.CPolyLine.DIAGONAL_EDGE)
-                newoutline = newzone.Outline()
-                for pt in coords[1:]:
-                    newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE), pt[1] + int(sheet_index*y_offset*SCALE))
+                if polar:
+                    pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                    newposition = get_new_position((coords[0][0], coords[0][1]), pivot_point, sheet_index * y_offset)
+                    newposition = [int(x) for x in newposition]
+                    newzone = self.board.InsertArea(to_net.GetNet(),
+                                                    0,
+                                                    zone.GetLayer(),
+                                                    newposition[0],
+                                                    newposition[1],
+                                                    pcbnew.CPolyLine.DIAGONAL_EDGE)
+                    newoutline = newzone.Outline()
+                    for pt in coords[1:]:
+                        newposition = get_new_position((pt[0], pt[1]), pivot_point,
+                                                       sheet_index * y_offset)
+                        newposition = [int(x) for x in newposition]
+                        newoutline.Append(newposition[0], newposition[1])
+                else:
+                    newposition = (coords[0][0] + sheet_index * x_offset * SCALE,
+                                   coords[0][1] + sheet_index * y_offset * SCALE)
+                    newposition = [int(x) for x in newposition]
+                    newzone = self.board.InsertArea(to_net.GetNet(),
+                                                    0,
+                                                    zone.GetLayer(),
+                                                    newposition[0],
+                                                    newposition[1],
+                                                    pcbnew.CPolyLine.DIAGONAL_EDGE)
+                    newoutline = newzone.Outline()
+                    for pt in coords[1:]:
+                        newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE),
+                                          pt[1] + int(sheet_index*y_offset*SCALE))
                 newzone.Hatch()
 
     def replicate_layout(self, x_offset, y_offset,
@@ -482,9 +503,8 @@ class Replicator:
             self.remove_zones_tracks()
         if replicate_tracks:
             self.replicate_tracks(x_offset, y_offset, polar)
-        # zone replication does not work in polar mode
-        if replicate_zones and not polar:
-            self.replicate_zones(x_offset, y_offset)
+        if replicate_zones:
+            self.replicate_zones(x_offset, y_offset, polar)
 
 
 def test_replicate(x, y, within, polar):

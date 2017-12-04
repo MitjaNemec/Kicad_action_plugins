@@ -1682,21 +1682,6 @@
       )
     )
   )
-  (zone (net 2) (net_name GND) (layer F.Cu) (tstamp 0) (hatch edge 0.508)
-    (connect_pads (clearance 0.508))
-    (min_thickness 0.254)
-    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
-    (polygon
-      (pts
-        (xy 188.595 92.075) (xy 188.595 90.17) (xy 191.77 90.17) (xy 191.77 92.075)
-      )
-    )
-    (filled_polygon
-      (pts
-        (xy 191.643 91.948) (xy 188.722 91.948) (xy 188.722 90.297) (xy 191.643 90.297)
-      )
-    )
-  )
   (zone (net 3) (net_name /Veja_1/OUT) (layer F.Cu) (tstamp 0) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
@@ -1712,6 +1697,24 @@
         (xy 188.865258 84.868954) (xy 188.663538 84.963) (xy 187.989156 84.963) (xy 187.837765 84.861843) (xy 187.59 84.81256)
         (xy 185.79 84.81256) (xy 185.542235 84.861843) (xy 185.390844 84.963) (xy 183.007 84.963) (xy 183.007 77.597)
         (xy 191.008 77.597)
+      )
+    )
+  )
+  (zone (net 2) (net_name GND) (layer F.Cu) (tstamp 0) (hatch edge 0.508)
+    (connect_pads (clearance 0.508))
+    (min_thickness 0.254)
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (polygon
+      (pts
+        (xy 188.595 90.17) (xy 188.595 93.345) (xy 189.865 94.615) (xy 189.865 95.885) (xy 190.5 95.885)
+        (xy 190.5 92.71) (xy 191.77 92.71) (xy 192.405 90.17)
+      )
+    )
+    (filled_polygon
+      (pts
+        (xy 191.670842 92.583) (xy 190.5 92.583) (xy 190.451399 92.592667) (xy 190.410197 92.620197) (xy 190.382667 92.661399)
+        (xy 190.373 92.71) (xy 190.373 95.758) (xy 189.992 95.758) (xy 189.992 94.615) (xy 189.982333 94.566399)
+        (xy 189.954803 94.525197) (xy 188.722 93.292394) (xy 188.722 90.297) (xy 192.242342 90.297)
       )
     )
   )
