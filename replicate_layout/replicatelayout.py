@@ -24,7 +24,6 @@ import math
 
 SCALE = 1000000.0
 
-# helper functions
 
 def get_module_id(module):
     """ get module id"""
@@ -74,14 +73,14 @@ def get_bounding_box(module_list):
     left = None
     right = None
     for mod in module_list:
-        if top == None:
-            bounding_box = mod.GetBoundingBox()
+        if top is None:
+            bounding_box = mod.GetFootprintRect()
             top = bounding_box.GetTop()
             bottom = bounding_box.GetBottom()
             left = bounding_box.GetLeft()
             right = bounding_box.GetRight()
         else:
-            mod_box = mod.GetBoundingBox()
+            mod_box = mod.GetFootprintRect()
             top = min(top, mod_box.GetTop())
             bottom = max(bottom, mod_box.GetBottom())
             left = min(left, mod_box.GetLeft())
@@ -91,6 +90,7 @@ def get_bounding_box(module_list):
     size = pcbnew.wxSize(right - left, bottom - top)
     bounding_box = pcbnew.EDA_RECT(position, size)
     return bounding_box
+
 
 # this function was made by Miles Mccoo
 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
@@ -261,6 +261,7 @@ class Replicator:
                     mod_sheet.append(mod)
             # get bounding box
             bounding_box = get_bounding_box(mod_sheet)
+            # get coordinates
             # get tracks in bounding box
             all_tracks = self.board.GetTracks()
             # keep only tracks that are within our bounding box
@@ -277,7 +278,7 @@ class Replicator:
             for track in bb_tracks:
                 self.board.RemoveNative(track)
 
-            # get tracks in bounding box
+            # get zones in bounding box
             all_zones = []
             for zoneid in range(self.board.GetAreaCount()):
                 all_zones.append(self.board.GetArea(zoneid))
@@ -565,8 +566,8 @@ def test_replicate(x, y, within, polar):
 
 
 def main():
-    errnum_all = test_replicate(22.860, 0.0, within=True, polar=False)
-    errnum_within = test_replicate(22.860, 0.0, within=False, polar=False)
+    errnum_within = test_replicate(22.860, 0.0, within=True, polar=False)
+    errnum_all = test_replicate(22.860, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
     if errnum_all == 0 and errnum_within == 0 and errnum_polar == 0:
