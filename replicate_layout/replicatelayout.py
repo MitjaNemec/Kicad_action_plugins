@@ -301,10 +301,10 @@ class Replicator:
             for zone in all_zones:
                 zone_bb = zone.GetBoundingBox()
                 if self.only_within_bbox:
-                    if self.pivot_bounding_box.Contains(zone_bb):
+                    if bounding_box.Contains(zone_bb):
                         bb_zones.append(zone)
                 else:
-                    if self.pivot_bounding_box.Intersects(zone_bb):
+                    if bounding_box.Intersects(zone_bb):
                         bb_zones.append(zone)
             # remove tracks
             for zone in bb_zones:
@@ -582,8 +582,8 @@ def test_replicate(x, y, within, polar):
 
 
 def main():
-    errnum_within = test_replicate(22.860, 0.0, within=True, polar=False)
-    errnum_all = test_replicate(22.860, 0.0, within=False, polar=False)
+    errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
+    errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
     if errnum_all == 0 and errnum_within == 0 and errnum_polar == 0:
