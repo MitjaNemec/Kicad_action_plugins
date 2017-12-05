@@ -27,7 +27,12 @@ ___version___ = "1.0"
 
 
 class ReplicateLayoutDialog(wx.Dialog):
-    def __init__(self, parent):
+    def __init__(self, parent, radius, width, angle):
+
+        self.minimum_radius = radius
+        self.minimum_width = width
+        self.minimum_angle = angle
+
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Replicate layout", pos=wx.DefaultPosition,
                            size=wx.Size(270, 387), style=wx.DEFAULT_DIALOG_STYLE)
 
@@ -51,7 +56,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.lbl_x_mag.Wrap(-1)
         bSizer2.Add(self.lbl_x_mag, 0, wx.ALL, 5)
 
-        self.val_x_mag = wx.TextCtrl(self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.val_x_mag = wx.TextCtrl(self, wx.ID_ANY, str(self.minimum_width), wx.DefaultPosition, wx.DefaultSize, 0)
         bSizer2.Add(self.val_x_mag, 0, wx.ALL, 5)
 
         bSizer1.Add(bSizer2, 1, wx.EXPAND, 5)
@@ -125,9 +130,13 @@ class ReplicateLayoutDialog(wx.Dialog):
         if self.coordinate_system.GetSelection() == 0:
             self.lbl_x_mag.SetLabelText(u"x offset (mm)")
             self.lbl_y_angle.SetLabelText(u"y offset (mm)")
+            self.val_x_mag.SetValue(str(self.minimum_width))
+            self.val_y_angle.SetValue(u"0.0")
         else:
             self.lbl_x_mag.SetLabelText(u"radius (mm)")
             self.lbl_y_angle.SetLabelText(u"angle (deg)")
+            self.val_x_mag.SetValue(str(self.minimum_radius))
+            self.val_y_angle.SetValue(str(self.minimum_angle))
         pass
 
 
@@ -171,10 +180,17 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             # this is a pivot module
             pivot_module_reference = selected_names[0]
 
+            # prepare the replicator
+            replicator = replicatelayout.Replicator(pcbnew.GetBoard(), pivot_module_reference)
+            # get minimum radius and width
+            min_radius = replicator.minimum_radius
+            min_width = replicator.minimum_width
+            min_angle = replicator.minimum_angle
+
             # show dialog
             x_offset = None
             y_offset = None
-            dlg = ReplicateLayoutDialog(_pcbnew_frame)
+            dlg = ReplicateLayoutDialog(_pcbnew_frame, min_radius, min_width, min_angle)
             res = dlg.ShowModal()
 
             replicate_containing_only = False
@@ -207,12 +223,9 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                     if dlg.coordinate_system.GetSelection() != 0:
                         polar = True
 
-                    # prepare to replicate
-                    replicator = replicatelayout.Replicator(pcbnew.GetBoard(),
-                                                            pivot_module_reference,
-                                                            replicate_containing_only)
                     # replicate now
                     replicator.replicate_layout(x_offset, y_offset,
+                                                replicate_containing_only,
                                                 remove_existing_nets_zones,
                                                 rep_tracks,
                                                 rep_zones,
