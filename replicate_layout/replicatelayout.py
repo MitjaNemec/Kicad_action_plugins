@@ -362,9 +362,9 @@ class Replicator:
                         # get module text
                         mod_text_items = get_module_text_items(mod)
                         # replicate each text item
-                        for text_item in pivot_mod_text_items:
-                            index = pivot_mod_text_items.index(text_item)
-                            pivot_text_position = text_item.GetPosition()
+                        for pivot_text in pivot_mod_text_items:
+                            index = pivot_mod_text_items.index(pivot_text)
+                            pivot_text_position = pivot_text.GetPosition()
                             if polar:
                                 pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
                                 newposition = rotate_around_pivot_point(pivot_text_position, pivot_point, sheet_index * y_offset)
@@ -375,6 +375,12 @@ class Replicator:
                             # convert to tuple of integers
                             newposition = [int(x) for x in newposition]
                             mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
+
+                            # set orientation
+                            mod_text_items[index].SetTextAngle(pivot_text.GetTextAngle())
+
+                            # set visibility
+                            mod_text_items[index].SetVisible(pivot_text.IsVisible())
 
     def replicate_tracks(self, x_offset, y_offset, polar):
         """ method which replicates tracks"""
