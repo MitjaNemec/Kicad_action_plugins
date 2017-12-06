@@ -144,13 +144,13 @@ class Replicator:
         pass
 
         # get bounding bounding box of all modules
-        bounding_box = self.pivot_mod.GetBoundingBox()
+        bounding_box = self.pivot_mod.GetFootprintRect()
         top = bounding_box.GetTop()
         bottom = bounding_box.GetBottom()
         left = bounding_box.GetLeft()
         right = bounding_box.GetRight()
         for mod in self.pivot_modules:
-            mod_box = mod.GetBoundingBox()
+            mod_box = mod.GetFootprintRect()
             top = min(top, mod_box.GetTop())
             bottom = max(bottom, mod_box.GetBottom())
             left = min(left, mod_box.GetLeft())
