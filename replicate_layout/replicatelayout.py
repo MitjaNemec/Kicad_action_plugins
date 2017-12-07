@@ -226,7 +226,7 @@ class Replicator:
                 if self.pivot_bounding_box.Intersects(zone_bb):
                     self.pivot_zones.append(zone)
 
-    def get_nets(self, sheet_id):
+    def get_nets_by_name(self, sheet_id):
         # find all modules, pads and nets on this sheet
         sheet_modules = []
         for mod in self.modules:
@@ -240,7 +240,7 @@ class Replicator:
             pads = mod.PadsList()
             # get net
             for pad in pads:
-                nets.append(pad.GetNet())
+                nets.append(pad.GetNetname())
 
         # remove duplicates
         nets_clean = []
@@ -299,7 +299,6 @@ class Replicator:
         return net_pairs_clean, net_dict
 
     def remove_zones_tracks(self):
-        # TODO - remove only tracks and zones bound to the current sheet
         for sheet in self.sheets_to_clone:
             # get modules on a sheet
             mod_sheet = []
@@ -315,10 +314,10 @@ class Replicator:
             # from all the tracks on board
             all_tracks = self.board.GetTracks()
             # remove the tracks that are not on nets contained in this sheet
-            nets_on_sheet = self.get_nets(sheet)
+            nets_on_sheet = self.get_nets_by_name(sheet)
             tracks_on_nets_on_sheet = []
             for track in all_tracks:
-                if track.GetNet() in nets_on_sheet:
+                if track.GetNetname() in nets_on_sheet:
                     tracks_on_nets_on_sheet.append(track)
 
             for track in tracks_on_nets_on_sheet:
@@ -345,7 +344,7 @@ class Replicator:
             # remove the zones that are not on nets contained in this sheet
             zones_on_nets_on_sheet = []
             for zone in all_zones:
-                if zone.GetNet() in nets_on_sheet:
+                if zone.GetNetname() in nets_on_sheet:
                     zones_on_nets_on_sheet.append(zone)
             for zone in all_zones:
                 # minus the zones in pivot bounding box
