@@ -92,6 +92,15 @@ def get_bounding_box_of_modules(module_list):
     return bounding_box
 
 
+def get_index_of_tuple(list, index, value):
+    for pos, t in enumerate(list):
+        if t[index] == value:
+            return pos
+
+    # Matches behavior of list.index
+    raise ValueError("list.index(x): x not in list")
+
+
 # this function was made by Miles Mccoo
 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
 def get_coordinate_points_of_shape_poly_set(ps):
@@ -183,12 +192,16 @@ class Replicator:
         # get minimal width - GUI assumes horizontal replication
         self.minimum_width = (right - left) / SCALE
 
+        self.pivot_tracks = []
+        self.pivot_zones = []
+        self.only_within_bbox = False
+
     def prepare_for_replication(self, only_within_boundingbox):
         self.only_within_bbox = only_within_boundingbox
         # find all tracks within the pivot bounding box
         all_tracks = self.board.GetTracks()
         # keep only tracks that are within our bounding box
-        self.pivot_tracks = []
+
         for track in all_tracks:
             track_bb = track.GetBoundingBox()
             if only_within_boundingbox:
@@ -203,7 +216,7 @@ class Replicator:
         for zoneid in range(self.board.GetAreaCount()):
             all_zones.append(self.board.GetArea(zoneid))
         # find all zones which are completely within the pivot bounding box
-        self.pivot_zones = []
+
         for zone in all_zones:
             zone_bb = zone.GetBoundingBox()
             if only_within_boundingbox:
@@ -213,23 +226,37 @@ class Replicator:
                 if self.pivot_bounding_box.Intersects(zone_bb):
                     self.pivot_zones.append(zone)
 
-    def get_net_pairs(self, sheet_id):
-        """ find all net pairs between pivot sheet and current sheet"""
+    def get_nets(self, sheet_id):
         # find all modules, pads and nets on this sheet
-        sheet_pads = []
         sheet_modules = []
-        sheet_nets = set([])
         for mod in self.modules:
             mod_sheet_id = get_sheet_id(mod)
             if mod_sheet_id == sheet_id:
                 sheet_modules.append(mod)
-                for pad in mod.PadsList():
-                    sheet_pads.append(pad)
-                    net = pad.GetNetname()
-                    sheet_nets.add(net)
-        sheet_nets_list = []
-        for net in sheet_nets:
-            sheet_nets_list.append((net, net.split('/')))
+        # go through all modules and their pads and get the nets they are connected to
+        nets = []
+        for mod in sheet_modules:
+            # get their pads
+            pads = mod.PadsList()
+            # get net
+            for pad in pads:
+                nets.append(pad.GetNet())
+
+        # remove duplicates
+        nets_clean = []
+        for i in nets:
+            if i not in nets_clean:
+                nets_clean.append(i)
+        return nets_clean
+
+    def get_net_pairs(self, sheet_id):
+        """ find all net pairs between pivot sheet and current sheet"""
+        # find all modules, pads and nets on this sheet
+        sheet_modules = []
+        for mod in self.modules:
+            mod_sheet_id = get_sheet_id(mod)
+            if mod_sheet_id == sheet_id:
+                sheet_modules.append(mod)
         # find all net pairs via same modules pads,
         net_pairs = []
         net_dict = {}
@@ -247,14 +274,21 @@ class Replicator:
                     s_nets = []
                     # get nelists for each pad
                     for p_pad in p_mod_pads:
-                        p_nets.append(p_pad.GetNetname())
+                        pad_name = p_pad.GetPadName()
+                        p_nets.append((pad_name, p_pad.GetNetname()))
                     for s_pad in s_mod_pads:
-                        s_nets.append(s_pad.GetNetname())
+                        pad_name = s_pad.GetPadName()
+                        s_nets.append((pad_name, s_pad.GetNetname()))
                         net_dict[s_pad.GetNetname()] = s_pad.GetNet()
+                    # sort both lists by pad name
+                    # so that they have the same order - needed in some cases
+                    # as the iterator thorugh the pads list does not return pads always in the proper order
+                    p_nets.sort(key=lambda tup: tup[0])
+                    s_nets.sort(key=lambda tup: tup[0])
                     # build list of net tupules
                     for net in p_nets:
-                        index = p_nets.index(net)
-                        net_pairs.append((p_nets[index], s_nets[index]))
+                        index = get_index_of_tuple(p_nets, 1, net[1])
+                        net_pairs.append((p_nets[index][1], s_nets[index][1]))
 
         # remove duplicates
         net_pairs_clean = []
@@ -265,6 +299,7 @@ class Replicator:
         return net_pairs_clean, net_dict
 
     def remove_zones_tracks(self):
+        # TODO - remove only tracks and zones bound to the current sheet
         for sheet in self.sheets_to_clone:
             # get modules on a sheet
             mod_sheet = []
@@ -275,39 +310,57 @@ class Replicator:
                     mod_sheet.append(mod)
             # get bounding box
             bounding_box = get_bounding_box_of_modules(mod_sheet)
-            # get coordinates
-            # get tracks in bounding box
+
+            tracks_to_remove = []
+            # from all the tracks on board
             all_tracks = self.board.GetTracks()
-            # keep only tracks that are within our bounding box
-            bb_tracks = []
+            # remove the tracks that are not on nets contained in this sheet
+            nets_on_sheet = self.get_nets(sheet)
+            tracks_on_nets_on_sheet = []
             for track in all_tracks:
-                track_bb = track.GetBoundingBox()
-                if self.only_within_bbox:
-                    if bounding_box.Contains(track_bb):
-                        bb_tracks.append(track)
-                else:
-                    if bounding_box.Intersects(track_bb):
-                        bb_tracks.append(track)
+                if track.GetNet() in nets_on_sheet:
+                    tracks_on_nets_on_sheet.append(track)
+
+            for track in tracks_on_nets_on_sheet:
+                # minus the tracks in pivot bounding box
+                if track not in self.pivot_tracks:
+                    track_in_bounding_box = track.GetBoundingBox()
+                    # add the tracks containing/interesecting in the replicated bounding box
+                    # on the list for removal
+                    if self.only_within_bbox:
+                        if bounding_box.Contains(track_in_bounding_box):
+                            tracks_to_remove.append(track)
+                    else:
+                        if bounding_box.Intersects(track_in_bounding_box):
+                            tracks_to_remove.append(track)
             # remove tracks
-            for track in bb_tracks:
+            for track in tracks_to_remove:
                 self.board.RemoveNative(track)
 
-            # get zones in bounding box
+            zones_to_remove = []
+            # from all the zones on the board
             all_zones = []
             for zoneid in range(self.board.GetAreaCount()):
                 all_zones.append(self.board.GetArea(zoneid))
-            # keep only tracks that are within our bounding box
-            bb_zones = []
+            # remove the zones that are not on nets contained in this sheet
+            zones_on_nets_on_sheet = []
             for zone in all_zones:
-                zone_bb = zone.GetBoundingBox()
-                if self.only_within_bbox:
-                    if bounding_box.Contains(zone_bb):
-                        bb_zones.append(zone)
-                else:
-                    if bounding_box.Intersects(zone_bb):
-                        bb_zones.append(zone)
+                if zone.GetNet() in nets_on_sheet:
+                    zones_on_nets_on_sheet.append(zone)
+            for zone in all_zones:
+                # minus the zones in pivot bounding box
+                if zone not in self.pivot_zones:
+                    zone_in_bounding_box = zone.GetBoundingBox()
+                    # add the zones containing/interesecting in the replicated bounding box
+                    # on the list for removal
+                    if self.only_within_bbox:
+                        if bounding_box.Contains(zone_in_bounding_box):
+                            zones_to_remove.append(zone)
+                    else:
+                        if bounding_box.Intersects(zone_in_bounding_box):
+                            zones_to_remove.append(zone)
             # remove tracks
-            for zone in bb_zones:
+            for zone in zones_to_remove:
                 self.board.RemoveNative(zone)
             # get and remove zones in bounding box
 
@@ -395,70 +448,74 @@ class Replicator:
                 # get from which net we are clonning
                 from_net_name = track.GetNetname()
                 # find to net
-                to_net_name = [item for item in net_pairs if item[0] == from_net_name][0][1]
-                to_net = net_dict[to_net_name]
-
-                # finally make a copy
-                # this came from Miles Mccoo, I only extended it with polar support
-                # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-                if track.GetClass() == "VIA":
-                    newvia = pcbnew.VIA(self.board)
-                    # need to add before SetNet will work, so just doing it first
-                    self.board.Add(newvia)
-                    toplayer = -1
-                    bottomlayer = pcbnew.PCB_LAYER_ID_COUNT
-                    for l in range(pcbnew.PCB_LAYER_ID_COUNT):
-                        if not track.IsOnLayer(l):
-                            continue
-                        toplayer = max(toplayer, l)
-                        bottomlayer = min(bottomlayer, l)
-                    newvia.SetLayerPair(toplayer, bottomlayer)
-                    if polar:
-                        # get the pivot point
-                        pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-
-                        newposition = rotate_around_pivot_point((track.GetPosition().x, track.GetPosition().y),
-                                                                pivot_point, sheet_index * y_offset)
-                    else:
-                        newposition = (track.GetPosition().x + sheet_index*x_offset*SCALE,
-                                       track.GetPosition().y + sheet_index*y_offset*SCALE)
-
-                    # convert to tuple of integers
-                    newposition = [int(x) for x in newposition]
-
-                    newvia.SetPosition(pcbnew.wxPoint(*newposition))
-
-                    newvia.SetViaType(track.GetViaType())
-                    newvia.SetWidth(track.GetWidth())
-                    newvia.SetNet(to_net)
+                tup = [item for item in net_pairs if item[0] == from_net_name]
+                # if net was not fount, then the track is not part of this sheet and should not be cloned
+                if not tup:
+                    pass
                 else:
-                    newtrack = pcbnew.TRACK(self.board)
-                    # need to add before SetNet will work, so just doing it first
-                    self.board.Add(newtrack)
-                    if polar:
-                        # get the pivot point
-                        pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                        newposition = rotate_around_pivot_point((track.GetStart().x, track.GetStart().y),
-                                                                pivot_point, sheet_index * y_offset)
-                        # convert to tuple of integers
-                        newposition = [int(x) for x in newposition]
-                        newtrack.SetStart(pcbnew.wxPoint(*newposition))
+                    to_net_name = tup[0][1]
+                    to_net = net_dict[to_net_name]
 
-                        newposition = rotate_around_pivot_point((track.GetEnd().x, track.GetEnd().y),
-                                                                pivot_point, sheet_index * y_offset)
+                    # finally make a copy
+                    # this came from Miles Mccoo, I only extended it with polar support
+                    # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
+                    if track.GetClass() == "VIA":
+                        newvia = pcbnew.VIA(self.board)
+                        # need to add before SetNet will work, so just doing it first
+                        self.board.Add(newvia)
+                        toplayer = -1
+                        bottomlayer = pcbnew.PCB_LAYER_ID_COUNT
+                        for l in range(pcbnew.PCB_LAYER_ID_COUNT):
+                            if not track.IsOnLayer(l):
+                                continue
+                            toplayer = max(toplayer, l)
+                            bottomlayer = min(bottomlayer, l)
+                        newvia.SetLayerPair(toplayer, bottomlayer)
+                        if polar:
+                            # get the pivot point
+                            pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+
+                            newposition = rotate_around_pivot_point((track.GetPosition().x, track.GetPosition().y),
+                                                                    pivot_point, sheet_index * y_offset)
+                        else:
+                            newposition = (track.GetPosition().x + sheet_index*x_offset*SCALE,
+                                           track.GetPosition().y + sheet_index*y_offset*SCALE)
+
                         # convert to tuple of integers
                         newposition = [int(x) for x in newposition]
-                        newtrack.SetEnd(pcbnew.wxPoint(*newposition))
+
+                        newvia.SetPosition(pcbnew.wxPoint(*newposition))
+
+                        newvia.SetViaType(track.GetViaType())
+                        newvia.SetWidth(track.GetWidth())
+                        newvia.SetNet(to_net)
                     else:
-                        newtrack.SetStart(pcbnew.wxPoint(track.GetStart().x + sheet_index*x_offset*SCALE,
-                                                         track.GetStart().y + sheet_index*y_offset*SCALE))
-                        newtrack.SetEnd(pcbnew.wxPoint(track.GetEnd().x + sheet_index*x_offset*SCALE,
-                                                       track.GetEnd().y + sheet_index*y_offset*SCALE))
-                    newtrack.SetWidth(track.GetWidth())
-                    newtrack.SetLayer(track.GetLayer())
+                        newtrack = pcbnew.TRACK(self.board)
+                        # need to add before SetNet will work, so just doing it first
+                        self.board.Add(newtrack)
+                        if polar:
+                            # get the pivot point
+                            pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                            newposition = rotate_around_pivot_point((track.GetStart().x, track.GetStart().y),
+                                                                    pivot_point, sheet_index * y_offset)
+                            # convert to tuple of integers
+                            newposition = [int(x) for x in newposition]
+                            newtrack.SetStart(pcbnew.wxPoint(*newposition))
 
-                    newtrack.SetNet(to_net)
-                pass
+                            newposition = rotate_around_pivot_point((track.GetEnd().x, track.GetEnd().y),
+                                                                    pivot_point, sheet_index * y_offset)
+                            # convert to tuple of integers
+                            newposition = [int(x) for x in newposition]
+                            newtrack.SetEnd(pcbnew.wxPoint(*newposition))
+                        else:
+                            newtrack.SetStart(pcbnew.wxPoint(track.GetStart().x + sheet_index*x_offset*SCALE,
+                                                             track.GetStart().y + sheet_index*y_offset*SCALE))
+                            newtrack.SetEnd(pcbnew.wxPoint(track.GetEnd().x + sheet_index*x_offset*SCALE,
+                                                           track.GetEnd().y + sheet_index*y_offset*SCALE))
+                        newtrack.SetWidth(track.GetWidth())
+                        newtrack.SetLayer(track.GetLayer())
+
+                        newtrack.SetNet(to_net)
 
     def replicate_zones(self, x_offset, y_offset, polar):
         """ method which replicates zones"""
