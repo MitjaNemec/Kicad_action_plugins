@@ -589,6 +589,14 @@ def test_replicate(x, y, within, polar):
     import difflib
     import os
 
+    filename = ''
+    if within is True and polar is False:
+        filename = 'test_board_only_within.kicad_pcb'
+    if within is False and polar is False:
+        filename = 'test_board_all.kicad_pcb'
+    if within is False and polar is True:
+        filename = 'test_board_polar.kicad_pcb'
+
     # load test board
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
@@ -600,17 +608,11 @@ def test_replicate(x, y, within, polar):
                                 replicate_zones=True,
                                 polar=polar)
     # save the board
-    saved = pcbnew.SaveBoard('test_board_temp.kicad_pcb', board)
+    saved = pcbnew.SaveBoard('temp_'+filename, board)
 
     # compare files
     errnum = 0
-    with open('test_board_temp.kicad_pcb', 'r') as correct_board:
-        if within is True and polar is False:
-            filename = 'test_board_only_within.kicad_pcb'
-        if within is False and polar is False:
-            filename = 'test_board_all.kicad_pcb'
-        if within is False and polar is True:
-            filename = 'test_board_polar.kicad_pcb'
+    with open('temp_'+filename, 'r') as correct_board:
         with open(filename, 'r') as tested_board:
             diff = difflib.unified_diff(
                 correct_board.readlines(),
@@ -620,7 +622,7 @@ def test_replicate(x, y, within, polar):
                 n=0)
 
     # remove temp file
-    os.remove("test_board_temp.kicad_pcb")
+    #os.remove('temp'+filename)
 
     # only timestamps on zones and file version information should differ
     diffstring = []
