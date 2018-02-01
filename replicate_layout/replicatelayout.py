@@ -400,12 +400,16 @@ class Replicator:
                         if (mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.IsFlipped()):
                             mod.Flip(mod.GetPosition())
 
-                        # check foo orientation wraparound
-                        new_orientation = pivot_mod_orientation - sheet_index * y_offset
-                        if new_orientation > 360.0:
-                            new_orientation = new_orientation - 360
-                        if new_orientation < 0.0:
-                            new_orientation = new_orientation + 360
+                        # set module orientation
+                        if polar:
+                            new_orientation = pivot_mod_orientation - sheet_index * y_offset
+                            # check for orientation wraparound
+                            if new_orientation > 360.0:
+                                new_orientation = new_orientation - 360
+                            if new_orientation < 0.0:
+                                new_orientation = new_orientation + 360
+                        else:
+                            new_orientation = pivot_mod_orientation
                         mod.SetOrientationDegrees(new_orientation)
 
                         # replicate also text layout
