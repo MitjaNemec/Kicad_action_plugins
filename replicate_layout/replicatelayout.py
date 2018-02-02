@@ -1,6 +1,6 @@
 #  replicatelayout.py
 #
-# Copyright (C) 2017 Mitja Nemec
+# Copyright (C) 2018 Mitja Nemec, Stephen Walker-Weinshenker
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -25,20 +25,21 @@ SCALE = 1000000.0
 
 
 def get_module_id(module):
-    """ get module id"""
+    """ get module id """
     module_path = module.GetPath().split('/')
     module_id = "/".join(module_path[-1:])
     return module_id
 
-    
+
 def get_sheet_id(module):
-    """ get sheet id"""
+    """ get sheet id """
     module_path = module.GetPath().split('/')
     sheet_id = "/".join(module_path[0:-1])
     return sheet_id
 
 
 def rotate_around_center(coordinates, angle):
+    """ rotate coordinates for a defined angle in degrees around coordinate center"""
     new_x = coordinates[0] * math.cos(2 * math.pi * angle/360)\
           - coordinates[1] * math.sin(2 * math.pi * angle/360)
     new_y = coordinates[0] * math.sin(2 * math.pi * angle/360)\
@@ -47,6 +48,7 @@ def rotate_around_center(coordinates, angle):
 
 
 def rotate_around_pivot_point(old_position, pivot_point, angle):
+    """ rotate coordinates for a defined angle in degrees around a pivot point """
     # get relative position to pivot point
     rel_x = old_position[0] - pivot_point[0]
     rel_y = old_position[1] - pivot_point[1]
@@ -58,6 +60,7 @@ def rotate_around_pivot_point(old_position, pivot_point, angle):
 
 
 def get_module_text_items(module):
+    """ get all text item belonging to a modules """
     list_of_items = [module.Reference(), module.Value()]
 
     module_items = module.GraphicalItemsList()
@@ -68,6 +71,7 @@ def get_module_text_items(module):
 
 
 def get_bounding_box_of_modules(module_list):
+    """ get bounding box encompasing all modules """
     top = None
     bottom = None
     left = None
@@ -110,7 +114,7 @@ def get_coordinate_points_of_shape_poly_set(ps):
     pts = [[int(n) for n in x.split(" ")] for x in lines[3:-2]]  # -1 because of the extra two \n
     return pts
 
-    
+
 class Replicator:
     def __init__(self, board, pivot_module_reference):
         """ initialize base object needed to replicate module layout, track layout and zone layout"""
@@ -135,12 +139,28 @@ class Replicator:
         # find all modules on the same sheet
         self.pivot_modules = []
         self.pivot_modules_id = []
+        self.pivot_modules_ref = []
         for mod in self.modules:
             module_id = get_module_id(mod)
             sheet_id = get_sheet_id(mod)
             if sheet_id == self.pivot_sheet_id:
                 self.pivot_modules.append(mod)
                 self.pivot_modules_id.append(module_id)
+                self.pivot_modules_ref.append(mod.GetReference())
+
+        # find all local nets
+        other_modules = []
+        other_modules_ref = []
+        for mod in self.modules:
+            if mod.GetReference() not in self.pivot_modules_ref:
+                other_modules.append(mod)
+                other_modules_ref.append(mod.GetReference())
+        other_nets = self.get_nets_from_modules(other_modules)
+        pivot_nets = self.get_nets_from_modules(self.pivot_modules)
+        self.pivot_local_nets = []
+        for net in pivot_nets:
+            if net not in other_nets:
+                self.pivot_local_nets.append(net)
 
         # find all sheets to replicate
         self.sheets_to_clone = []
@@ -202,13 +222,18 @@ class Replicator:
         all_tracks = self.board.GetTracks()
         # keep only tracks that are within our bounding box
 
+        # get all the tracks for replication
         for track in all_tracks:
             track_bb = track.GetBoundingBox()
-            if only_within_boundingbox:
-                if self.pivot_bounding_box.Contains(track_bb):
-                    self.pivot_tracks.append(track)
+            # if track is contained or intersecting the bounding box
+            if (only_within_boundingbox and self.pivot_bounding_box.Contains(track_bb)) or\
+               (not only_within_boundingbox and self.pivot_bounding_box.Intersects(track_bb)):
+                self.pivot_tracks.append(track)
+            # even if track is not within the bounding box
             else:
-                if self.pivot_bounding_box.Intersects(track_bb):
+                # check if it on a local net
+                if track.GetNetname() in self.pivot_local_nets:
+                    # and add it to the
                     self.pivot_tracks.append(track)
 
         # get all zones in pivot bounding box
@@ -219,23 +244,14 @@ class Replicator:
 
         for zone in all_zones:
             zone_bb = zone.GetBoundingBox()
-            if only_within_boundingbox:
-                if self.pivot_bounding_box.Contains(zone_bb):
-                    self.pivot_zones.append(zone)
-            else:
-                if self.pivot_bounding_box.Intersects(zone_bb):
-                    self.pivot_zones.append(zone)
+            if (only_within_boundingbox and self.pivot_bounding_box.Contains(track_bb)) or\
+               (not only_within_boundingbox and self.pivot_bounding_box.Intersects(track_bb)):
+                self.pivot_zones.append(zone)
 
-    def get_nets_by_name(self, sheet_id):
-        # find all modules, pads and nets on this sheet
-        sheet_modules = []
-        for mod in self.modules:
-            mod_sheet_id = get_sheet_id(mod)
-            if mod_sheet_id == sheet_id:
-                sheet_modules.append(mod)
+    def get_nets_from_modules(self, modules):
         # go through all modules and their pads and get the nets they are connected to
         nets = []
-        for mod in sheet_modules:
+        for mod in modules:
             # get their pads
             pads = mod.PadsList()
             # get net
@@ -247,6 +263,17 @@ class Replicator:
         for i in nets:
             if i not in nets_clean:
                 nets_clean.append(i)
+        return nets_clean
+
+    def get_nets_on_sheet(self, sheet_id):
+        # find all modules, pads and nets on this sheet
+        sheet_modules = []
+        for mod in self.modules:
+            mod_sheet_id = get_sheet_id(mod)
+            if mod_sheet_id == sheet_id:
+                sheet_modules.append(mod)
+        # go through all modules and their pads and get the nets they are connected to
+        nets_clean = self.get_nets_from_modules(sheet_modules)
         return nets_clean
 
     def get_net_pairs(self, sheet_id):
@@ -314,7 +341,7 @@ class Replicator:
             # from all the tracks on board
             all_tracks = self.board.GetTracks()
             # remove the tracks that are not on nets contained in this sheet
-            nets_on_sheet = self.get_nets_by_name(sheet)
+            nets_on_sheet = self.get_nets_on_sheet(sheet)
             tracks_on_nets_on_sheet = []
             for track in all_tracks:
                 if track.GetNetname() in nets_on_sheet:
