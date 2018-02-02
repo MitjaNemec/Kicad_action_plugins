@@ -274,10 +274,10 @@ class Replicator:
                     s_nets = []
                     # get nelists for each pad
                     for p_pad in p_mod_pads:
-                        pad_name = p_pad.GetPadName()
+                        pad_name = p_pad.GetName()
                         p_nets.append((pad_name, p_pad.GetNetname()))
                     for s_pad in s_mod_pads:
-                        pad_name = s_pad.GetPadName()
+                        pad_name = s_pad.GetName()
                         s_nets.append((pad_name, s_pad.GetNetname()))
                         net_dict[s_pad.GetNetname()] = s_pad.GetNet()
                     # sort both lists by pad name
