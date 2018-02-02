@@ -40,7 +40,7 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
-        bSizer9 = wx.BoxSizer(wx.VERTICAL)
+        bSizer9 = wx.BoxSizer(wx.HORIZONTAL)
 
         coordinate_systemChoices = [u"Linear", u"Circular"]
         self.coordinate_system = wx.RadioBox(self, wx.ID_ANY, u"Replication", wx.DefaultPosition,
