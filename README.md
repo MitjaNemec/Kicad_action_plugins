@@ -51,3 +51,7 @@ Within the plugin folder only *.py files are required for operation.
 
 This plugin deletes selected items. Items can be: zones and/or tracks and/or modules. The main intention is to delete selected tracks to redo part of the layout.
 
+![Delete selected tracks and zones](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Delete_selected_anim.gif)
+
+
+
