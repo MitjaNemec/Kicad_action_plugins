@@ -75,11 +75,10 @@ This plugin has been developed as a complex plugin according the [Python Plugin 
 
 Within the plugin folder only *.py files are required for operation.
 
-This plugin calculates shortest distance between two pads. The result is not always correct as the algorithm folows the track layout. Also the Via distance is not accounted for.
+This plugin calculates shortest distance between two pads. The result is not always correct as the algorithm folows the track layout. Also the Via distance is not accounted for. Following picture shows the example where the distacne is not correct as the tracks go to pin #4 and then back over the same tracks as there is no connection between thick and thin track at the encircled area
+![Track layout which confuses the algorithm](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Distance_example.gif)
 
 For complex tracks (GND, Supply rails) the calculation can take quite some time.
-
-![Track layout which confuses the algorithm](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Distance_example.gif)
 
 To run the plugin:
 1. select two pads to measure the distance between
