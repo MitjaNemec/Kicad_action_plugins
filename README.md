@@ -19,7 +19,15 @@ Basic requirement for replication is that the section for replication is complet
 ![Top sheet schematics](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_0.png)
 ![Hierarchical sheet to replicate](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_1.png)
 
-Once the section for replication (pivot section) has been laid out (modules, tracks and zones placed) you need to select anyone of the modules within this section and run the plugin.
+Once the section for replication (pivot section) has been laid out (modules, tracks and zones placed) you need to:
+1. select anyone of the modules within the pivot section
+2. run the plugin
+3. choose between linear and circular replication
+4. Enter replication step size (x,y in linear replication and radius, angle (in degrees) for circular replication
+5. select wheather you want to replicate also tracks and/or zones
+6. select wheather you want to replicate tracks/zones which are intersectin the pivot bounding box
+7. select wheather you want to delete already layed out tracks/zones (this is useful when updating already replicated layout)
+8. hit OK
 
 The replication can be linear or circular. For linear replication the plugin will ask for x and y offset (in mm) with respect to pivot section where replicated sections will be placed. For circular replication the plugin will ask for radius (in mm) and angle (in °) with respect to pivot section where replicated sections will be placed.
 
@@ -51,7 +59,32 @@ Within the plugin folder only *.py files are required for operation.
 
 This plugin deletes selected items. Items can be: zones and/or tracks and/or modules. The main intention is to delete selected tracks to redo part of the layout.
 
+To run the plugin:
+1. select items you want to delete (note that in kicad it is different if you start your selection box from left or right)
+2. run the plugin
+3. select what you want to delete
+4. hit OK
+
 ![Delete selected tracks and zones](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Delete_selected_anim.gif)
 
+## pad2pad track distance
 
+This plugin has been tested on Windows 7 Kicad nightly 2018-03-03 revision aeae32b1a.
 
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
+
+Within the plugin folder only *.py files are required for operation.
+
+This plugin calculates shortest distance between two pads. The result is not always correct as the algorithm folows the track layout. Also the Via distance is not accounted for.
+
+For complex tracks (GND, Supply rails) the calculation can take quite some time.
+
+![Track layout which confuses the algorithm](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Distance_example.gif)
+
+To run the plugin:
+1. select two pads to measure the distance between
+2. run the plugin
+3. select what you want to delete
+4. hit OK
+
+![Measure pad to pad distance](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/pad2pad_animation.gif)

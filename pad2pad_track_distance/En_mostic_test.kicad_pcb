@@ -1,4 +1,4 @@
-(kicad_pcb (version 20171130) (host pcbnew "(5.0.0-rc2-dev-62-gaeae32b1a)")
+(kicad_pcb (version 20171130) (host pcbnew "(5.0.0-rc2-dev-206-ge4d512a29)")
 
   (general
     (thickness 1.6)
@@ -42,7 +42,7 @@
   )
 
   (setup
-    (last_trace_width 0.5)
+    (last_trace_width 0.25)
     (user_trace_width 0.2)
     (user_trace_width 0.25)
     (user_trace_width 0.4)

@@ -143,7 +143,7 @@ class DeleteSelected(pcbnew.ActionPlugin):
                     for mod in selected_modules:
                         board.RemoveNative(mod)
 
-        # if more or less than one show only a messagebox
+        # if nothing is selected a messagebox
         else:
             caption = 'Delete selected'
             message = "Nothing is selected !"

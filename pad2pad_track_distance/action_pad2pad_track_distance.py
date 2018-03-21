@@ -36,9 +36,9 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
     """
 
     def defaults(self):
-        self.name = "Delete selected"
-        self.category = "Modify Drawing PCB"
-        self.description = "Delete selected elements"
+        self.name = "Pad2Pad distance"
+        self.category = "Measure distance"
+        self.description = "Measure distance between two selected pads"
 
     def Run(self):
         _pcbnew_frame = \
@@ -81,16 +81,43 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
                 # deselect pads
                 selected_pads[0].ClearSelected()
                 selected_pads[1].ClearSelected()
-                # select tracks
-                for track in measure_distance.track_list[1:-1]:
-                    track.SetSelected()
+
+                # deselect all tracks except used ones
+                all_tracks = board.GetTracks()
+                
+                for track in all_tracks:
+                    if track not in measure_distance.track_list:
+                        track.ClearSelected()
+                    else:
+                        track.SetSelected()
+                        track.SetBrightened()
+                        track.SetHighlighted()
+                
+                pad1_pos = selected_pads[0].GetPosition()
+                pad2_pos = selected_pads[1].GetPosition()
+                if pad1_pos[0] > pad2_pos[0]:
+                    x = pad2_pos[0]
+                    width = pad1_pos[0] - pad2_pos[0]
+                else:
+                    x = pad1_pos[0]
+                    width = pad2_pos[0] - pad1_pos[0]
+
+                if pad1_pos[1] > pad2_pos[1]:
+                    y = pad2_pos[1]
+                    height = pad1_pos[1] - pad2_pos[1]
+                else:
+                    y = pad1_pos[1]
+                    height = pad2_pos[1] - pad1_pos[1]
+                    
+                pcbnew.WindowZoom(x, y, width, height)
+
+                # pcbnew.Refresh()
 
                 caption = 'Pad2Pad Track Distance'
                 message = "Distance between pads is " + str(distance) + " mm"
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
-                dlg.Destroy()  
-                
+                dlg.Destroy()
             else:
                 caption = 'Pad2Pad Track Distance'
                 message = "The selected pads are not on the same net"
