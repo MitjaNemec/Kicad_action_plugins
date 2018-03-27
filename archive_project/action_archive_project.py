@@ -48,14 +48,55 @@ class ArchiveProject(pcbnew.ActionPlugin):
                    )[0]
 
         # only testing if keypress simulation works
+
         key_simulator = wx.UIActionSimulator()
+
+        # show the dialog informing the user that eeschema should be closed
+        caption = 'Archive project'
+        message = "Is eeschema closed?"
+        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+        res = dlg.ShowModal()
+        dlg.Destroy()
+
+        if res == wx.ID_NO:
+            caption = 'Archive project'
+            message = "You need to close eeschema and then run the plugin again!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        caption = 'Archive project'
+        message = "Current layout will be saved and when the plugin finishes, pcbnew will be closed." \
+                  "This is normal behaviour.\n" \
+                  "\nProceed?"
+        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+        res = dlg.ShowModal()
+        dlg.Destroy()
+
+        if res == wx.ID_NO:
+            return
+
+        # simulate Ctrl+S (save layout)
         key_simulator.KeyDown(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
         key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
 
+        # archive the project
+
+        # exit pcbnew to avoid issues with concurent editing of .kicad_pcb file
+        # simulate Alt+F (File) and e twice (Exit) and Enter
+        key_simulator.KeyDown(ord('f'), wx.MOD_ALT)
+        key_simulator.KeyUp(ord('f'), wx.MOD_ALT)
+
+        key_simulator.KeyDown(ord('e'))
+        key_simulator.KeyUp(ord('e'))
+
+        key_simulator.KeyDown(ord('e'))
+        key_simulator.KeyUp(ord('e'))
         
-        
-        
-        
+        key_simulator.KeyDown(wx.WXK_RETURN)
+        key_simulator.KeyUp(wx.WXK_RETURN)
+
         
         
         
