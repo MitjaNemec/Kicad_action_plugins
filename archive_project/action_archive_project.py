@@ -47,10 +47,10 @@ class ArchiveProject(pcbnew.ActionPlugin):
                    wx.GetTopLevelWindows()
                    )[0]
 
-        # notify the user to close the schematics
-        # if possible chech if schematics is open. If it is, close it if possible
-                # pcbnew.Refresh()
-        
+        # only testing if keypress simulation works
+        key_simulator = wx.UIActionSimulator()
+        key_simulator.KeyDown(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
+        key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
 
         
         
