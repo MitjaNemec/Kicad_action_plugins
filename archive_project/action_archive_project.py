@@ -69,6 +69,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
         caption = 'Archive project'
         message = "Current layout will be saved and when the plugin finishes, pcbnew will be closed." \
                   "This is normal behaviour.\n" \
+                  "You should back up the project before proceeding any further\n" \
                   "\nProceed?"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
         res = dlg.ShowModal()

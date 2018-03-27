@@ -117,8 +117,10 @@ def archive_3D_models(board):
     models = list(set(models))
 
     model_library_path = os.getenv("KISYS3DMOD")
-    # D:\Mitja\Plate\Kicad_libs\official_libs\Packages3D
-    model_library_path = "D://Mitja//Plate//Kicad_libs//official_libs//Packages3D"
+    # if running standalone, enviroment variables might not be set
+    if model_library_path is None:
+        # hardcode the path for my machine - testing works only on my machine
+        model_library_path = "D://Mitja//Plate//Kicad_libs//official_libs//Packages3D"
 
     # prepare folder for 3dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
@@ -156,17 +158,12 @@ def archive_3D_models(board):
 
 
 def main():
-    board = pcbnew.LoadBoard('En_mostic_test.kicad_pcb')
+    board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
 
     archive_3D_models(board)
 
     archive_symbols(board, True)
 
-    # kot only kicad related
-    # os.getenv("KISYSMOD")
-    # os.getenv("KISYS3DMOD")
-    # os.getenv("KICAD_SYMBOL_DIR")
-    # os.getenv("KIPRJMOD")
 
 
 # for testing purposes only
