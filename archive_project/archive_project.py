@@ -60,11 +60,9 @@ def archive_symbols(board, alt_files=False):
 
     # if there is already nickname cache but no actual cache-lib
     if "cache" in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
-            # warn the user and quite
-            pass
-            # TODO return proper error message
-            return
-    
+        # throw an exception
+        raise ValueError("Nickname \"cache\" already taken by library that is not a project cache library!")
+
     # if cache library is not on the list, put it there
     if cache_lib_name not in unicode(project_sym_lib_file):
         line_contents = "    (lib (name cache)(type Legacy)(uri ${KIPRJMOD}/" + cache_lib_name + ")(options \"\")(descr \"\"))\n"
@@ -175,18 +173,25 @@ def archive_3D_models(board, alt_files=False):
 
     # copy the models
     for model in cleaned_models:
+        copied_at_least_one = False
         try:
             shutil.copy2(model + ".wrl", model_folder_path)
+            copied_at_least_one = True
         except:
             pass
         try:
             shutil.copy2(model + ".step", model_folder_path)
+            copied_at_least_one = True
         except:
             pass
         try:
             shutil.copy2(model + ".stp", model_folder_path)
+            copied_at_least_one = True
         except:
             pass
+        if not copied_at_least_one:
+            raise IOError("Did not suceed to copy 3D models\n"
+                          "Did not find " + model)
 
     # generate output file with project relative path
     out_file = []

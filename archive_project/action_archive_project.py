@@ -83,6 +83,28 @@ class ArchiveProject(pcbnew.ActionPlugin):
         key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
 
         # archive the project
+        board = pcbnew.GetBoard()
+        try:
+            archive_project.archive_symbols(board)
+        except ValueError as error:
+            caption = 'Archive project'
+            message = error
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
+            res = dlg.ShowModal()
+            dlg.Destroy()
+            # exit the plugin before archiving 3D models
+            return
+
+        try:
+            archive_project.archive_3D_models(board)
+        except IOError as error:
+            caption = 'Archive project'
+            message = error
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
+            res = dlg.ShowModal()
+            dlg.Destroy()
+            # exit
+            return
 
         # exit pcbnew to avoid issues with concurent editing of .kicad_pcb file
         # simulate Alt+F (File) and e twice (Exit) and Enter
