@@ -17,7 +17,7 @@ def archive_symbols(board, alt_files=False):
     # get project name
     project_name = os.path.basename(board.GetFileName()).split(".")[0]
     cache_lib_name = project_name + "-cache.lib"
-    
+
     # load system symbol library table
     if is_pcbnew_running():
         sys_path = pcbnew.GetKicadConfigPath()
@@ -28,7 +28,7 @@ def archive_symbols(board, alt_files=False):
     global_sym_lib_file_path = sys_path + "//sym-lib-table"
     with open(global_sym_lib_file_path) as f:
         global_sym_lib_file = f.readlines()
-    
+
     # get add library nicknames
     nicknames = []
     for line in global_sym_lib_file:
@@ -37,7 +37,7 @@ def archive_symbols(board, alt_files=False):
             nick_stop = line.find(")", nick_start)
             nick = line[nick_start:nick_stop]
             nicknames.append(nick)
-    
+
     # load project library table
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
     proj_sym_lib_file_path = proj_path + "//sym-lib-table"
@@ -69,11 +69,15 @@ def archive_symbols(board, alt_files=False):
         project_sym_lib_file.insert(1, line_contents)
         with open(proj_sym_lib_file_path, "w") as f:
             f.writelines(project_sym_lib_file)
-    
+
     # load cache library
     proj_cache_ling_path = proj_path + "//" + cache_lib_name
-    with open(proj_cache_ling_path) as f:
-        project_cache_file = f.readlines()
+    try:
+        with open(proj_cache_ling_path) as f:
+            project_cache_file = f.readlines()
+    # if file does not exists, raise exception
+    except:
+        raise IOError("Project cache library does not exists")
 
     # get list of symbols in cache library
     cache_symbols = []
@@ -90,7 +94,9 @@ def archive_symbols(board, alt_files=False):
                 all_sch_files.append(os.path.join(root, filename))
 
     # go through each .sch file
+    out_files = {}
     for filename in all_sch_files:
+        out_files[filename] = []
         with open(filename) as f:
             sch_file = f.readlines()
 
@@ -104,17 +110,26 @@ def archive_symbols(board, alt_files=False):
                 # make sure that the symbol is in cache and append cache nickname
                 if new_name in cache_symbols:
                     line_contents[1] = "cache:" + new_name
+                # if the symbol is not in cache raise exception
+                else:
+                    raise LookupError("Symbol \"" + new_name + "\" is not present in cache libray. Cache library is incomplete")
                 # join line back again
                 new_line = ' '.join(line_contents)
                 sch_file_out.append(new_line+"\n")
             else:
                 sch_file_out.append(line)
+        # prepare for writing
+        out_files[filename] = sch_file_out
 
+    # if no exceptions has been raised write files
+    for key in out_files:
+        filename = key
         # write
         if alt_files:
-            filename = filename + "_alt"
+            filename = key + "_alt"
+
         with open(filename, "w") as f:
-            f.writelines(sch_file_out)
+            f.writelines(out_files[key])
             pass
     pass
 
