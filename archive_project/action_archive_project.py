@@ -124,7 +124,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
 
                 # archive schematics
                 try:
-                    archive_project.archive_symbols(board)
+                    archive_project.archive_symbols(board, alt_files=False)
                 except ValueError or IOError or LookupError as error:
                     caption = 'Archive project'
                     message = error
@@ -150,15 +150,18 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
 
                 try:
-                    archive_project.archive_3D_models(board)
+                    archive_project.archive_3D_models(board, allow_missing_models=False, alt_files=False)
                 except IOError as error:
                     caption = 'Archive project'
-                    message = error
-                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
-                    dlg.ShowModal()
+                    message = error + "\nContinue?"
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption,  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+                    res = dlg.ShowModal()
                     dlg.Destroy()
-                    # exit
-                    return
+
+                    if res == wx.ID_YES:
+                        archive_project.archive_3D_models(board, allow_missing_models=True, alt_files=False)
+                    else:
+                        return
 
                 # exit pcbnew to avoid issues with concurent editing of .kicad_pcb file
                 # simulate Alt+F (File) and e twice (Exit) and Enter

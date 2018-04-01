@@ -4,13 +4,13 @@ import os.path
 import shutil
 import wx
 
+
 def is_pcbnew_running():
     windows = wx.GetTopLevelWindows()
     if len(windows) == 0:
         return False
     else:
         return True
-
 
 
 def archive_symbols(board, alt_files=False):
@@ -59,6 +59,9 @@ def archive_symbols(board, alt_files=False):
             nicknames.append(nick)
 
     # if there is already nickname cache but no actual cache-lib
+    # TODO tighter check required. Current one will not catch the obscure case when
+    # TODO cache nickname is taken and project-cache.lib is listed in project_sym_lib file
+    # TODO but under different nickname
     if "cache" in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
         # throw an exception
         raise ValueError("Nickname \"cache\" already taken by library that is not a project cache library!")
@@ -134,7 +137,7 @@ def archive_symbols(board, alt_files=False):
     pass
 
 
-def archive_3D_models(board, alt_files=False):
+def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     # load layout
     filename = board.GetFileName()
     with open(filename) as f:
@@ -187,6 +190,7 @@ def archive_3D_models(board, alt_files=False):
             cleaned_models.append(model)
 
     # copy the models
+    not_copied = []
     for model in cleaned_models:
         copied_at_least_one = False
         try:
@@ -205,8 +209,12 @@ def archive_3D_models(board, alt_files=False):
         except:
             pass
         if not copied_at_least_one:
+            not_copied.append(model)
+
+    if not not_copied:
+        if not allow_missing_models:
             raise IOError("Did not suceed to copy 3D models\n"
-                          "Did not find " + model)
+                          "Did not find:\n" + "\n".join(not_copied))
 
     # generate output file with project relative path
     out_file = []
@@ -235,9 +243,9 @@ def archive_3D_models(board, alt_files=False):
 def main():
     board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
 
-    archive_symbols(board, True)
+    archive_symbols(board, alt_files=True)
 
-    archive_3D_models(board, True)
+    archive_3D_models(board, allow_missing_models=False, alt_files=True)
 
 
 # for testing purposes only
