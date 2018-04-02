@@ -211,7 +211,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
         if not copied_at_least_one:
             not_copied.append(model)
 
-    if not not_copied:
+    if not_copied:
         if not allow_missing_models:
             raise IOError("Did not suceed to copy 3D models\n"
                           "Did not find:\n" + "\n".join(not_copied))

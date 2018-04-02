@@ -153,12 +153,16 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     archive_project.archive_3D_models(board, allow_missing_models=False, alt_files=False)
                 except IOError as error:
                     caption = 'Archive project'
-                    message = error + "\nContinue?"
+                    message = str(error) + "\nContinue?"
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption,  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
                     res = dlg.ShowModal()
                     dlg.Destroy()
 
                     if res == wx.ID_YES:
+                        # simulate Ctrl+S (save layout)
+                        key_simulator.KeyDown(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
+                        key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
+
                         archive_project.archive_3D_models(board, allow_missing_models=True, alt_files=False)
                     else:
                         return
