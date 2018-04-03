@@ -13,9 +13,10 @@ def is_pcbnew_running():
         return True
 
 
-def archive_symbols(board, alt_files=False):
+def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     # get project name
-    project_name = os.path.basename(board.GetFileName()).split(".")[0]
+    pcb_filename = str(os.path.basename(board.GetFileName()))
+    project_name = pcb_filename.replace(".kicad_pcb", "")
     cache_lib_name = project_name + "-cache.lib"
 
     # load system symbol library table
@@ -51,6 +52,7 @@ def archive_symbols(board, alt_files=False):
             f.writelines(new_sym_lib_file)
             project_sym_lib_file = new_sym_lib_file
     # append nicknames
+    cache_nick = "cache"
     for line in project_sym_lib_file:
         nick_start = line.find("(name ")+6
         if nick_start >= 6:
@@ -58,11 +60,17 @@ def archive_symbols(board, alt_files=False):
             nick = line[nick_start:nick_stop]
             nicknames.append(nick)
 
+            # check if library is project cache library
+            name_start = line.find("(uri ") + 5
+            name_end = line.find(")(options ")
+            if cache_lib_name in line[name_start:name_end]:
+                cache_nick = nick
+
     # if there is already nickname cache but no actual cache-lib
     # TODO tighter check required. Current one will not catch the obscure case when
     # TODO cache nickname is taken and project-cache.lib is listed in project_sym_lib file
     # TODO but under different nickname
-    if "cache" in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
+    if cache_nick in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
         # throw an exception
         raise ValueError("Nickname \"cache\" already taken by library that is not a project cache library!")
 
@@ -74,7 +82,7 @@ def archive_symbols(board, alt_files=False):
             f.writelines(project_sym_lib_file)
 
     # load cache library
-    proj_cache_ling_path = proj_path + "//" + cache_lib_name
+    proj_cache_ling_path = os.path.join(proj_path, cache_lib_name)
     try:
         with open(proj_cache_ling_path) as f:
             project_cache_file = f.readlines()
@@ -87,7 +95,9 @@ def archive_symbols(board, alt_files=False):
     for line in project_cache_file:
         line_contents = line.split()
         if line_contents[0] == "DEF":
-            cache_symbols.append(line_contents[1])
+            # remove any "~"
+            cache_symbol = line_contents[1].replace("~", "")
+            cache_symbols.append(cache_symbol)
 
     # find all .sch files
     all_sch_files = []
@@ -98,6 +108,7 @@ def archive_symbols(board, alt_files=False):
 
     # go through each .sch file
     out_files = {}
+    symbols_form_missing_libraries = set()
     for filename in all_sch_files:
         out_files[filename] = []
         with open(filename) as f:
@@ -107,22 +118,35 @@ def archive_symbols(board, alt_files=False):
         # find line starting with L and next word until colon mathes library nickname
         for line in sch_file:
             line_contents = line.split()
-            if line_contents[0] == "L" and line_contents[1].split(":")[0] in nicknames:
+            # find symbol name
+            if line_contents[0] == "L":
+                libraryname = line_contents[1].split(":")[0]
+                symbolname = line_contents[1].split(":")[1]
                 # replace colon with underscore
                 new_name = line_contents[1].replace(":", "_")
                 # make sure that the symbol is in cache and append cache nickname
                 if new_name in cache_symbols:
-                    line_contents[1] = "cache:" + new_name
+                    line_contents[1] = cache_nick + ":" + new_name
                 # if the symbol is not in cache raise exception
                 else:
-                    raise LookupError("Symbol \"" + new_name + "\" is not present in cache libray. Cache library is incomplete")
+                    raise LookupError(
+                        "Symbol \"" + new_name + "\" is not present in cache libray. Cache library is incomplete")
                 # join line back again
                 new_line = ' '.join(line_contents)
-                sch_file_out.append(new_line+"\n")
+                sch_file_out.append(new_line + "\n")
+
+                # symbol is not from the library present on the system markit for the potential errormessage
+                if libraryname not in nicknames:
+                    symbols_form_missing_libraries.add(symbolname)
             else:
                 sch_file_out.append(line)
         # prepare for writing
         out_files[filename] = sch_file_out
+
+    if symbols_form_missing_libraries:
+        if not allow_missing_libraries:
+            raise NameError("Schematics includes symbols from the libraries not present on the system\n"
+                            "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
 
     # if no exceptions has been raised write files
     for key in out_files:
@@ -241,11 +265,25 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
+    #board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
 
-    archive_symbols(board, alt_files=True)
+    board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
 
-    archive_3D_models(board, allow_missing_models=False, alt_files=True)
+    try:
+        archive_symbols(board, allow_missing_libraries=True, alt_files=False)
+    except (ValueError, IOError, LookupError), error:
+        message = str(error)
+        print message
+    except NameError as error:
+        print error
+
+    try:
+        archive_3D_models(board, allow_missing_models=False, alt_files=True)
+    except IOError as error:
+        message = error
+        print message
+
+
 
 
 # for testing purposes only

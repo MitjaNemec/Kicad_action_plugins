@@ -126,13 +126,23 @@ class ArchiveProject(pcbnew.ActionPlugin):
 
                 # archive schematics
                 try:
-                    archive_project.archive_symbols(board, alt_files=False)
-                except (ValueError, IOError, LookupError),  error:
+                    archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
+                except (ValueError, IOError, LookupError), error:
                     caption = 'Archive project'
-                    message = error
+                    message = str(error)
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
                     dlg.ShowModal()
                     dlg.Destroy()
+                except NameError as error:
+                    caption = 'Archive project'
+                    message = str(error)+ "\nContinue?"
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+                    res = dlg.ShowModal()
+                    dlg.Destroy()
+                    if res == wx.ID_YES:
+                        archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
+                    else:
+                        return
 
             if main_dialog.chkbox_3D.GetValue():
                 caption = 'Archive project'
