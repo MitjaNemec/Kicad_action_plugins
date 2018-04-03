@@ -284,8 +284,6 @@ def main():
         print message
 
 
-
-
 # for testing purposes only
 if __name__ == "__main__":
     main()
