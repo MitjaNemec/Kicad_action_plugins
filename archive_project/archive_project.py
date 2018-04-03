@@ -80,7 +80,7 @@ def archive_symbols(board, alt_files=False):
             project_cache_file = f.readlines()
     # if file does not exists, raise exception
     except:
-        raise IOError("Project cache library does not exists")
+        raise IOError("Project cache library does not exists!")
 
     # get list of symbols in cache library
     cache_symbols = []

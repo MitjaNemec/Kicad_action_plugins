@@ -32,7 +32,7 @@ class ArchiveProjectDialog (wx.Dialog):
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Archive project", pos=wx.DefaultPosition,
-                           size=wx.Size(224, 159), style=wx.DEFAULT_DIALOG_STYLE)
+                           style=wx.DEFAULT_DIALOG_STYLE)
 
         bSizer4 = wx.BoxSizer(wx.VERTICAL)
 
@@ -62,6 +62,8 @@ class ArchiveProjectDialog (wx.Dialog):
         self.Layout()
 
         self.Centre(wx.BOTH)
+
+        self.Fit()
 
 
 class ArchiveProject(pcbnew.ActionPlugin):
@@ -125,7 +127,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 # archive schematics
                 try:
                     archive_project.archive_symbols(board, alt_files=False)
-                except ValueError or IOError or LookupError as error:
+                except (ValueError, IOError, LookupError),  error:
                     caption = 'Archive project'
                     message = error
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
