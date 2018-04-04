@@ -330,10 +330,10 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    #board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
+    board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
 
-    board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
-    """
+    #board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
+    
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=False)
     except (ValueError, IOError, LookupError), error:
@@ -341,7 +341,7 @@ def main():
         print message
     except NameError as error:
         print error
-    """
+    
     try:
         archive_3D_models(board, allow_missing_models=True, alt_files=True)
     except IOError as error:
