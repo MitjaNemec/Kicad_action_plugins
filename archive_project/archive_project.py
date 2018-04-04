@@ -5,6 +5,54 @@ import shutil
 import wx
 
 
+def balanced_braces(args):
+    if isinstance(args, str):
+        args = [args]
+    parts = []
+    for arg in args:
+        if '(' not in arg:
+            continue
+        chars = []
+        n = 0
+        for c in arg:
+            if c == '(':
+                if n > 0:
+                    chars.append(c)
+                n += 1
+            elif c == ')':
+                n -= 1
+                if n > 0:
+                    chars.append(c)
+                elif n == 0:
+                    parts.append(''.join(chars).lstrip().rstrip())
+                    chars = []
+            elif n > 0:
+                chars.append(c)
+    return parts
+
+
+def remove_braced_content(args):
+    if isinstance(args, str):
+        args = [args]
+    parts = []
+    for arg in args:
+        if '(' not in arg:
+            continue
+        chars = []
+        n = 0
+        for c in arg:
+            if c == '(':
+                n += 1
+            elif c == ')':
+                n -= 1
+                if n == 0:
+                    parts.append(''.join(chars).lstrip().rstrip())
+                    chars = []
+            elif n == 0:
+                chars.append(c)
+    return " ".join(parts)
+
+
 def is_pcbnew_running():
     windows = wx.GetTopLevelWindows()
     if len(windows) == 0:
@@ -166,17 +214,27 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     filename = board.GetFileName()
     with open(filename) as f:
         pcb_layout = f.readlines()
+        f.seek(0, 0)
+        pcb_layout_raw = f.read()
 
-    # find all used models
-    models = []
-    for line in pcb_layout:
-        index = line.find("(model")
-        if index != -1:
-            line_split = line.split()
-            index = line_split.index("(model")
-            model_path = line_split[index+1]
-            models.append(model_path.rsplit(".", 1)[0])
-    models = list(set(models))
+    # parse the file
+    pcb_layout_nested = balanced_braces(pcb_layout_raw)
+    pcb_layout_nested_nested = balanced_braces(pcb_layout_nested)
+    # get only modules
+    parsed_modules = []
+    for entry in pcb_layout_nested_nested:
+        if "module" in entry:
+            parsed_modules.append(balanced_braces(entry))
+
+    # get models
+    parsed_models = []
+    for mod in parsed_modules:
+        for entry in mod:
+            if "model" in entry:
+                model = remove_braced_content(entry).replace("model", "").lstrip().rstrip()
+                parsed_models.append(model)
+    # remove duplicates
+    models = list(set(parsed_models))
 
     model_library_path = os.getenv("KISYS3DMOD")
     # if running standalone, enviroment variables might not be set
@@ -186,9 +244,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
     # prepare folder for 3dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
-
     model_folder_path = os.path.normpath(proj_path + "//shapes3D")
-
     if not os.path.exists(model_folder_path):
         os.makedirs(model_folder_path)
 
@@ -196,20 +252,26 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     cleaned_models = []
     for model in models:
         # check if path is encoded with variables
-        if model[0:2] == "${":
+        if "${" in model:
+            start_index = model.find("${")+2
             end_index = model.find("}")
-            env_var = model[2:end_index]
+            env_var = model[start_index:end_index]
             if env_var != "KISYS3DMOD":
                 path = os.getenv(env_var)
             else:
                 path = model_library_path
+            # if variable is defined, find proper model path
             if path is not None:
                 model = os.path.normpath(path+model[end_index+1:])
                 cleaned_models.append(model)
+            # if variable is not defined, we can not find the model. Thus don't put it on the list
+            else:
+                pass
         # check if there is no path (model is local to project
         elif model == os.path.basename(model):
             model = os.path.normpath(proj_path + "//" + model)
             cleaned_models.append(model)
+        # if model is referenced with absolute path, we don't need to do anything
         else:
             cleaned_models.append(model)
 
@@ -231,6 +293,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             shutil.copy2(model + ".stp", model_folder_path)
             copied_at_least_one = True
         except:
+            pass
         try:
             shutil.copy2(model + ".igs", model_folder_path)
             copied_at_least_one = True
@@ -248,17 +311,15 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     out_file = []
     for line in pcb_layout:
         line_new = line
-        index = line.find("(model")
-        if index != -1:
-            line_split = line.split("(model")
-            for model in cleaned_models:
-                model = os.path.basename(model)
-                if model in line_split[1]:
-                    model_path = " ${KIPRJMOD}/" + "shapes3D/" + model + ".wrl"
-                    line_split_split = line_split[1].split()
-                    line_split_split[0] = model_path
-                    line_split[1] = " ".join(line_split_split)
-                    line_new = "(model".join(line_split) + "\n"
+        for mod in models:
+            if mod in line:
+                model_name = os.path.basename(os.path.normpath(mod)).strip('"')
+                new_model_path = "${KIPRJMOD}/" + "shapes3D/" + model_name
+                # if enclosed with doublequotes, enclose line_new also
+                if "\"" in mod:
+                    new_model_path = "\"" + new_model_path + "\""
+                line_new = line.replace(mod, new_model_path)
+                pass
         out_file.append(line_new)
     # write
     if alt_files:
@@ -269,10 +330,10 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
+    #board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
 
-    #board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
-
+    board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
+    """
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=False)
     except (ValueError, IOError, LookupError), error:
@@ -280,9 +341,9 @@ def main():
         print message
     except NameError as error:
         print error
-
+    """
     try:
-        archive_3D_models(board, allow_missing_models=False, alt_files=True)
+        archive_3D_models(board, allow_missing_models=True, alt_files=True)
     except IOError as error:
         message = error
         print message
