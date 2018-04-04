@@ -24,9 +24,9 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
         sys_path = pcbnew.GetKicadConfigPath()
     else:
         # hardcode the path for my machine - testing works only on my machine
-        sys_path = "C://Users//MitjaN//AppData//Roaming//kicad"
+        sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad")
 
-    global_sym_lib_file_path = sys_path + "//sym-lib-table"
+    global_sym_lib_file_path = os.path.normpath(sys_path + "//sym-lib-table")
     with open(global_sym_lib_file_path) as f:
         global_sym_lib_file = f.readlines()
 
@@ -41,7 +41,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
     # load project library table
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
-    proj_sym_lib_file_path = proj_path + "//sym-lib-table"
+    proj_sym_lib_file_path = os.path.normpath(proj_path + "//sym-lib-table")
     try:
         with open(proj_sym_lib_file_path) as f:
             project_sym_lib_file = f.readlines()
@@ -182,12 +182,12 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     # if running standalone, enviroment variables might not be set
     if model_library_path is None:
         # hardcode the path for my machine - testing works only on my machine
-        model_library_path = "D://Mitja//Plate//Kicad_libs//official_libs//Packages3D"
+        model_library_path = os.path.normpath("D://Mitja//Plate//Kicad_libs//official_libs//Packages3D")
 
     # prepare folder for 3dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
 
-    model_folder_path = proj_path + "//shapes3D"
+    model_folder_path = os.path.normpath(proj_path + "//shapes3D")
 
     if not os.path.exists(model_folder_path):
         os.makedirs(model_folder_path)
@@ -204,11 +204,11 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             else:
                 path = model_library_path
             if path is not None:
-                model = path+model[end_index+1:]
+                model = os.path.normpath(path+model[end_index+1:])
                 cleaned_models.append(model)
         # check if there is no path (model is local to project
         elif model == os.path.basename(model):
-            model = proj_path + "//" + model
+            model = os.path.normpath(proj_path + "//" + model)
             cleaned_models.append(model)
         else:
             cleaned_models.append(model)
@@ -231,6 +231,10 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             shutil.copy2(model + ".stp", model_folder_path)
             copied_at_least_one = True
         except:
+        try:
+            shutil.copy2(model + ".igs", model_folder_path)
+            copied_at_least_one = True
+        except:
             pass
         if not copied_at_least_one:
             not_copied.append(model)
@@ -238,7 +242,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     if not_copied:
         if not allow_missing_models:
             raise IOError("Did not suceed to copy 3D models\n"
-                          "Did not find:\n" + "\n".join(not_copied))
+                          "Did not find:\n" + "\n".join(os.path.normpath(not_copied)))
 
     # generate output file with project relative path
     out_file = []
@@ -265,9 +269,9 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    #board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
+    board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
 
-    board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
+    #board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
 
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=False)
@@ -282,8 +286,6 @@ def main():
     except IOError as error:
         message = error
         print message
-
-
 
 
 # for testing purposes only
