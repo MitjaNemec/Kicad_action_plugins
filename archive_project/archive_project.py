@@ -279,23 +279,28 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     not_copied = []
     for model in cleaned_models:
         copied_at_least_one = False
+        model_without_extension = model.rsplit('.', 1)[0]
         try:
-            shutil.copy2(model + ".wrl", model_folder_path)
+            filepath = model_without_extension + ".wrl"
+            shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
         except:
             pass
         try:
-            shutil.copy2(model + ".step", model_folder_path)
+            filepath = model_without_extension + ".step"
+            shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
         except:
             pass
         try:
-            shutil.copy2(model + ".stp", model_folder_path)
+            filepath = model_without_extension + ".stp"
+            shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
         except:
             pass
         try:
-            shutil.copy2(model + ".igs", model_folder_path)
+            filepath = model_without_extension + ".igs"
+            shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
         except:
             pass
@@ -304,8 +309,11 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
     if not_copied:
         if not allow_missing_models:
+            not_copied_pretty = []
+            for x in not_copied:
+                not_copied_pretty.append(os.path.normpath(x))
             raise IOError("Did not suceed to copy 3D models\n"
-                          "Did not find:\n" + "\n".join(os.path.normpath(not_copied)))
+                          "Did not find:\n" + "\n".join(not_copied_pretty))
 
     # generate output file with project relative path
     out_file = []
@@ -335,7 +343,7 @@ def main():
     #board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
     
     try:
-        archive_symbols(board, allow_missing_libraries=True, alt_files=False)
+        archive_symbols(board, allow_missing_libraries=True, alt_files=True)
     except (ValueError, IOError, LookupError), error:
         message = str(error)
         print message
@@ -343,8 +351,9 @@ def main():
         print error
     
     try:
-        archive_3D_models(board, allow_missing_models=True, alt_files=True)
+        archive_3D_models(board, allow_missing_models=False, alt_files=True)
     except IOError as error:
+        archive_3D_models(board, allow_missing_models=True, alt_files=True)
         message = error
         print message
 
