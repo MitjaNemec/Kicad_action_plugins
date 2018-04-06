@@ -22,6 +22,7 @@
 import wx
 import pcbnew
 import archive_project
+import logging
 
 
 
@@ -80,6 +81,11 @@ class ArchiveProject(pcbnew.ActionPlugin):
         self.description = "Archive schematics symbols and 3D models"
 
     def Run(self):
+        logging.basicConfig(level=logging.DEBUG, filename="archive_project.log", filemode='w',
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logger = logging.getLogger(__name__)
+        logger.info("Action plugin started")
+
         _pcbnew_frame = \
             filter(lambda w: w.GetTitle().startswith('Pcbnew'),
                    wx.GetTopLevelWindows()
@@ -104,6 +110,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
             dlg.Destroy()
         # exit the plugin
         else:
+            logger.info("Action plugin canceled on first dialog")
             return
 
         # if user clicked OK
@@ -122,10 +129,12 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
                     dlg.ShowModal()
                     dlg.Destroy()
+                    logger.info("Exiting as eeschema is opened")
                     return
 
                 # archive schematics
                 try:
+                    logger.info("Starting schematics archiving")
                     archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
                 except (ValueError, IOError, LookupError), error:
                     caption = 'Archive project'
@@ -133,13 +142,16 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
                     dlg.ShowModal()
                     dlg.Destroy()
+                    logger.debug("Action plugin exiting due to error in schematics archiving part")
                 except NameError as error:
                     caption = 'Archive project'
                     message = str(error)+ "\nContinue?"
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
                     res = dlg.ShowModal()
                     dlg.Destroy()
+                    logger.info(message)
                     if res == wx.ID_YES:
+                        logger.info("Retrying schematics archiving")
                         archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
                     else:
                         return
@@ -162,6 +174,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
 
                 try:
+                    logger.info("Starting 3D model archiving")
                     archive_project.archive_3D_models(board, allow_missing_models=False, alt_files=False)
                 except IOError as error:
                     caption = 'Archive project'
@@ -169,8 +182,9 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     dlg = wx.MessageDialog(_pcbnew_frame, message, caption,  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
                     res = dlg.ShowModal()
                     dlg.Destroy()
-
+                    logger.info(message)
                     if res == wx.ID_YES:
+                        logger.info("Retrying 3D model archiving")
                         # simulate Ctrl+S (save layout)
                         key_simulator.KeyDown(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
                         key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
@@ -192,5 +206,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
 
                 key_simulator.KeyDown(wx.WXK_RETURN)
                 key_simulator.KeyUp(wx.WXK_RETURN)
+                logger.info("3D model linking successful, exiting pcbnew")
 
-        main_dialog.Destroy()
+            main_dialog.Destroy()

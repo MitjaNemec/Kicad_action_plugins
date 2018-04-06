@@ -4,6 +4,9 @@ import os.path
 import shutil
 import wx
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def balanced_braces(args):
     if isinstance(args, str):
@@ -62,10 +65,13 @@ def is_pcbnew_running():
 
 
 def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
+    logger.info("Starting to archive symbols")
     # get project name
     pcb_filename = str(os.path.basename(board.GetFileName()))
     project_name = pcb_filename.replace(".kicad_pcb", "")
     cache_lib_name = project_name + "-cache.lib"
+
+    logger.info("Pcb filename:" + pcb_filename)
 
     # load system symbol library table
     if is_pcbnew_running():
@@ -73,6 +79,8 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     else:
         # hardcode the path for my machine - testing works only on my machine
         sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad")
+
+    logger.info("Kicad config path: " + sys_path)
 
     global_sym_lib_file_path = os.path.normpath(sys_path + "//sym-lib-table")
     with open(global_sym_lib_file_path) as f:
@@ -95,6 +103,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             project_sym_lib_file = f.readlines()
     # if file does not exists, create new
     except:
+        logger.info("Project sym lib table does not exist")
         new_sym_lib_file = [u"(sym_lib_table\n", u")\n"]
         with open(proj_sym_lib_file_path, "w") as f:
             f.writelines(new_sym_lib_file)
@@ -113,17 +122,17 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             name_end = line.find(")(options ")
             if cache_lib_name in line[name_start:name_end]:
                 cache_nick = nick
+                logger.info("project-cache.lib is already in the sym-lib-table, using its nickname")
 
     # if there is already nickname cache but no actual cache-lib
-    # TODO tighter check required. Current one will not catch the obscure case when
-    # TODO cache nickname is taken and project-cache.lib is listed in project_sym_lib file
-    # TODO but under different nickname
     if cache_nick in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
         # throw an exception
+        logger.debug("Nickname \"cache\" already taken")
         raise ValueError("Nickname \"cache\" already taken by library that is not a project cache library!")
 
     # if cache library is not on the list, put it there
     if cache_lib_name not in unicode(project_sym_lib_file):
+        logger.info("Entering cache library in sym-lib-table")
         line_contents = "    (lib (name cache)(type Legacy)(uri ${KIPRJMOD}/" + cache_lib_name + ")(options \"\")(descr \"\"))\n"
         project_sym_lib_file.insert(1, line_contents)
         with open(proj_sym_lib_file_path, "w") as f:
@@ -136,6 +145,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             project_cache_file = f.readlines()
     # if file does not exists, raise exception
     except:
+        logger.debug("Project cache library does not exists!")
         raise IOError("Project cache library does not exists!")
 
     # get list of symbols in cache library
@@ -177,6 +187,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
                     line_contents[1] = cache_nick + ":" + new_name
                 # if the symbol is not in cache raise exception
                 else:
+                    logger.debug("Trying to remap symbol which does not exist in cache library. Cache library is incomplete")
                     raise LookupError(
                         "Symbol \"" + new_name + "\" is not present in cache libray. Cache library is incomplete")
                 # join line back again
@@ -193,10 +204,12 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
     if symbols_form_missing_libraries:
         if not allow_missing_libraries:
+            logger.debug("Schematics includes symbols from the libraries not present on the system")
             raise NameError("Schematics includes symbols from the libraries not present on the system\n"
                             "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
 
     # if no exceptions has been raised write files
+    logger.info("Writing schematics file")
     for key in out_files:
         filename = key
         # write
@@ -210,8 +223,11 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
 
 def archive_3D_models(board, allow_missing_models=False, alt_files=False):
+    logger.info("Starting to archive 3D models")
     # load layout
     filename = board.GetFileName()
+    logger.info("Pcb filename: " + filename)
+
     with open(filename) as f:
         pcb_layout = f.readlines()
         f.seek(0, 0)
@@ -241,6 +257,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     if model_library_path is None:
         # hardcode the path for my machine - testing works only on my machine
         model_library_path = os.path.normpath("D://Mitja//Plate//Kicad_libs//official_libs//Packages3D")
+    logger.debug("KISYS3DMOD path: " + model_library_path)
 
     # prepare folder for 3dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
@@ -277,6 +294,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
     # copy the models
     not_copied = []
+    logger.info("Copying 3D models")
     for model in cleaned_models:
         copied_at_least_one = False
         model_without_extension = model.rsplit('.', 1)[0]
@@ -312,7 +330,8 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             not_copied_pretty = []
             for x in not_copied:
                 not_copied_pretty.append(os.path.normpath(x))
-            raise IOError("Did not suceed to copy 3D models\n"
+            logger.debug("Did not suceed to copy 3D models!")
+            raise IOError("Did not suceed to copy 3D models!\n"
                           "Did not find:\n" + "\n".join(not_copied_pretty))
 
     # generate output file with project relative path
@@ -330,6 +349,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 pass
         out_file.append(line_new)
     # write
+    logger.info("Writing pcb layout file")
     if alt_files:
         filename = filename + "_alt"
     with open(filename, "w") as f:
@@ -360,4 +380,7 @@ def main():
 
 # for testing purposes only
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, filename="archive_project.log", filemode='w',
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     main()
