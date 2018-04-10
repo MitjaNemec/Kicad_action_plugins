@@ -3,7 +3,7 @@ EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 2
+Sheet 1 3
 Title ""
 Date ""
 Rev ""
@@ -236,4 +236,10 @@ $EndComp
 Connection ~ 2100 4000
 Wire Wire Line
 	2100 4000 2550 4000
+$Sheet
+S 3550 3750 900  600 
+U 5ACC74AB
+F0 "Sheet5ACC74AA" 50
+F1 "hiearchical_sub/file5ACC74AA.sch" 50
+$EndSheet
 $EndSCHEMATC

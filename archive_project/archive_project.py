@@ -3,8 +3,10 @@ import os
 import os.path
 import shutil
 import wx
-
+import sys
 import logging
+from collections import defaultdict
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,11 +66,61 @@ def is_pcbnew_running():
         return True
 
 
+def extract_subsheets(filename):
+    in_rec_mode = False
+    counter = 0
+    with open(filename) as f:
+        file_folder = os.path.dirname(os.path.abspath(filename))
+        file_lines = f.readlines()
+    for line in file_lines:
+        counter += 1
+        if not in_rec_mode:
+            if line.startswith('$Sheet'):
+                in_rec_mode = True
+                subsheet_path = []
+        elif line.startswith('$EndSheet'):
+            in_rec_mode = False
+            yield subsheet_path
+        else:
+            #extract subsheet path
+            if line.startswith('F1'):
+                subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
+                if not os.path.isabs(subsheet_path):
+                    # check if path is encoded with variables
+                    if "${" in subsheet_path:
+                        start_index = subsheet_path.find("${") + 2
+                        end_index = subsheet_path.find("}")
+                        env_var = subsheet_path[start_index:end_index]
+                        path = os.getenv(env_var)
+                        # if variable is not defined rasie an exception
+                        if path is None:
+                            raise LookupError("Can not find subsheet: " + subsheet_path)
+                        # replace variable with full path
+                        subsheet_path = subsheet_path.replace("${", "")\
+                                                     .replace("}", "")\
+                                                     .replace("env_var", path)
+
+                # if path is still not absolute, then it is relative to project
+                if not os.path.isabs(subsheet_path):
+                    subsheet_path = os.path.join(file_folder, subsheet_path)
+
+                subsheet_path = os.path.normpath(subsheet_path)
+                pass
+
+
+def find_all_sch_files(filename, list_of_files):
+    list_of_files.append(filename)
+    for sheet in extract_subsheets(filename):
+        seznam = find_all_sch_files(sheet, list_of_files)
+        list_of_files = seznam
+    return list_of_files
+
+
 def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     logger.info("Starting to archive symbols")
     # get project name
-    pcb_filename = str(os.path.basename(board.GetFileName()))
-    project_name = pcb_filename.replace(".kicad_pcb", "")
+    pcb_filename = board.GetFileName()
+    project_name = str(os.path.basename(board.GetFileName())).replace(".kicad_pcb", "")
     cache_lib_name = project_name + "-cache.lib"
 
     logger.info("Pcb filename:" + pcb_filename)
@@ -127,7 +179,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     # if there is already nickname cache but no actual cache-lib
     if cache_nick in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
         # throw an exception
-        logger.debug("Nickname \"cache\" already taken")
+        logger.info("Nickname \"cache\" already taken")
         raise ValueError("Nickname \"cache\" already taken by library that is not a project cache library!")
 
     # if cache library is not on the list, put it there
@@ -145,7 +197,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             project_cache_file = f.readlines()
     # if file does not exists, raise exception
     except:
-        logger.debug("Project cache library does not exists!")
+        logger.info("Project cache library does not exists!")
         raise IOError("Project cache library does not exists!")
 
     # get list of symbols in cache library
@@ -158,11 +210,12 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             cache_symbols.append(cache_symbol)
 
     # find all .sch files
+    # open main schematics file and look fo any sbuhiearchical files. In any subhierachical file scan for any sub-sub
+    main_sch_file = os.path.abspath(str(pcb_filename).replace(".kicad_pcb", ".sch"))
+
     all_sch_files = []
-    for root, directories, filenames in os.walk(proj_path):
-        for filename in filenames:
-            if filename.endswith(".sch"):
-                all_sch_files.append(os.path.join(root, filename))
+    all_sch_files = find_all_sch_files(main_sch_file, all_sch_files)
+    all_sch_files = list(set(all_sch_files))
 
     # go through each .sch file
     out_files = {}
@@ -187,7 +240,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
                     line_contents[1] = cache_nick + ":" + new_name
                 # if the symbol is not in cache raise exception
                 else:
-                    logger.debug("Trying to remap symbol which does not exist in cache library. Cache library is incomplete")
+                    logger.info("Trying to remap symbol which does not exist in cache library. Cache library is incomplete")
                     raise LookupError(
                         "Symbol \"" + new_name + "\" is not present in cache libray. Cache library is incomplete")
                 # join line back again
@@ -204,7 +257,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
     if symbols_form_missing_libraries:
         if not allow_missing_libraries:
-            logger.debug("Schematics includes symbols from the libraries not present on the system")
+            logger.info("Schematics includes symbols from the libraries not present on the system")
             raise NameError("Schematics includes symbols from the libraries not present on the system\n"
                             "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
 
@@ -257,7 +310,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     if model_library_path is None:
         # hardcode the path for my machine - testing works only on my machine
         model_library_path = os.path.normpath("D://Mitja//Plate//Kicad_libs//official_libs//Packages3D")
-    logger.debug("KISYS3DMOD path: " + model_library_path)
+    logger.info("KISYS3DMOD path: " + model_library_path)
 
     # prepare folder for 3dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
@@ -330,7 +383,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             not_copied_pretty = []
             for x in not_copied:
                 not_copied_pretty.append(os.path.normpath(x))
-            logger.debug("Did not suceed to copy 3D models!")
+            logger.info("Did not suceed to copy 3D models!")
             raise IOError("Did not suceed to copy 3D models!\n"
                           "Did not find:\n" + "\n".join(not_copied_pretty))
 
@@ -365,22 +418,32 @@ def main():
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=True)
     except (ValueError, IOError, LookupError), error:
-        message = str(error)
-        print message
+        print str(error)
     except NameError as error:
-        print error
+        print str(error)
     
     try:
         archive_3D_models(board, allow_missing_models=False, alt_files=True)
     except IOError as error:
         archive_3D_models(board, allow_missing_models=True, alt_files=True)
-        message = error
-        print message
+        print str(error)
 
 
 # for testing purposes only
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, filename="archive_project.log", filemode='w',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    file_handler = logging.FileHandler(filename='archive_project.log')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    handlers = [file_handler, stdout_handler]
+    # handlers = [file_handler]
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        handlers=handlers,
+                        filemode='w'
+                        )
+
+    logger = logging.getLogger(__name__)
+    logger.info("Archive plugin started in standalone mode")
 
     main()

@@ -23,7 +23,8 @@ import wx
 import pcbnew
 import archive_project
 import logging
-
+import os
+import sys
 
 
 SCALE = 1000000.0
@@ -81,10 +82,26 @@ class ArchiveProject(pcbnew.ActionPlugin):
         self.description = "Archive schematics symbols and 3D models"
 
     def Run(self):
+        # load board
+        board = pcbnew.GetBoard()
+        # go to the project folder - so that log will be in proper place
+        os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
+
+        # set up logger
         logging.basicConfig(level=logging.DEBUG, filename="archive_project.log", filemode='w',
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            disable_existing_loggers=False)
         logger = logging.getLogger(__name__)
         logger.info("Action plugin started")
+
+        stdout_logger = logging.getLogger('STDOUT')
+        sl = StreamToLogger(stdout_logger, logging.INFO)
+        sys.stdout = sl
+
+        stderr_logger = logging.getLogger('STDERR')
+        sl = StreamToLogger(stderr_logger, logging.ERROR)
+        sys.stderr = sl
+
 
         _pcbnew_frame = \
             filter(lambda w: w.GetTitle().startswith('Pcbnew'),
@@ -94,9 +111,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
         # only testing if keypress simulation works
         key_simulator = wx.UIActionSimulator()
 
-        board = pcbnew.GetBoard()
-
-        # show GUI
         # show dialog
         main_dialog = ArchiveProjectDialog(_pcbnew_frame)
         main_res = main_dialog.ShowModal()
@@ -209,3 +223,17 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 logger.info("3D model linking successful, exiting pcbnew")
 
             main_dialog.Destroy()
+
+
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
