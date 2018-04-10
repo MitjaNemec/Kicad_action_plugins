@@ -127,7 +127,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
     # load system symbol library table
     if is_pcbnew_running():
-        sys_path = pcbnew.GetKicadConfigPath()
+        sys_path = os.path.normpath(pcbnew.GetKicadConfigPath())
     else:
         # hardcode the path for my machine - testing works only on my machine
         sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad")
@@ -305,7 +305,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     # remove duplicates
     models = list(set(parsed_models))
 
-    model_library_path = os.getenv("KISYS3DMOD")
+    model_library_path = os.path.normpath(os.getenv("KISYS3DMOD"))
     # if running standalone, enviroment variables might not be set
     if model_library_path is None:
         # hardcode the path for my machine - testing works only on my machine
@@ -402,10 +402,10 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 pass
         out_file.append(line_new)
     # write
-    logger.info("Writing pcb layout file")
     if alt_files:
         filename = filename + "_alt"
     with open(filename, "w") as f:
+        logger.info("Writing to pcb layout file:"+filename)
         f.writelines(out_file)
     pass
 
@@ -438,7 +438,8 @@ if __name__ == "__main__":
     # handlers = [file_handler]
 
     logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                        datefmt='%m-%d %H:%M:%S',
                         handlers=handlers,
                         filemode='w'
                         )

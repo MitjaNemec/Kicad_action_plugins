@@ -88,8 +88,11 @@ class ArchiveProject(pcbnew.ActionPlugin):
         os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
 
         # set up logger
-        logging.basicConfig(level=logging.DEBUG, filename="archive_project.log", filemode='w',
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        logging.basicConfig(level=logging.DEBUG,
+                            filename="archive_project.log",
+                            filemode='w',
+                            format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                            datefmt='%m-%d %H:%M:%S',
                             disable_existing_loggers=False)
         logger = logging.getLogger(__name__)
         logger.info("Action plugin started")
@@ -101,7 +104,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
         stderr_logger = logging.getLogger('STDERR')
         sl = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl
-
 
         _pcbnew_frame = \
             filter(lambda w: w.GetTitle().startswith('Pcbnew'),
@@ -207,8 +209,17 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     else:
                         return
 
+                # caption = 'Archive project'
+                # message = "The project finished succesfully"
+                # dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_QUESTION)
+                # dlg.ShowModal()
+                # dlg.Destroy()
+
+                logger.info("3D model linking successful, exiting pcbnew")
+
                 # exit pcbnew to avoid issues with concurent editing of .kicad_pcb file
                 # simulate Alt+F (File) and e twice (Exit) and Enter
+
                 key_simulator.KeyDown(ord('f'), wx.MOD_ALT)
                 key_simulator.KeyUp(ord('f'), wx.MOD_ALT)
 
@@ -220,7 +231,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
 
                 key_simulator.KeyDown(wx.WXK_RETURN)
                 key_simulator.KeyUp(wx.WXK_RETURN)
-                logger.info("3D model linking successful, exiting pcbnew")
 
             main_dialog.Destroy()
 
