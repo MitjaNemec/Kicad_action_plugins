@@ -173,10 +173,12 @@ class ArchiveProject(pcbnew.ActionPlugin):
                         return
 
             if main_dialog.chkbox_3D.GetValue():
+
+                filename = board.GetFileName()
+
                 caption = 'Archive project'
                 message = "Current layout will be saved and when the plugin finishes, pcbnew will be closed." \
                           "This is normal behaviour.\n" \
-                          "You should back up the project before proceeding any further\n" \
                           "\nProceed?"
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
                 res = dlg.ShowModal()
@@ -209,11 +211,11 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     else:
                         return
 
-                # caption = 'Archive project'
-                # message = "The project finished succesfully"
-                # dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_QUESTION)
-                # dlg.ShowModal()
-                # dlg.Destroy()
+                caption = 'Archive project'
+                message = "The project finished succesfully. Exiting pcbnew"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_QUESTION)
+                dlg.ShowModal()
+                dlg.Destroy()
 
                 logger.info("3D model linking successful, exiting pcbnew")
 
@@ -229,6 +231,14 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 key_simulator.KeyDown(ord('e'))
                 key_simulator.KeyUp(ord('e'))
 
+                key_simulator.KeyDown(wx.WXK_RETURN)
+                key_simulator.KeyUp(wx.WXK_RETURN)
+
+                # tab
+                key_simulator.KeyDown(wx.WXK_TAB)
+                key_simulator.KeyUp(wx.WXK_TAB)
+
+                # enter
                 key_simulator.KeyDown(wx.WXK_RETURN)
                 key_simulator.KeyUp(wx.WXK_RETURN)
 
