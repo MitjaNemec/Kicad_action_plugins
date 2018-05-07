@@ -244,8 +244,8 @@ class Replicator:
 
         for zone in all_zones:
             zone_bb = zone.GetBoundingBox()
-            if (only_within_boundingbox and self.pivot_bounding_box.Contains(track_bb)) or\
-               (not only_within_boundingbox and self.pivot_bounding_box.Intersects(track_bb)):
+            if (only_within_boundingbox and self.pivot_bounding_box.Contains(zone_bb)) or\
+               (not only_within_boundingbox and self.pivot_bounding_box.Intersects(zone_bb)):
                 self.pivot_zones.append(zone)
 
     def get_nets_from_modules(self, modules):
