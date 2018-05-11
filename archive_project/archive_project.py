@@ -5,7 +5,6 @@ import shutil
 import wx
 import sys
 import logging
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +304,12 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     # remove duplicates
     models = list(set(parsed_models))
 
-    model_library_path = os.path.normpath(os.getenv("KISYS3DMOD"))
+    path_3d = os.getenv("KISYS3DMOD")
+    if path_3d is not None:
+        model_library_path = os.path.normpath(path_3d)
+    else:
+        model_library_path = None
+
     # if running standalone, enviroment variables might not be set
     if model_library_path is None:
         # hardcode the path for my machine - testing works only on my machine
@@ -322,9 +326,9 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     cleaned_models = []
     for model in models:
         # check if path is encoded with variables
-        if "${" in model:
-            start_index = model.find("${")+2
-            end_index = model.find("}")
+        if "${" or "$(" in model:
+            start_index = model.find("${")+2 or model.find("$(")+2
+            end_index = model.find("}") or model.find(")")
             env_var = model[start_index:end_index]
             if env_var != "KISYS3DMOD":
                 path = os.getenv(env_var)
