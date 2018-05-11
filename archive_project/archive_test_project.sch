@@ -198,7 +198,7 @@ F 3 "~" H 1750 4000 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L Connector_Specialized:Screw_Terminal_01x02 J3
+L Connector:Screw_Terminal_01x02 J3
 U 1 1 5ABA6E1A
 P 4950 2850
 F 0 "J3" H 4950 2950 50  0000 C CNN
