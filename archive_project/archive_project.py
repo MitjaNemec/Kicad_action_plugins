@@ -5,6 +5,7 @@ import shutil
 import wx
 import sys
 import logging
+from shutil import copyfile
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     pcb_filename = board.GetFileName()
     project_name = str(os.path.basename(board.GetFileName())).replace(".kicad_pcb", "")
     cache_lib_name = project_name + "-cache.lib"
+    archive_lib_name = project_name + "-archive.lib"
 
     logger.info("Pcb filename:" + pcb_filename)
 
@@ -129,15 +131,20 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
         sys_path = os.path.normpath(pcbnew.GetKicadConfigPath())
     else:
         # hardcode the path for my machine - testing works only on my machine
-        sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad")
+        sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad//V5")
 
     logger.info("Kicad config path: " + sys_path)
 
     global_sym_lib_file_path = os.path.normpath(sys_path + "//sym-lib-table")
-    with open(global_sym_lib_file_path) as f:
-        global_sym_lib_file = f.readlines()
+    try:
+        with open(global_sym_lib_file_path) as f:
+            global_sym_lib_file = f.readlines()
+    except IOError:
+        logger.info("Global sym-lib-table does not exist!")
+        raise IOError("Global sym-lib-table does not exist!")
 
-    # get add library nicknames
+    # get library nicknames and dictionary of libraries (nickame:uri)
+    libraries = {}
     nicknames = []
     for line in global_sym_lib_file:
         nick_start = line.find("(name ")+6
@@ -145,6 +152,12 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             nick_stop = line.find(")", nick_start)
             nick = line[nick_start:nick_stop]
             nicknames.append(nick)
+            # find path to library
+            path_start = line.find("(uri ")+5
+            if path_start >= 5:
+                path_stop = line.find(")", path_start)
+                path = line[path_start:path_stop]
+                libraries[path] = nick
 
     # load project library table
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
@@ -153,14 +166,13 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
         with open(proj_sym_lib_file_path) as f:
             project_sym_lib_file = f.readlines()
     # if file does not exists, create new
-    except:
+    except IOError:
         logger.info("Project sym lib table does not exist")
         new_sym_lib_file = [u"(sym_lib_table\n", u")\n"]
         with open(proj_sym_lib_file_path, "w") as f:
             f.writelines(new_sym_lib_file)
             project_sym_lib_file = new_sym_lib_file
     # append nicknames
-    cache_nick = "cache"
     for line in project_sym_lib_file:
         nick_start = line.find("(name ")+6
         if nick_start >= 6:
@@ -168,45 +180,68 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             nick = line[nick_start:nick_stop]
             nicknames.append(nick)
 
-            # check if library is project cache library
-            name_start = line.find("(uri ") + 5
-            name_end = line.find(")(options ")
-            if cache_lib_name in line[name_start:name_end]:
-                cache_nick = nick
-                logger.info("project-cache.lib is already in the sym-lib-table, using its nickname")
+            path_start = line.find("(uri ")+5
+            if path_start >= 5:
+                path_stop = line.find(")", path_start)
+                path = line[path_start:path_stop]
+                libraries[path] = nick
 
-    # if there is already nickname cache but no actual cache-lib
-    if cache_nick in nicknames and cache_lib_name not in unicode(project_sym_lib_file):
-        # throw an exception
-        logger.info("Nickname \"cache\" already taken")
-        raise ValueError("Nickname \"cache\" already taken by library that is not a project cache library!")
+    # check if archive library is already linked in
+    archive_nick = None
+    for lib in libraries.keys():
+        # if archive is already linked in, use its nickname
+        if archive_lib_name in lib:
+            logger.info("project-archive.lib is already in the sym-lib-table, using its nickname")
+            archive_nick = libraries[lib]
+        # if archive is not linked
+        else:
+            # check if default nick is already taken
+            if libraries[lib] == "archive":
+                logger.info("Nickname \"archive\" already taken")
+                raise ValueError("Nickname \"archive\" already taken by library that is not a project cache library!")
 
-    # if cache library is not on the list, put it there
-    if cache_lib_name not in unicode(project_sym_lib_file):
-        logger.info("Entering cache library in sym-lib-table")
-        line_contents = "    (lib (name cache)(type Legacy)(uri ${KIPRJMOD}/" + cache_lib_name + ")(options \"\")(descr \"\"))\n"
+    if archive_nick is None:
+        archive_nick = "archive"
+        logger.info("Entering archive library in sym-lib-table")
+        line_contents = "    (lib (name archive)(type Legacy)(uri ${KIPRJMOD}/" + archive_lib_name + ")(options \"\")(descr \"\"))\n"
         project_sym_lib_file.insert(1, line_contents)
         with open(proj_sym_lib_file_path, "w") as f:
             f.writelines(project_sym_lib_file)
 
-    # load cache library
-    proj_cache_ling_path = os.path.join(proj_path, cache_lib_name)
-    try:
-        with open(proj_cache_ling_path) as f:
-            project_cache_file = f.readlines()
-    # if file does not exists, raise exception
-    except:
+    # copy cache library
+    if not os.path.isfile(os.path.join(proj_path, cache_lib_name)):
         logger.info("Project cache library does not exists!")
         raise IOError("Project cache library does not exists!")
+    copyfile(os.path.join(proj_path, cache_lib_name),
+             os.path.join(proj_path, archive_lib_name))
 
-    # get list of symbols in cache library
-    cache_symbols = []
-    for line in project_cache_file:
+    if os.path.isfile(os.path.join(proj_path, cache_lib_name.replace(".lib", ".dcm"))):
+        copyfile(os.path.join(proj_path, cache_lib_name.replace(".lib", ".dcm")),
+                 os.path.join(proj_path, archive_lib_name.replace(".lib", ".dcm")))
+
+    # read_archive library
+    with open(os.path.join(proj_path, archive_lib_name)) as f:
+        project_archive_file = f.readlines()
+
+    # get list of symbols in archive library and correct any colons into underscores
+    archive_symbols_list = []
+    for line in project_archive_file:
         line_contents = line.split()
         if line_contents[0] == "DEF":
+            # replace colon with underscore
+            symbol = line_contents[1].replace(":", "_")
+            # send replacement back to file
+            line_nr = project_archive_file.index(line)
+            line_new = list(line_contents)
+            line_new[1] = symbol
+            line_new = " ".join(line_new) + "\n"
+            project_archive_file[line_nr] = line_new
             # remove any "~"
-            cache_symbol = line_contents[1].replace("~", "")
-            cache_symbols.append(cache_symbol)
+            symbol = symbol.replace("~", "")
+            archive_symbols_list.append(symbol)
+    # writeback the archive file
+    with open(os.path.join(proj_path, archive_lib_name), "w") as f:
+        f.writelines(project_archive_file)
 
     # find all .sch files
     # open main schematics file and look fo any sbuhiearchical files. In any subhierachical file scan for any sub-sub
@@ -235,13 +270,13 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
                 # replace colon with underscore
                 new_name = line_contents[1].replace(":", "_")
                 # make sure that the symbol is in cache and append cache nickname
-                if new_name in cache_symbols:
-                    line_contents[1] = cache_nick + ":" + new_name
+                if new_name in archive_symbols_list:
+                    line_contents[1] = archive_nick + ":" + new_name
                 # if the symbol is not in cache raise exception
                 else:
-                    logger.info("Trying to remap symbol which does not exist in cache library. Cache library is incomplete")
+                    logger.info("Trying to remap symbol which does not exist in archive library. Archive library is incomplete")
                     raise LookupError(
-                        "Symbol \"" + new_name + "\" is not present in cache libray. Cache library is incomplete")
+                        "Symbol \"" + new_name + "\" is not present in archive libray. Archive library is incomplete")
                 # join line back again
                 new_line = ' '.join(line_contents)
                 sch_file_out.append(new_line + "\n")
@@ -256,7 +291,8 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
     if symbols_form_missing_libraries:
         if not allow_missing_libraries:
-            logger.info("Schematics includes symbols from the libraries not present on the system")
+            logger.info("Schematics includes symbols from the libraries not present on the system\n"
+                        "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
             raise NameError("Schematics includes symbols from the libraries not present on the system\n"
                             "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
 
