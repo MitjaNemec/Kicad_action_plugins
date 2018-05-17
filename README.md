@@ -5,7 +5,7 @@ This repo contains Kicad pcbnew Action Plugins()
 
 ## Replicate layout
 
-This plugin has been tested on Windows 7 Kicad nightly 2017-09-19 revision dddaa7e69. 
+This plugin has been tested on Windows 7 Kicad nightly 2017-09-19 revision dddaa7e69.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -87,3 +87,24 @@ To run the plugin:
 4. hit OK
 
 ![Measure pad to pad distance](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/pad2pad_animation.gif)
+
+## Archive project
+
+This plugin has been tested on Windows 7 Kicad nightly 2018-26-03 revision 1dd4af297. The testing has not been thorough.
+
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
+
+Within the plugin folder only *.py files are required for operation.
+
+This plugin archives the project thus making it portable.
+
+The schematics archive is achieved via project cache library. The project cache library is copied to project-archive.lib which is modified and added to project symbol library table (if the table does not exist it is created). Also the links to the symbols within the schematics are modified so that they point to the symbols within archive library.
+
+The archiving of the pcb and its footprints is already implemented within pcbnew.
+
+The 3D models archive is placed in "shapes3D" subfolder where all 3D models are copied.
+Then the links to the models within the layout (.kicad_pcb) file are modified so that they point to the archived 3D models with relative path to the project folder
+
+Plugin is run from pcbnew. When the plugin is run, eeschema has to be closed. If the plugin finished successfully it automatically closes pcbnew. This is normal and required operation.
+
+If the project is modified later it should be archived again in order to stay portable. If a symbol of a unit has to be replaced, all units with same symbol have to be deleted.
