@@ -90,7 +90,7 @@ To run the plugin:
 
 ## Archive project
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9. The testing has not been thorough.
+This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9. The testing has not been thorough. The plugin works correctly only when KiCad language is English. For other languages lines 225-243 have to be changed.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
