@@ -518,6 +518,7 @@ class Replicator:
 
                         newvia.SetViaType(track.GetViaType())
                         newvia.SetWidth(track.GetWidth())
+                        newvia.SetDrill(track.GetDrill())
                         newvia.SetNet(to_net)
                     else:
                         newtrack = pcbnew.TRACK(self.board)
