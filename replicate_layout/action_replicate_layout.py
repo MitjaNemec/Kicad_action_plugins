@@ -39,7 +39,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.rad_btn_Linear.SetValue(True)
         bSizer9.Add( self.rad_btn_Linear, 0, wx.ALL, 5 )
 
-        self.rad_btn_Circular = wx.RadioButton( self, wx.ID_ANY, u"Circular", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
+        self.rad_btn_Circular = wx.RadioButton( self, wx.ID_ANY, u"Circular", wx.DefaultPosition, wx.DefaultSize )
         self.rad_btn_Circular.SetValue(False)
         bSizer9.Add( self.rad_btn_Circular, 0, wx.ALL, 5 )
 
