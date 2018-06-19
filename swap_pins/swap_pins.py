@@ -19,64 +19,41 @@
 #
 #
 
-import wx
 import pcbnew
 import os
-import swap_pins
 
 
-class SwapPinsDialog(wx.Dialog):
+def swap(board, pad_1, pad_2):
+    footprint = pad_2.GetParent().GetReference()
+    # get respective nets
+    net_1 = pad_1.GetNet()
+    net_2 = pad_2.GetNet()
+    net_name_1 = net_1.GetNetname()
+    net_name_2 = net_2.GetNetname()
 
-    def __init__(self, parent):
+    # Find the sch file that has this symbol
+    main_sch_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", ".sch"))
+    all_sch_files = []
+    all_sch_files = find_all_sch_files(main_sch_file, all_sch_files)
+    all_sch_files = list(set(all_sch_files))
+    for sch_file in all_sch_files:
+        with open(sch_file) as f:
+            current_sch_file = f.read()
+        if footprint in current_sch_file:
+            sch_file_to_modify = sch_file
 
-        
+    # open the schematics, find symbol, find the pins and nearbywires connected to the respective nets
+    with open(sch_file_to_modify) as f:
+        sch_file = f.readlines()
 
-class SwapPins(pcbnew.ActionPlugin):
-    """
-    A script to swap selected pins
-    How to use:
-    - move to GAL
-    - select two pads to swap
-    - call the plugin
-    """
+    # swap netnames in schematics
 
-    def defaults(self):
-        self.name = "Swap pins"
-        self.category = "Modify Drawing PCB and schematics"
-        self.description = "Swap selected pins"
+    # save schematics
 
-    def Run(self):
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().startswith('Pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
-
-        # load board
-        board = pcbnew.GetBoard()
-                    
-        # check if there are precisely two pads selected
-        selected_pads = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetPads())
-        if len(selected_pads) != 2:
-            caption = 'Swap pins'
-            message = "More or less than 2 pads selected. Please select exactly two pads and run the script again"
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
-
-        # are they on the same module
-        pad1 = selected_pads[0]
-        pad2 = selected_pads[1]
-        if pad1.GetParent().GetReference() != pad2.GetParent().GetReference():
-            caption = 'Swap pins'
-            message = "Pads don't belong to the same footprint"
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
-
-        # swap pins
-        swap_pins.swap(board, pad1, pad2)
+    # swap nets in layout
+    # Select PADa -> Properties.Copy NetName
+    pad_2.SetNet(net_1)
+    pad_1.SetNet(net_2)
 
 
 def extract_subsheets(filename):
@@ -127,6 +104,21 @@ def find_all_sch_files(filename, list_of_files):
         seznam = find_all_sch_files(sheet, list_of_files)
         list_of_files = seznam
     return list_of_files
-        
-        
 
+
+def main():
+    board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+    mod = board.FindModuleByReference('U201')
+    pads = mod.Pads()
+    for pad in pads:
+        if pad.GetPadName() == u'21':
+            pad1 = pad
+        if pad.GetPadName() == u'22':
+            pad2 = pad
+    pass
+    swap(board, pad1, pad2)
+
+
+# for testing purposes only
+if __name__ == "__main__":
+    main()

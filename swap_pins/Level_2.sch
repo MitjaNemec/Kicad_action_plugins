@@ -1,0 +1,186 @@
+EESchema Schematic File Version 4
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 3 3
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L MCU_Microchip_PIC18:PIC18F452-IP U301
+U 1 1 5B293B60
+P 3200 3800
+F 0 "U301" H 3300 5150 50  0000 C CNN
+F 1 "PIC18F452-IP" H 3550 5050 50  0000 C CNN
+F 2 "Package_DIP:DIP-40_W15.24mm" H 3200 3800 50  0001 C CIN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/39564c.pdf" H 3200 3450 50  0001 C CNN
+	1    3200 3800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4200 2900 4500 2900
+Wire Wire Line
+	4200 3000 4500 3000
+Wire Wire Line
+	4200 3100 4500 3100
+Wire Wire Line
+	4200 3200 4500 3200
+Text Label 4500 2900 0    50   ~ 0
+RC1
+Text Label 4500 3000 0    50   ~ 0
+RC2
+Text Label 4500 3100 0    50   ~ 0
+RC3
+Text Label 4500 3200 0    50   ~ 0
+RC4
+$Comp
+L Device:R R301
+U 1 1 5B293C65
+P 5650 2850
+F 0 "R301" V 5443 2850 50  0000 C CNN
+F 1 "R" V 5534 2850 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5580 2850 50  0001 C CNN
+F 3 "~" H 5650 2850 50  0001 C CNN
+	1    5650 2850
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R302
+U 1 1 5B293D9F
+P 5650 3150
+F 0 "R302" V 5443 3150 50  0000 C CNN
+F 1 "R" V 5534 3150 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5580 3150 50  0001 C CNN
+F 3 "~" H 5650 3150 50  0001 C CNN
+	1    5650 3150
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R303
+U 1 1 5B293DBD
+P 5650 3450
+F 0 "R303" V 5443 3450 50  0000 C CNN
+F 1 "R" V 5534 3450 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5580 3450 50  0001 C CNN
+F 3 "~" H 5650 3450 50  0001 C CNN
+	1    5650 3450
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R304
+U 1 1 5B293DDD
+P 5650 3750
+F 0 "R304" V 5443 3750 50  0000 C CNN
+F 1 "R" V 5534 3750 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5580 3750 50  0001 C CNN
+F 3 "~" H 5650 3750 50  0001 C CNN
+	1    5650 3750
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:C C301
+U 1 1 5B293E54
+P 6050 4000
+F 0 "C301" H 6165 4046 50  0000 L CNN
+F 1 "C" H 6165 3955 50  0000 L CNN
+F 2 "Capacitor_THT:C_Disc_D7.5mm_W5.0mm_P5.00mm" H 6088 3850 50  0001 C CNN
+F 3 "~" H 6050 4000 50  0001 C CNN
+	1    6050 4000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5500 2850 5300 2850
+Wire Wire Line
+	5500 3150 5300 3150
+Wire Wire Line
+	5500 3450 5300 3450
+Wire Wire Line
+	5500 3750 5300 3750
+Wire Wire Line
+	5800 3750 6050 3750
+Wire Wire Line
+	6050 3750 6050 3850
+Wire Wire Line
+	5800 3450 6050 3450
+Wire Wire Line
+	6050 3450 6050 3750
+Connection ~ 6050 3750
+Wire Wire Line
+	5800 3150 6050 3150
+Wire Wire Line
+	6050 3150 6050 3450
+Connection ~ 6050 3450
+Wire Wire Line
+	5800 2850 6050 2850
+Wire Wire Line
+	6050 2850 6050 3150
+Connection ~ 6050 3150
+Text Label 5300 2850 0    50   ~ 0
+RC1
+Text Label 5300 3150 0    50   ~ 0
+RC2
+Text Label 5300 3450 0    50   ~ 0
+RC3
+Text Label 5300 3750 0    50   ~ 0
+RC4
+$Comp
+L power:GND #PWR0303
+U 1 1 5B294318
+P 6050 4250
+F 0 "#PWR0303" H 6050 4000 50  0001 C CNN
+F 1 "GND" H 6055 4077 50  0000 C CNN
+F 2 "" H 6050 4250 50  0001 C CNN
+F 3 "" H 6050 4250 50  0001 C CNN
+	1    6050 4250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6050 4250 6050 4150
+Wire Wire Line
+	3100 5100 3100 5200
+Wire Wire Line
+	3100 5200 3200 5200
+Wire Wire Line
+	3200 5200 3200 5300
+Wire Wire Line
+	3200 5100 3200 5200
+Connection ~ 3200 5200
+$Comp
+L power:GND #PWR0302
+U 1 1 5B29480A
+P 3200 5300
+F 0 "#PWR0302" H 3200 5050 50  0001 C CNN
+F 1 "GND" H 3205 5127 50  0000 C CNN
+F 2 "" H 3200 5300 50  0001 C CNN
+F 3 "" H 3200 5300 50  0001 C CNN
+	1    3200 5300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3200 2500 3200 2400
+Wire Wire Line
+	3200 2400 3100 2400
+Wire Wire Line
+	3100 2400 3100 2300
+Wire Wire Line
+	3100 2500 3100 2400
+Connection ~ 3100 2400
+$Comp
+L power:+5V #PWR0301
+U 1 1 5B294D9E
+P 3100 2300
+F 0 "#PWR0301" H 3100 2150 50  0001 C CNN
+F 1 "+5V" H 3115 2473 50  0000 C CNN
+F 2 "" H 3100 2300 50  0001 C CNN
+F 3 "" H 3100 2300 50  0001 C CNN
+	1    3100 2300
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
