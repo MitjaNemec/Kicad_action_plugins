@@ -73,12 +73,12 @@ F 3 "" H 3100 2300 50  0001 C CNN
 	1    3100 2300
 	1    0    0    -1  
 $EndComp
-Text GLabel 4500 2900 2    50   Input ~ 0
+Text HLabel 4500 2900 2    50   Input ~ 0
 RC1
-Text GLabel 4500 3000 2    50   Input ~ 0
+Text HLabel 4500 3000 2    50   Input ~ 0
 RC2
-Text GLabel 4500 3100 2    50   Input ~ 0
+Text HLabel 4500 3100 2    50   Input ~ 0
 RC3
-Text GLabel 4500 3200 2    50   Input ~ 0
+Text HLabel 4500 3200 2    50   Input ~ 0
 RC4
 $EndSCHEMATC

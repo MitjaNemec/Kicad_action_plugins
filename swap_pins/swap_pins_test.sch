@@ -113,14 +113,6 @@ Wire Wire Line
 Wire Wire Line
 	5800 4300 5800 4600
 Connection ~ 5800 4600
-Text Label 5050 4300 0    50   ~ 0
-RB1
-Text Label 5050 4600 0    50   ~ 0
-RB2
-Text Label 5050 4900 0    50   ~ 0
-RB3
-Text Label 5050 5200 0    50   ~ 0
-RB4
 $Comp
 L power:GND #PWR0103
 U 1 1 5B2964A5
@@ -142,14 +134,6 @@ Wire Wire Line
 	2300 4100 1950 4100
 Wire Wire Line
 	2300 4200 1950 4200
-Text Label 1950 3900 0    50   ~ 0
-RB1
-Text Label 1950 4000 0    50   ~ 0
-RB2
-Text Label 1950 4100 0    50   ~ 0
-RB3
-Text Label 1950 4200 0    50   ~ 0
-RB4
 Wire Wire Line
 	3200 4900 3200 5000
 Wire Wire Line
@@ -190,4 +174,20 @@ F 3 "" H 3300 1950 50  0001 C CNN
 	1    3300 1950
 	1    0    0    -1  
 $EndComp
+Text GLabel 1950 3900 0    50   Input ~ 0
+RB1
+Text GLabel 1950 4000 0    50   Input ~ 0
+RB2
+Text GLabel 1950 4100 0    50   Input ~ 0
+RB3
+Text GLabel 1950 4200 0    50   Input ~ 0
+RB4
+Text GLabel 5050 4300 0    50   Input ~ 0
+RB1
+Text GLabel 5050 4600 0    50   Input ~ 0
+RB2
+Text GLabel 5050 4900 0    50   Input ~ 0
+RB3
+Text GLabel 5050 5200 0    50   Input ~ 0
+RB4
 $EndSCHEMATC
