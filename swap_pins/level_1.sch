@@ -1,4 +1,5 @@
 EESchema Schematic File Version 4
+LIBS:swap_pins_test-cache
 EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
@@ -189,4 +190,107 @@ Text Label 4100 3600 0    50   ~ 0
 RD3
 Text Label 4100 3700 0    50   ~ 0
 RD4
+$Comp
+L Device:R R1
+U 1 1 5B2A0216
+P 5250 4950
+F 0 "R1" V 5043 4950 50  0000 C CNN
+F 1 "R" V 5134 4950 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5180 4950 50  0001 C CNN
+F 3 "~" H 5250 4950 50  0001 C CNN
+	1    5250 4950
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R2
+U 1 1 5B2A021D
+P 5250 5250
+F 0 "R2" V 5043 5250 50  0000 C CNN
+F 1 "R" V 5134 5250 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5180 5250 50  0001 C CNN
+F 3 "~" H 5250 5250 50  0001 C CNN
+	1    5250 5250
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R3
+U 1 1 5B2A0224
+P 5250 5550
+F 0 "R3" V 5043 5550 50  0000 C CNN
+F 1 "R" V 5134 5550 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5180 5550 50  0001 C CNN
+F 3 "~" H 5250 5550 50  0001 C CNN
+	1    5250 5550
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R4
+U 1 1 5B2A022B
+P 5250 5850
+F 0 "R4" V 5043 5850 50  0000 C CNN
+F 1 "R" V 5134 5850 50  0000 C CNN
+F 2 "Resistor_THT:R_Axial_DIN0614_L14.3mm_D5.7mm_P20.32mm_Horizontal" V 5180 5850 50  0001 C CNN
+F 3 "~" H 5250 5850 50  0001 C CNN
+	1    5250 5850
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:C C1
+U 1 1 5B2A0232
+P 5650 6100
+F 0 "C1" H 5765 6146 50  0000 L CNN
+F 1 "C" H 5765 6055 50  0000 L CNN
+F 2 "Capacitor_THT:C_Disc_D7.5mm_W5.0mm_P5.00mm" H 5688 5950 50  0001 C CNN
+F 3 "~" H 5650 6100 50  0001 C CNN
+	1    5650 6100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 4950 4900 4950
+Wire Wire Line
+	5100 5250 4900 5250
+Wire Wire Line
+	5100 5550 4900 5550
+Wire Wire Line
+	5100 5850 4900 5850
+Wire Wire Line
+	5400 5850 5650 5850
+Wire Wire Line
+	5650 5850 5650 5950
+Wire Wire Line
+	5400 5550 5650 5550
+Wire Wire Line
+	5650 5550 5650 5850
+Connection ~ 5650 5850
+Wire Wire Line
+	5400 5250 5650 5250
+Wire Wire Line
+	5650 5250 5650 5550
+Connection ~ 5650 5550
+Wire Wire Line
+	5400 4950 5650 4950
+Wire Wire Line
+	5650 4950 5650 5250
+Connection ~ 5650 5250
+$Comp
+L power:GND #PWR0104
+U 1 1 5B2A0248
+P 5650 6350
+F 0 "#PWR0104" H 5650 6100 50  0001 C CNN
+F 1 "GND" H 5655 6177 50  0000 C CNN
+F 2 "" H 5650 6350 50  0001 C CNN
+F 3 "" H 5650 6350 50  0001 C CNN
+	1    5650 6350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5650 6350 5650 6250
+Text GLabel 4900 4950 0    50   Input ~ 0
+RC1
+Text GLabel 4900 5250 0    50   Input ~ 0
+RC2
+Text GLabel 4900 5550 0    50   Input ~ 0
+RC3
+Text GLabel 4900 5850 0    50   Input ~ 0
+RC4
 $EndSCHEMATC
