@@ -1,7 +1,7 @@
 (export (version D)
   (design
     (source D:\Mitja\Plate\Kicad_libs\action_plugins\swap_pins\swap_pins_test.sch)
-    (date "20.6.2018 8:38:08")
+    (date "20.6.2018 10:04:41")
     (tool "Eeschema (5.0.0-rc2-dev-668-g07e7340a9)")
     (sheet (number 1) (name /) (tstamps /)
       (title_block

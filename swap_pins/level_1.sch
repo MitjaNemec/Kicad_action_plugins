@@ -185,9 +185,9 @@ Wire Wire Line
 Text Label 4100 3400 0    50   ~ 0
 RD1
 Text Label 4100 3500 0    50   ~ 0
-RD3
-Text Label 4100 3600 0    50   ~ 0
 RD2
+Text Label 4100 3600 0    50   ~ 0
+RD3
 Text Label 4100 3700 0    50   ~ 0
 RD4
 $Comp
