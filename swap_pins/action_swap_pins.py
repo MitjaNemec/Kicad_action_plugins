@@ -24,13 +24,6 @@ import pcbnew
 import os
 import swap_pins
 
-
-class SwapPinsDialog(wx.Dialog):
-
-    def __init__(self, parent):
-
-        
-
 class SwapPins(pcbnew.ActionPlugin):
     """
     A script to swap selected pins
@@ -50,6 +43,20 @@ class SwapPins(pcbnew.ActionPlugin):
             filter(lambda w: w.GetTitle().startswith('Pcbnew'),
                    wx.GetTopLevelWindows()
                    )[0]
+
+        caption = 'Swap pins'
+        message = "Is eeschema closed?"
+        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+        res = dlg.ShowModal()
+        dlg.Destroy()
+
+        if res == wx.ID_NO:
+            caption = 'Swap pins'
+            message = "You need to close eeschema and then run the plugin again!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
 
         # load board
         board = pcbnew.GetBoard()

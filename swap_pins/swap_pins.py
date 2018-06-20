@@ -21,6 +21,8 @@
 
 import pcbnew
 import os
+import math
+from operator import itemgetter
 
 
 def swap(board, pad_1, pad_2):
@@ -28,8 +30,8 @@ def swap(board, pad_1, pad_2):
     # get respective nets
     net_1 = pad_1.GetNet()
     net_2 = pad_2.GetNet()
-    net_name_1 = net_1.GetNetname()
-    net_name_2 = net_2.GetNetname()
+    net_name_1 = net_1.GetNetname().split('/')[-1]
+    net_name_2 = net_2.GetNetname().split('/')[-1]
 
     # Find the sch file that has this symbol
     main_sch_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", ".sch"))
@@ -44,16 +46,88 @@ def swap(board, pad_1, pad_2):
 
     # open the schematics, find symbol, find the pins and nearbywires connected to the respective nets
     with open(sch_file_to_modify) as f:
-        sch_file = f.readlines()
+        sch_file = f.read()
+
+    # find both net names and their locations
+    closest_label_1 = find_closest_label(sch_file, footprint, net_name_1)
+    closest_label_2 = find_closest_label(sch_file, footprint, net_name_2)
 
     # swap netnames in schematics
+    sch_file_temp = sch_file[0:closest_label_1[0][2]]\
+                  + net_name_2\
+                  + sch_file[closest_label_1[0][2]+len(net_name_2):]
+    sch_file_out = sch_file_temp[0:closest_label_2[0][2]]\
+                 + net_name_1\
+                 + sch_file_temp[closest_label_2[0][2]+len(net_name_1):]
+    # if label type is different also swap label types
+    # TODO
 
     # save schematics
+    if __name__ == "__main__":
+        sch_file_to_write = os.path.join(os.path.dirname(sch_file_to_modify), 'temp_' + os.path.basename(sch_file_to_modify))
+    else:
+        sch_file_to_write = sch_file_to_modify
+    with open(sch_file_to_write, 'w') as f:
+        f.write(sch_file_out)
 
     # swap nets in layout
     # Select PADa -> Properties.Copy NetName
     pad_2.SetNet(net_1)
     pad_1.SetNet(net_2)
+
+    # save board
+    if __name__ == "__main__":
+        pcb_file_to_write = 'temp_' + board.GetFileName()
+        saved = pcbnew.SaveBoard(pcb_file_to_write, board)
+
+
+def find_closest_label(sch_file, footprint, net):
+    label_locations = find_all(sch_file, net)
+    labels = []
+    for loc_end in label_locations:
+        # find position of a label
+        loc_begin = sch_file[0:loc_end].rfind('Text Label')
+        label_type = 'local'
+        if loc_begin == -1:
+            loc_begin = sch_file[0:loc_end].rfind('Text GLabel')
+            label_type = 'global'
+
+        label_data = sch_file[loc_begin:loc_end].split()
+        labels.append((float(label_data[2]), float(label_data[3]), loc_end, label_type))
+
+    # find component location
+    component_name_index = sch_file.find(footprint)
+    componend_description_start = sch_file[0:component_name_index].rfind('$Comp')
+    componend_description_end = sch_file[component_name_index:-1].find('$EndComp')
+    component_data = sch_file[componend_description_start:componend_description_end].split('\n')
+    for data in component_data:
+        if data[0] == 'P':
+            component_location = (float(data.split()[1]), float(data.split()[2]))
+            break
+
+    # find closest label
+    distances = []
+    for label in labels:
+        distances.append((label, get_distance((label[0], label[1]), component_location)))
+    if len(distances) == 1:
+        closest_label = distances[0]
+    else:
+        closest_label = min(distances, key=itemgetter(1))
+
+    return closest_label
+
+
+def get_distance(point1, point2):
+    return math.hypot(point1[0]-point2[0], point1[1]-point2[1])
+
+
+def find_all(a_str, sub):
+    start = 0
+    while True:
+        start = a_str.find(sub, start)
+        if start == -1: return
+        yield start
+        start += len(sub)
 
 
 def extract_subsheets(filename):
@@ -107,16 +181,29 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
-    board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-    mod = board.FindModuleByReference('U201')
-    pads = mod.Pads()
-    for pad in pads:
-        if pad.GetPadName() == u'21':
-            pad1 = pad
-        if pad.GetPadName() == u'22':
-            pad2 = pad
-    pass
-    swap(board, pad1, pad2)
+    test = 'local'  # local global
+    if test == 'local':
+        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+        mod = board.FindModuleByReference('U201')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'21':
+                pad1 = pad
+            if pad.GetPadName() == u'22':
+                pad2 = pad
+        pass
+        swap(board, pad1, pad2)
+    else:
+        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+        mod = board.FindModuleByReference('U301')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'17':
+                pad1 = pad
+            if pad.GetPadName() == u'18':
+                pad2 = pad
+        pass
+        swap(board, pad1, pad2)
 
 
 # for testing purposes only
