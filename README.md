@@ -108,3 +108,17 @@ Then the links to the models within the layout (.kicad_pcb) file are modified so
 Plugin is run from pcbnew. When the plugin is run, eeschema has to be closed. If the plugin finished successfully it automatically closes pcbnew. This is normal and required operation.
 
 If the project is modified later it should be archived again in order to stay portable. If a symbol of a unit has to be replaced, all units with same symbol have to be deleted.
+
+## Swap pins
+
+This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9.
+
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
+
+Within the plugin folder only *.py files are required for operation.
+
+This plugin swaps two pads (in layout) and coresponding pins (in schematics). The pins in the shematics have to be connected to local or global label or hierarchical label either directly at the symbol or through a short wire segment. Eeschema has to be closed when the plugin is executed in pcbnew.
+
+Example of pin swaping
+
+![swaping of pins on local labels](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_pins_animation.gif)
