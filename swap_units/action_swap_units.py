@@ -21,6 +21,7 @@
 
 import wx
 import pcbnew
+import swap_units
 
 
 

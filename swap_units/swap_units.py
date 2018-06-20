@@ -22,6 +22,8 @@
 import pcbnew
 import os
 import re
+import difflib
+
 
 def swap(board, pad_1, pad_2):
 
@@ -48,7 +50,7 @@ def swap(board, pad_1, pad_2):
         with open(page) as f:
             current_sch_file = f.read()
         if footprint_reference in current_sch_file:
-            relevant_sch_files.append(sch_file)
+            relevant_sch_files.append(page)
 
     # link refernce to symbol
     with open(relevant_sch_files[0]) as f:
@@ -128,15 +130,67 @@ def swap(board, pad_1, pad_2):
                     unit_1_loc = data[2].split()[1].find(unit_1) + comp[0] + len(data[0]) + len(data[1]) + len(data[2].split()[0]) + 2 + 1
                     break
         # swap the unit
-        unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc+len(unit_1):]
-    with open(page_1+'_alt','w') as f:
-        f.write(unit_1_sch_file)
+        unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
 
-    # TODO swap unit 2 in schematics, but if it is in the same file, take care of it
+    with open(page_2) as f:
+        current_sch_file = f.read()
+        # find location of specific unit
+        comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
+        comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
+        for comp in zip(comp_starts, comp_ends):
+            data = current_sch_file[comp[0]:comp[1]].split('\n')
+            if footprint_reference in data[1]:
+                if unit_2 in data[2].split()[1]:
+                    # +2 +1 account for splits
+                    unit_2_loc = data[2].split()[1].find(unit_2) + comp[0] + len(data[0]) + len(data[1]) + len(data[2].split()[0]) + 2 + 1
+                    break
+        # swap the unit
+        unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
 
+    # if files are the same, then merge two strings
+    if page_1 == page_2:
+        # reswap in cascade swap the unit
+        unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
+        unit_2_sch_file = unit_1_sch_file[:unit_2_loc] + unit_1 + unit_1_sch_file[unit_2_loc+len(unit_2):]
+        if __name__ == "__main__":
+            with open(page_2+'_alt', 'w') as f:
+                f.write(unit_2_sch_file)
+        else:
+            with open(page_2, 'w') as f:
+                f.write(unit_2_sch_file)
+    # if files are different, then there is no problem, write both of them and be done with it
+    else:
+        if __name__ == "__main__":
+            with open(page_1+'_alt', 'w') as f:
+                f.write(unit_1_sch_file)
+            with open(page_2+'_alt', 'w') as f:
+                f.write(unit_2_sch_file)
+        else:
+            with open(page_1, 'w') as f:
+                f.write(unit_1_sch_file)
+            with open(page_2, 'w') as f:
+                f.write(unit_2_sch_file)
 
     # swap pins in layout
-    pass
+    module = pad_1.GetParent()
+    module_pads = module.PadsList()
+    pins_of_unit_1 = pins_by_unit[int(unit_1) - 1]
+    pins_of_unit_2 = pins_by_unit[int(unit_2) - 1]
+    for pins_to_swap in zip(pins_of_unit_1, pins_of_unit_2):
+        for pad in module_pads:
+            if pad.GetName() == pins_to_swap[0][2]:
+                pad_x = pad
+            if pad.GetName() == pins_to_swap[1][2]:
+                pad_y = pad
+        net_x = pad_x.GetNet()
+        net_y = pad_y.GetNet()
+        pad_x.SetNet(net_y)
+        pad_y.SetNet(net_x)
+
+    # save board
+    if __name__ == "__main__":
+        pcb_file_to_write = 'temp_' + board.GetFileName()
+        saved = pcbnew.SaveBoard(pcb_file_to_write, board)
 
 
 def extract_subsheets(filename):
@@ -190,16 +244,28 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
-    board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
-    mod = board.FindModuleByReference('U1')
-    pads = mod.Pads()
-    for pad in pads:
-        if pad.GetPadName() == u'1':
-            pad1 = pad
-        if pad.GetPadName() == u'7':
-            pad2 = pad
-    pass
-    swap(board, pad1, pad2)
+    # same_sheet, different_sheets
+    test = 'same_sheet'
+    if test == 'same_sheet':
+        board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
+        mod = board.FindModuleByReference('U1')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'1':
+                pad1 = pad
+            if pad.GetPadName() == u'7':
+                pad2 = pad
+        swap(board, pad1, pad2)
+    if test == 'different_sheets':
+        board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
+        mod = board.FindModuleByReference('U1')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'8':
+                pad1 = pad
+            if pad.GetPadName() == u'14':
+                pad2 = pad
+        swap(board, pad1, pad2)
 
 
 # for testing purposes only
