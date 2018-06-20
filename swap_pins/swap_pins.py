@@ -87,13 +87,13 @@ def find_closest_label(sch_file, footprint, net):
     for loc_end in label_locations:
         # find position of a label
         loc_begin = sch_file[0:loc_end].rfind('Text Label')
-        label_type = 'local'
         if loc_begin == -1:
             loc_begin = sch_file[0:loc_end].rfind('Text GLabel')
-            label_type = 'global'
+        if loc_begin == -1:
+            loc_begin = sch_file[0:loc_end].rfind('Text HLabel')
 
         label_data = sch_file[loc_begin:loc_end].split()
-        labels.append((float(label_data[2]), float(label_data[3]), loc_end, label_type))
+        labels.append((float(label_data[2]), float(label_data[3]), loc_end))
 
     # find component location
     component_name_index = sch_file.find(footprint)
@@ -181,7 +181,7 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
-    test = 'local'  # local global
+    test = 'local'  # local global hierarchical
     if test == 'local':
         board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
         mod = board.FindModuleByReference('U201')
@@ -193,7 +193,7 @@ def main():
                 pad2 = pad
         pass
         swap(board, pad1, pad2)
-    else:
+    if test == 'hierarchical':
         board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
         mod = board.FindModuleByReference('U301')
         pads = mod.Pads()
@@ -201,6 +201,17 @@ def main():
             if pad.GetPadName() == u'17':
                 pad1 = pad
             if pad.GetPadName() == u'18':
+                pad2 = pad
+        pass
+        swap(board, pad1, pad2)
+    if test == 'global':
+        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+        mod = board.FindModuleByReference('U101')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'35':
+                pad1 = pad
+            if pad.GetPadName() == u'36':
                 pad2 = pad
         pass
         swap(board, pad1, pad2)
