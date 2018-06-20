@@ -23,11 +23,6 @@ import wx
 import pcbnew
 
 
-class SwapUnitsDialog(wx.Dialog):
-
-    def __init__(self, parent):
-
-        
 
 class SwapUnits(pcbnew.ActionPlugin):
     """
@@ -49,28 +44,46 @@ class SwapUnits(pcbnew.ActionPlugin):
                    wx.GetTopLevelWindows()
                    )[0]
 
+        caption = 'Swap units'
+        message = "Is eeschema closed?"
+        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+        res = dlg.ShowModal()
+        dlg.Destroy()
+
+        if res == wx.ID_NO:
+            caption = 'Swap pins'
+            message = "You need to close eeschema and then run the plugin again!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
         # load board
         board = pcbnew.GetBoard()
                     
         # check if there are precisely two pads selected
-        
-        
-        # get respective nets
-        
-        
-        # open the schematics, find the pins and nearbywires connecte to the respective nets
-        
-        
-        # swap netnames in schematics
-        
-        
-        # save schematics
-        
-        
-        # swap nets in layout
-        
-        
-        # save layout
+        selected_pads = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetPads())
+        if len(selected_pads) != 2:
+            caption = 'Swap pins'
+            message = "More or less than 2 pads selected. Please select exactly two pads and run the script again"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        # are they on the same module
+        pad1 = selected_pads[0]
+        pad2 = selected_pads[1]
+        if pad1.GetParent().GetReference() != pad2.GetParent().GetReference():
+            caption = 'Swap pins'
+            message = "Pads don't belong to the same footprint"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        # swap pins
+        swap_units.swap(board, pad1, pad2)
         
         
 
