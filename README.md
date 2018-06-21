@@ -118,7 +118,22 @@ This plugin has been developed as a complex plugin according the [Python Plugin 
 Within the plugin folder only *.py files are required for operation.
 
 This plugin swaps two pads (in layout) and coresponding pins (in schematics). The pins in the shematics have to be connected to local or global label or hierarchical label either directly at the symbol or through a short wire segment. Eeschema has to be closed when the plugin is executed in pcbnew.
+Once the plugin is done, save the layout, as the undo will only undo the layout leaving schematics in changed state. In order to undo the operation, you have to run the plugin again. The plugin does not work across multi unit parts and/or across different hierarchical levels.
 
 Example of pin swaping
 
 ![swaping of pins on local labels](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_pins_animation.gif)
+
+## Swap units
+
+This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9.
+
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
+
+Within the plugin folder only *.py files are required for operation.
+
+This plugin swaps two units (in layout) and coresponding units (in schematics). Eeschema has to be closed when the plugin is executed in pcbnew. Unit swwapping work across hierarchical pages. Once the plugin is done, save the layout, as the undo will only undo the layout leaving schematics in changed state. In order to undo the operation, you have to run the plugin again.
+
+Example of unit swaping
+
+![swaping units in different hierarchical pages](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_units_animation.gif)
