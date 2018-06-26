@@ -22,15 +22,23 @@
 import pcbnew
 import os
 import re
-import difflib
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
 
 
 def swap(board, pad_1, pad_2):
+    logger.info("Starting swap_units")
 
     # get all file paths
     pcb_file = os.path.abspath(str(board.GetFileName()))
     sch_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", ".sch"))
     cache_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", "-cache.lib"))
+
+    logger.info("main sch file is: " + sch_file)
+    logger.info("main pcb file is: " + pcb_file)
+    logger.info("sch cache file is: " + cache_file)
 
     # get pad numbers
     pad_nr_1 = pad_1.GetPadName()
@@ -38,6 +46,8 @@ def swap(board, pad_1, pad_2):
 
     # get module reference
     footprint_reference = pad_2.GetParent().GetReference()
+
+    logger.info("Swaping units on: " + footprint_reference)
 
     # get all schematic pages
     all_sch_files = []
@@ -52,6 +62,8 @@ def swap(board, pad_1, pad_2):
         if footprint_reference in current_sch_file:
             relevant_sch_files.append(page)
 
+    logger.info("Sch file to modify is: " + relevant_sch_files[0])
+
     # link refernce to symbol
     with open(relevant_sch_files[0]) as f:
         # go through all components
@@ -61,6 +73,8 @@ def swap(board, pad_1, pad_2):
             if footprint_reference in component:
                 symbol_name = component.split()[1]
                 break
+
+    logger.info("Symbol name is: " + symbol_name)
 
     # load the symbol from cache library
     with open(cache_file) as f:
@@ -82,6 +96,8 @@ def swap(board, pad_1, pad_2):
     # get number of units
     unit_nr = int(max(symbol_pins, key=lambda item: item[9])[9])
 
+    logger.info("Number of units in symbols: " + str(unit_nr))
+
     # construct a list of units, where each unit contains its pins. pin order is the same for all units
     sorted_by_pin_name = sorted(symbol_pins, key=lambda tup: (tup[1], tup[9]))
     pins_by_unit = []
@@ -101,6 +117,8 @@ def swap(board, pad_1, pad_2):
             unit_2 = pin[9]
             break
 
+    logger.info("Units to swap are: " + unit_1 + ", " + unit_2)
+
     # find pages containing specific units
     for page in relevant_sch_files:
         with open(page) as f:
@@ -115,6 +133,9 @@ def swap(board, pad_1, pad_2):
                                     page_1 = page
                                 if fields.split()[1] == unit_2:
                                     page_2 = page
+    logger.info("Files where the unites are:\n\t"
+                + page_1 + "\n\t"
+                + page_2)
 
     # swap units in schematics
     with open(page_1) as f:
@@ -170,6 +191,7 @@ def swap(board, pad_1, pad_2):
                 f.write(unit_1_sch_file)
             with open(page_2, 'w') as f:
                 f.write(unit_2_sch_file)
+    logger.info("Saved the schematics.")
 
     # swap pins in layout
     module = pad_1.GetParent()
@@ -191,6 +213,7 @@ def swap(board, pad_1, pad_2):
     if __name__ == "__main__":
         pcb_file_to_write = 'temp_' + board.GetFileName()
         saved = pcbnew.SaveBoard(pcb_file_to_write, board)
+    logger.info("Saved the layout.")
 
 
 def extract_subsheets(filename):
@@ -238,6 +261,7 @@ def extract_subsheets(filename):
 def find_all_sch_files(filename, list_of_files):
     list_of_files.append(filename)
     for sheet in extract_subsheets(filename):
+        logger.info("found subsheet:\n\t" + sheet + "\n in:\n\t" + filename)
         seznam = find_all_sch_files(sheet, list_of_files)
         list_of_files = seznam
     return list_of_files
@@ -270,4 +294,19 @@ def main():
 
 # for testing purposes only
 if __name__ == "__main__":
+    file_handler = logging.FileHandler(filename='swap_units.log')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    handlers = [file_handler, stdout_handler]
+    # handlers = [file_handler]
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                        datefmt='%m-%d %H:%M:%S',
+                        handlers=handlers,
+                        filemode='w'
+                        )
+
+    logger = logging.getLogger(__name__)
+    logger.info("Swap units plugin started in standalone mode")
+
     main()

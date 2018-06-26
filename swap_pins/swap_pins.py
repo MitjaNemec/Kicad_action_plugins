@@ -24,6 +24,7 @@ import os
 import math
 from operator import itemgetter
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -228,4 +229,19 @@ def main():
 
 # for testing purposes only
 if __name__ == "__main__":
+    file_handler = logging.FileHandler(filename='swap_pins.log')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    handlers = [file_handler, stdout_handler]
+    # handlers = [file_handler]
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                        datefmt='%m-%d %H:%M:%S',
+                        handlers=handlers,
+                        filemode='w'
+                        )
+
+    logger = logging.getLogger(__name__)
+    logger.info("Swap pins plugin started in standalone mode")
+    print logger.handlers
     main()
