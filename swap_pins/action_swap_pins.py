@@ -23,6 +23,8 @@ import wx
 import pcbnew
 import os
 import swap_pins
+import logging
+import sys
 
 class SwapPins(pcbnew.ActionPlugin):
     """
@@ -44,6 +46,30 @@ class SwapPins(pcbnew.ActionPlugin):
                    wx.GetTopLevelWindows()
                    )[0]
 
+        # load board
+        board = pcbnew.GetBoard()
+
+        # go to the project folder - so that log will be in proper place
+        os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
+
+        # set up logger
+        logging.basicConfig(level=logging.DEBUG,
+                            filename="swap_pins.log",
+                            filemode='w',
+                            format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                            datefmt='%m-%d %H:%M:%S',
+                            disable_existing_loggers=False)
+        logger = logging.getLogger(__name__)
+        logger.info("Action plugin Swap pins started")
+
+        stdout_logger = logging.getLogger('STDOUT')
+        sl = StreamToLogger(stdout_logger, logging.INFO)
+        sys.stdout = sl
+
+        stderr_logger = logging.getLogger('STDERR')
+        sl = StreamToLogger(stderr_logger, logging.ERROR)
+        sys.stderr = sl
+
         caption = 'Swap pins'
         message = "Is eeschema closed?"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
@@ -56,11 +82,9 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logger.info("Action plugin canceled as eeschema was not closed")
             return
 
-        # load board
-        board = pcbnew.GetBoard()
-                    
         # check if there are precisely two pads selected
         selected_pads = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetPads())
         if len(selected_pads) != 2:
@@ -69,6 +93,7 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logger.info("Action plugin canceled. More or less than 2 pads selected.")
             return
 
         # are they on the same module
@@ -80,9 +105,22 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logger.info("Action plugin canceled. Selected pads don't belong to the same footprint.")
             return
 
         # swap pins
         swap_pins.swap(board, pad1, pad2)
 
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
 

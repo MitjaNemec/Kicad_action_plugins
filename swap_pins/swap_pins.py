@@ -23,18 +23,24 @@ import pcbnew
 import os
 import math
 from operator import itemgetter
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def swap(board, pad_1, pad_2):
+    logger.info("Starting swap_pins")
     footprint = pad_2.GetParent().GetReference()
     # get respective nets
     net_1 = pad_1.GetNet()
     net_2 = pad_2.GetNet()
     net_name_1 = net_1.GetNetname().split('/')[-1]
     net_name_2 = net_2.GetNetname().split('/')[-1]
+    logger.info("Swaping pins on " + footprint + " on nets " + net_name_1 + ", " + net_name_2)
 
     # Find the sch file that has this symbol
     main_sch_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", ".sch"))
+    logger.info("main sch file is: " + main_sch_file)
     all_sch_files = []
     all_sch_files = find_all_sch_files(main_sch_file, all_sch_files)
     all_sch_files = list(set(all_sch_files))
@@ -44,6 +50,7 @@ def swap(board, pad_1, pad_2):
         if footprint in current_sch_file:
             sch_file_to_modify = sch_file
 
+    logger.info("Sch file to modify: " + sch_file_to_modify)
     # open the schematics, find symbol, find the pins and nearbywires connected to the respective nets
     with open(sch_file_to_modify) as f:
         sch_file = f.read()
@@ -52,6 +59,7 @@ def swap(board, pad_1, pad_2):
     closest_label_1 = find_closest_label(sch_file, footprint, net_name_1)
     closest_label_2 = find_closest_label(sch_file, footprint, net_name_2)
 
+    logger.info("Swapping labels")
     # swap netnames in schematics
     sch_file_temp = sch_file[0:closest_label_1[0][2]]\
                   + net_name_2\
@@ -59,8 +67,7 @@ def swap(board, pad_1, pad_2):
     sch_file_out = sch_file_temp[0:closest_label_2[0][2]]\
                  + net_name_1\
                  + sch_file_temp[closest_label_2[0][2]+len(net_name_1):]
-    # if label type is different also swap label types
-    # TODO
+    # TODO if label type is different also swap label types
 
     # save schematics
     if __name__ == "__main__":
@@ -69,6 +76,7 @@ def swap(board, pad_1, pad_2):
         sch_file_to_write = sch_file_to_modify
     with open(sch_file_to_write, 'w') as f:
         f.write(sch_file_out)
+    logger.info("Saved the schematics.")
 
     # swap nets in layout
     # Select PADa -> Properties.Copy NetName
@@ -79,7 +87,7 @@ def swap(board, pad_1, pad_2):
     if __name__ == "__main__":
         pcb_file_to_write = 'temp_' + board.GetFileName()
         saved = pcbnew.SaveBoard(pcb_file_to_write, board)
-
+    logger.info("Saved the layout.")
 
 def find_closest_label(sch_file, footprint, net):
     label_locations = find_all(sch_file, net)
@@ -175,6 +183,7 @@ def extract_subsheets(filename):
 def find_all_sch_files(filename, list_of_files):
     list_of_files.append(filename)
     for sheet in extract_subsheets(filename):
+        logger.info("found subsheet:\n\t" + sheet + "\n in:\n\t" + filename)
         seznam = find_all_sch_files(sheet, list_of_files)
         list_of_files = seznam
     return list_of_files
