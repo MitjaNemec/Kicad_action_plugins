@@ -157,7 +157,7 @@ def extract_subsheets(filename):
     for sheet_location in sheet_locations:
         sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
         for line in sheet_reference:
-            if line.startswith('F1'):
+            if line.startswith('F1 '):
                 subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
                 subsheet_line = file_lines.split("\n").index(line)
                 if not os.path.isabs(subsheet_path):
@@ -180,6 +180,8 @@ def extract_subsheets(filename):
                     subsheet_path = os.path.join(file_folder, subsheet_path)
 
                 subsheet_path = os.path.normpath(subsheet_path)
+                # found subsheet reference go for the next one, no need to parse further
+                break
         yield subsheet_path, subsheet_line
 
 
