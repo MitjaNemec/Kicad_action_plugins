@@ -217,24 +217,24 @@ def swap(board, pad_1, pad_2):
 
 
 def extract_subsheets(filename):
-    in_rec_mode = False
-    counter = 0
     with open(filename) as f:
         file_folder = os.path.dirname(os.path.abspath(filename))
-        file_lines = f.readlines()
-    for line in file_lines:
-        counter += 1
-        if not in_rec_mode:
-            if line.startswith('$Sheet'):
-                in_rec_mode = True
-                subsheet_path = []
-        elif line.startswith('$EndSheet'):
-            in_rec_mode = False
-            yield subsheet_path
-        else:
-            #extract subsheet path
-            if line.startswith('F1'):
+        file_lines = f.read()
+    # alternative solution
+    # extract all sheet references
+    sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
+    endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
+
+    if len(sheet_indices) != len(endsheet_indices):
+        raise LookupError("Schematic page contains errors")
+
+    sheet_locations = zip(sheet_indices, endsheet_indices)
+    for sheet_location in sheet_locations:
+        sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
+        for line in sheet_reference:
+            if line.startswith('F1 '):
                 subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
+                subsheet_line = file_lines.split("\n").index(line)
                 if not os.path.isabs(subsheet_path):
                     # check if path is encoded with variables
                     if "${" in subsheet_path:
@@ -246,22 +246,25 @@ def extract_subsheets(filename):
                         if path is None:
                             raise LookupError("Can not find subsheet: " + subsheet_path)
                         # replace variable with full path
-                        subsheet_path = subsheet_path.replace("${", "")\
-                                                     .replace("}", "")\
-                                                     .replace("env_var", path)
+                        subsheet_path = subsheet_path.replace("${", "") \
+                            .replace("}", "") \
+                            .replace("env_var", path)
 
                 # if path is still not absolute, then it is relative to project
                 if not os.path.isabs(subsheet_path):
                     subsheet_path = os.path.join(file_folder, subsheet_path)
 
                 subsheet_path = os.path.normpath(subsheet_path)
-                pass
+                # found subsheet reference go for the next one, no need to parse further
+                break
+        yield subsheet_path, subsheet_line
 
 
 def find_all_sch_files(filename, list_of_files):
     list_of_files.append(filename)
-    for sheet in extract_subsheets(filename):
-        logger.info("found subsheet:\n\t" + sheet + "\n in:\n\t" + filename)
+    for sheet, line_nr in extract_subsheets(filename):
+        logger.info("found subsheet:\n\t" + sheet +
+                    "\n in:\n\t" + filename + ", line: " + str(line_nr))
         seznam = find_all_sch_files(sheet, list_of_files)
         list_of_files = seznam
     return list_of_files
