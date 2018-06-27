@@ -90,7 +90,7 @@ def swap(board, pad_1, pad_2):
     symbol_pins = []
     symbol_fields = symbol.split('\n')
     for field in symbol_fields:
-        if field.startswith('X'):
+        if field.startswith('X '):
             symbol_pins.append(tuple(field.split()))
 
     # get number of units
