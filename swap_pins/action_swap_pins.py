@@ -26,6 +26,7 @@ import swap_pins
 import logging
 import sys
 
+
 class SwapPins(pcbnew.ActionPlugin):
     """
     A script to swap selected pins
@@ -111,6 +112,7 @@ class SwapPins(pcbnew.ActionPlugin):
         # swap pins
         swap_pins.swap(board, pad1, pad2)
 
+
 class StreamToLogger(object):
     """
     Fake file-like stream object that redirects writes to a logger instance.
@@ -123,4 +125,3 @@ class StreamToLogger(object):
     def write(self, buf):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
-

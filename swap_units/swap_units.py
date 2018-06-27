@@ -148,7 +148,12 @@ def swap(board, pad_1, pad_2):
             if footprint_reference in data[1]:
                 if unit_1 in data[2].split()[1]:
                     # +2 +1 account for splits
-                    unit_1_loc = data[2].split()[1].find(unit_1) + comp[0] + len(data[0]) + len(data[1]) + len(data[2].split()[0]) + 2 + 1
+                    unit_1_loc = data[2].split()[1].find(unit_1)\
+                               + comp[0]\
+                               + len(data[0])\
+                               + len(data[1])\
+                               + len(data[2].split()[0])\
+                               + 2 + 1
                     break
         # swap the unit
         unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
@@ -163,7 +168,12 @@ def swap(board, pad_1, pad_2):
             if footprint_reference in data[1]:
                 if unit_2 in data[2].split()[1]:
                     # +2 +1 account for splits
-                    unit_2_loc = data[2].split()[1].find(unit_2) + comp[0] + len(data[0]) + len(data[1]) + len(data[2].split()[0]) + 2 + 1
+                    unit_2_loc = data[2].split()[1].find(unit_2)\
+                               + comp[0]\
+                               + len(data[0])\
+                               + len(data[1])\
+                               + len(data[2].split()[0])\
+                               + 2 + 1
                     break
         # swap the unit
         unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
@@ -212,7 +222,7 @@ def swap(board, pad_1, pad_2):
     # save board
     if __name__ == "__main__":
         pcb_file_to_write = 'temp_' + board.GetFileName()
-        saved = pcbnew.SaveBoard(pcb_file_to_write, board)
+        pcbnew.SaveBoard(pcb_file_to_write, board)
     logger.info("Saved the layout.")
 
 
@@ -313,3 +323,4 @@ if __name__ == "__main__":
     logger.info("Swap units plugin started in standalone mode")
 
     main()
+

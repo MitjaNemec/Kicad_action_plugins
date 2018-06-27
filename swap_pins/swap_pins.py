@@ -88,7 +88,7 @@ def swap(board, pad_1, pad_2):
     # save board
     if __name__ == "__main__":
         pcb_file_to_write = 'temp_' + board.GetFileName()
-        saved = pcbnew.SaveBoard(pcb_file_to_write, board)
+        pcbnew.SaveBoard(pcb_file_to_write, board)
     logger.info("Saved the layout.")
 
 
@@ -136,7 +136,8 @@ def find_all(a_str, sub):
     start = 0
     while True:
         start = a_str.find(sub, start)
-        if start == -1: return
+        if start == -1:
+            return
         yield start
         start += len(sub)
 
@@ -248,5 +249,5 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
     logger.info("Swap pins plugin started in standalone mode")
-    print logger.handlers
+
     main()
