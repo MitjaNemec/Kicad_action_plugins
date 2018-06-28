@@ -59,7 +59,11 @@ def swap(board, pad_1, pad_2):
 
     # find both net names and their locations
     closest_label_1 = find_closest_label(sch_file, footprint, net_name_1)
+    logger.info("Found closest label for " + net_name_1 + " at (" + str(closest_label_1[0][0]) + ", "
+                + str(closest_label_1[0][1]) + ")")
     closest_label_2 = find_closest_label(sch_file, footprint, net_name_2)
+    logger.info("Found closest label for " + net_name_2 + " at (" + str(closest_label_2[0][0]) + ", "
+                + str(closest_label_2[0][1]) + ")")
 
     logger.info("Swapping labels")
     # swap netnames in schematics
@@ -69,7 +73,6 @@ def swap(board, pad_1, pad_2):
     sch_file_out = sch_file_temp[0:closest_label_2[0][2]]\
                  + net_name_1\
                  + sch_file_temp[closest_label_2[0][2]+len(net_name_1):]
-    # TODO if label type is different also swap label types
 
     # save schematics
     if __name__ == "__main__":
@@ -94,6 +97,7 @@ def swap(board, pad_1, pad_2):
 
 def find_closest_label(sch_file, footprint, net):
     label_locations = find_all(sch_file, net)
+    logger.info("Searching for the closest label for " + net + " to " + footprint)
     labels = []
     for loc_end in label_locations:
         # find position of a label
@@ -105,6 +109,10 @@ def find_closest_label(sch_file, footprint, net):
 
         label_data = sch_file[loc_begin:loc_end].split()
         labels.append((float(label_data[2]), float(label_data[3]), loc_end))
+        logger.info("Found label at: (" + label_data[2] + ", " + label_data[3] + ")")
+
+    if labels is None:
+        raise ValueError("No labels for net: " + net + " found on this sheet")
 
     # find component location
     component_name_index = sch_file.find(footprint)
@@ -115,6 +123,8 @@ def find_closest_label(sch_file, footprint, net):
         if data[0] == 'P':
             component_location = (float(data.split()[1]), float(data.split()[2]))
             break
+
+    logger.info("Component location: (" + str(component_location[0]) + " ," + str(component_location[0]) + ")")
 
     # find closest label
     distances = []

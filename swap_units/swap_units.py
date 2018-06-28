@@ -62,7 +62,7 @@ def swap(board, pad_1, pad_2):
         if footprint_reference in current_sch_file:
             relevant_sch_files.append(page)
 
-    logger.info("Sch file to modify is: " + relevant_sch_files[0])
+    logger.info("Sch files to modify are: " + relevant_sch_files[0])
 
     # link refernce to symbol
     with open(relevant_sch_files[0]) as f:
