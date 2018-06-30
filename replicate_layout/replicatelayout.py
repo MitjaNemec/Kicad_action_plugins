@@ -169,8 +169,19 @@ class Replicator:
             sheet_id = get_sheet_id(mod)
             if (module_id == self.pivot_mod_id) and (sheet_id != self.pivot_sheet_id) \
                     and (sheet_id not in self.sheets_to_clone):
-                self.sheets_to_clone.append(sheet_id)
-        pass
+                # Get the number in the reference.
+                ref = [c for c in mod.GetReference() if c.isdigit()]
+                if ref:
+                    refnum = int(''.join(ref))
+                else:
+                    refnum = -1
+
+                # Add the number and the sheet ID.
+                self.sheets_to_clone.append((refnum, sheet_id))
+
+        # Sort by the number of the replicated modules, and then discard
+        # these numbers.
+        self.sheets_to_clone = [s for r, s in sorted(self.sheets_to_clone)]
 
         # get bounding bounding box of all modules
         bounding_box = self.pivot_mod.GetFootprintRect()
