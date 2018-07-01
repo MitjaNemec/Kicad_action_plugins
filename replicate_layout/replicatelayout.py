@@ -212,6 +212,7 @@ class Replicator:
         # get minimal width - GUI assumes horizontal replication
         self.minimum_width = (right - left) / SCALE
 
+        self.pivot_text = []
         self.pivot_tracks = []
         self.pivot_zones = []
         self.only_within_bbox = False
@@ -247,6 +248,19 @@ class Replicator:
             if (only_within_boundingbox and self.pivot_bounding_box.Contains(zone_bb)) or\
                (not only_within_boundingbox and self.pivot_bounding_box.Intersects(zone_bb)):
                 self.pivot_zones.append(zone)
+
+        # get all text objects in pivot bounding box
+        for drawing in self.board.GetDrawings():
+            if not isinstance(drawing, pcbnew.TEXTE_PCB):
+                continue
+            text_bb = drawing.GetBoundingBox()
+            if only_within_boundingbox:
+                if self.pivot_bounding_box.Contains(text_bb):
+                    self.pivot_text.append(drawing)
+            else:
+                if self.pivot_bounding_box.Intersects(text_bb):
+                    self.pivot_text.append(drawing)
+
 
     def get_nets_from_modules(self, modules):
         # go through all modules and their pads and get the nets they are connected to
@@ -388,7 +402,29 @@ class Replicator:
             # remove tracks
             for zone in zones_to_remove:
                 self.board.RemoveNative(zone)
-            # get and remove zones in bounding box
+
+            text_to_remove = []
+            # from all text items on the board
+            for drawing in self.board.GetDrawings():
+                if not isinstance(drawing, pcbnew.TEXTE_PCB):
+                    continue
+                # ignore text in the pivot sheet
+                if drawing in self.pivot_text:
+                    continue
+
+                # add text in/intersecting with the replicated bounding box to
+                # the list for removal.
+                text_bb = drawing.GetBoundingBox()
+                if self.only_within_bbox:
+                    if bounding_box.Contains(text_bb):
+                        text_to_remove.append(drawing)
+                else:
+                    if bounding_box.Intersects(text_bb):
+                        text_to_remove.append(drawing)
+
+            # remove text objects
+            for text in text_to_remove:
+                self.board.RemoveNative(text)
 
     def replicate_modules(self, x_offset, y_offset, polar):
         global SCALE
@@ -464,6 +500,36 @@ class Replicator:
 
                             # set visibility
                             mod_text_items[index].SetVisible(pivot_text.IsVisible())
+
+    def replicate_text(self, x_offset, y_offset, polar):
+        global SCALE
+        # start cloning
+        for sheet_index, sheet in enumerate(self.sheets_to_clone, 1):
+            for text in self.pivot_text:
+                pivot_position = text.GetPosition()
+                pivot_angle = text.GetTextAngle() / 10   # Returned in deci-degrees.
+                newtext = text.Duplicate()
+
+                # Calculate new position.
+                if polar:
+                    pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                    newposition = rotate_around_pivot_point(pivot_position, pivot_point, sheet_index * y_offset)
+
+                    # Calculate new angle.
+                    new_angle = pivot_angle - sheet_index * y_offset
+                    if new_angle > 360.0:
+                        new_angle = new_angle - 360
+                    if new_angle < 0.0:
+                        new_angle = new_angle + 360
+                    newtext.SetTextAngle(new_angle * 10)  # Set in deci-degrees.
+                else:
+                    newposition = (pivot_position[0] + sheet_index * x_offset * SCALE,
+                                   pivot_position[1] + sheet_index * y_offset * SCALE)
+
+                # Update position and add to board.
+                newposition = [int(x) for x in newposition]
+                newtext.SetPosition(pcbnew.wxPoint(*newposition))
+                self.board.Add(newtext)
 
     def replicate_tracks(self, x_offset, y_offset, polar):
         """ method which replicates tracks"""
@@ -616,6 +682,7 @@ class Replicator:
                          remove_existing_nets_zones,
                          replicate_tracks,
                          replicate_zones,
+                         replicate_text,
                          polar):
         self.prepare_for_replication(replicate_containing_only)
         if remove_existing_nets_zones:
@@ -627,6 +694,8 @@ class Replicator:
             self.replicate_tracks(x_offset, y_offset, polar)
         if replicate_zones:
             self.replicate_zones(x_offset, y_offset, polar)
+        if replicate_text:
+            self.replicate_text(x_offset, y_offset, polar)
 
 
 def test_replicate(x, y, within, polar):
@@ -650,6 +719,7 @@ def test_replicate(x, y, within, polar):
                                 remove_existing_nets_zones=True,
                                 replicate_tracks=True,
                                 replicate_zones=True,
+                                replicate_text=True,
                                 polar=polar)
     # save the board
     saved = pcbnew.SaveBoard('temp_'+filename, board)
