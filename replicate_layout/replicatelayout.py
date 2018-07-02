@@ -571,52 +571,66 @@ class Replicator:
                     tup = [(from_net_name, from_net_name), ]
                 else:
                     tup = [item for item in net_pairs if item[0] == from_net_name]
-                # if there is no net, then do not clone
-                if not tup:
-                    pass
-                # otherwise clone
-                else:
-                    to_net_name = tup[0][1]
-                    if to_net_name == u'':
-                        to_net = 0
-                    else:
-                        to_net = net_dict[to_net_name].GetNet()
 
-                    # now I can finally make a copy of a zone
-                    # this came partially from Miles Mccoo. I only extended it with polar support
-                    # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-                    coords = get_coordinate_points_of_shape_poly_set(zone.Outline())
-                    if polar:
-                        pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                        newposition = rotate_around_pivot_point((coords[0][0], coords[0][1]), pivot_point, sheet_index * y_offset)
-                        newposition = [int(x) for x in newposition]
-                        newzone = self.board.InsertArea(to_net,
-                                                        0,
-                                                        zone.GetLayer(),
-                                                        newposition[0],
-                                                        newposition[1],
-                                                        pcbnew.CPolyLine.DIAGONAL_EDGE)
-                        newoutline = newzone.Outline()
-                        for pt in coords[1:]:
-                            newposition = rotate_around_pivot_point((pt[0], pt[1]), pivot_point,
-                                                                    sheet_index * y_offset)
-                            newposition = [int(x) for x in newposition]
-                            newoutline.Append(newposition[0], newposition[1])
+                # there is no net
+                if not tup:
+                    # Allow keepout zones to be cloned.
+                    if zone.GetIsKeepout():
+                        tup = [('', '')]
+                    # do not clone
                     else:
-                        newposition = (coords[0][0] + sheet_index * x_offset * SCALE,
-                                       coords[0][1] + sheet_index * y_offset * SCALE)
+                        continue
+
+                # start the clone
+                to_net_name = tup[0][1]
+                if to_net_name == u'':
+                    to_net = 0
+                else:
+                    to_net = net_dict[to_net_name].GetNet()
+
+                # now I can finally make a copy of a zone
+                # this came partially from Miles Mccoo. I only extended it with polar support
+                # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
+                coords = get_coordinate_points_of_shape_poly_set(zone.Outline())
+                if polar:
+                    pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
+                    newposition = rotate_around_pivot_point((coords[0][0], coords[0][1]), pivot_point, sheet_index * y_offset)
+                    newposition = [int(x) for x in newposition]
+                    newzone = self.board.InsertArea(to_net,
+                                                    0,
+                                                    zone.GetLayer(),
+                                                    newposition[0],
+                                                    newposition[1],
+                                                    pcbnew.CPolyLine.DIAGONAL_EDGE)
+                    newoutline = newzone.Outline()
+                    for pt in coords[1:]:
+                        newposition = rotate_around_pivot_point((pt[0], pt[1]), pivot_point,
+                                                                sheet_index * y_offset)
                         newposition = [int(x) for x in newposition]
-                        newzone = self.board.InsertArea(to_net,
-                                                        0,
-                                                        zone.GetLayer(),
-                                                        newposition[0],
-                                                        newposition[1],
-                                                        pcbnew.CPolyLine.DIAGONAL_EDGE)
-                        newoutline = newzone.Outline()
-                        for pt in coords[1:]:
-                            newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE),
-                                              pt[1] + int(sheet_index*y_offset*SCALE))
-                    newzone.Hatch()
+                        newoutline.Append(newposition[0], newposition[1])
+                else:
+                    newposition = (coords[0][0] + sheet_index * x_offset * SCALE,
+                                   coords[0][1] + sheet_index * y_offset * SCALE)
+                    newposition = [int(x) for x in newposition]
+                    newzone = self.board.InsertArea(to_net,
+                                                    0,
+                                                    zone.GetLayer(),
+                                                    newposition[0],
+                                                    newposition[1],
+                                                    pcbnew.CPolyLine.DIAGONAL_EDGE)
+                    newoutline = newzone.Outline()
+                    for pt in coords[1:]:
+                        newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE),
+                                          pt[1] + int(sheet_index*y_offset*SCALE))
+
+                # Copy the keepout properties.
+                if zone.GetIsKeepout():
+                    newzone.SetIsKeepout(True)
+                    newzone.SetLayerSet(zone.GetLayerSet())
+                    newzone.SetDoNotAllowCopperPour(zone.GetDoNotAllowCopperPour())
+                    newzone.SetDoNotAllowTracks(zone.GetDoNotAllowTracks())
+                    newzone.SetDoNotAllowVias(zone.GetDoNotAllowVias())
+                newzone.Hatch()
 
     def replicate_layout(self, x_offset, y_offset,
                          replicate_containing_only,
