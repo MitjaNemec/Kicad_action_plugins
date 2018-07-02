@@ -83,6 +83,14 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer1.Add( bSizer5, 1, wx.EXPAND, 5 )
 
+        bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.chkbox_text = wx.CheckBox( self, wx.ID_ANY, u"Replicate text", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.chkbox_text.SetValue(True)
+        bSizer6.Add( self.chkbox_text, 0, wx.ALL, 5 )
+
+        bSizer1.Add( bSizer6, 1, wx.EXPAND, 5 )
+
         bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
 
         self.chkbox_intersecting = wx.CheckBox( self, wx.ID_ANY, u"Replicate intersecting tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -193,6 +201,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
             replicate_containing_only = False
             remove_existing_nets_zones = False
+            rep_text = False
             rep_tracks = False
             rep_zones = False
 
@@ -210,6 +219,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                 remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
                 rep_tracks = dlg.chkbox_tracks.GetValue()
                 rep_zones = dlg.chkbox_zones.GetValue()
+                rep_text = dlg.chkbox_text.GetValue()
             else:
                 process_canceled = True
 
@@ -226,7 +236,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                                                 replicate_containing_only,
                                                 remove_existing_nets_zones,
                                                 rep_tracks,
-                                                rep_zones,
+                                                rep_zones, rep_text,
                                                 polar)
 
                     pcbnew.Refresh()

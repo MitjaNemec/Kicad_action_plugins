@@ -19,19 +19,19 @@ Basic requirement for replication is that the section for replication is complet
 ![Top sheet schematics](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_0.png)
 ![Hierarchical sheet to replicate](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_1.png)
 
-Once the section for replication (pivot section) has been laid out (modules, tracks and zones placed) you need to:
+Once the section for replication (pivot section) has been laid out (modules, tracks, text objects and zones placed) you need to:
 1. select anyone of the modules within the pivot section
 2. run the plugin
 3. choose between linear and circular replication
 4. Enter replication step size (x,y in linear replication and radius, angle (in degrees) for circular replication
-5. select wheather you want to replicate also tracks and/or zones
-6. select wheather you want to replicate tracks/zones which are intersectin the pivot bounding box
-7. select wheather you want to delete already layed out tracks/zones (this is useful when updating already replicated layout)
+5. select whether you want to replicate also tracks, zones and/or text objects
+6. select whether you want to replicate tracks/zones/text which intersect the pivot bounding box or just those contained within the bounding box
+7. select whether you want to delete already layed out tracks/zones/text (this is useful when updating already replicated layout)
 8. hit OK
 
 The replication can be linear or circular. For linear replication the plugin will ask for x and y offset (in mm) with respect to pivot section where replicated sections will be placed. For circular replication the plugin will ask for radius (in mm) and angle (in °) with respect to pivot section where replicated sections will be placed.
 
-Additionally you can choose wheather you want to replicate also zones and/or tracks. By default only tracks and zones which are contained in bounding box constituted by all the modules in the section will be replicated. You can seledt to replicate also zones and tracks which intersect this bounding box. Additionally, tracks and zones already laid out in replicated bounding boxes can be removed (useful when updating). Note that in circular replication, bounding boxes are still squares alligned with x and y axis.
+Additionally you can choose wheather you want to replicate also zones, text and/or tracks. By default only objects which are contained in bounding box constituted by all the modules in the section will be replicated. You can select to replicate also zones and tracks which intersect this bounding box. Additionally, tracks, text and zones already laid out in replicated bounding boxes can be removed (useful when updating). Note that in circular replication, bounding boxes are still squares alligned with x and y axis.
 
 ![Bounding box, contained, intersecting definitions](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_2.png)
 
