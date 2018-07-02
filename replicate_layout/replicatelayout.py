@@ -439,6 +439,13 @@ class Replicator:
                             new_orientation = pivot_mod_orientation
                         mod.SetOrientationDegrees(new_orientation)
 
+                        # Copy local settings.
+                        mod.SetLocalClearance(mod_to_clone.GetLocalClearance())
+                        mod.SetLocalSolderMaskMargin(mod_to_clone.GetLocalSolderMaskMargin())
+                        mod.SetLocalSolderPasteMargin(mod_to_clone.GetLocalSolderPasteMargin())
+                        mod.SetLocalSolderPasteMarginRatio(mod_to_clone.GetLocalSolderPasteMarginRatio())
+                        mod.SetZoneConnection(mod_to_clone.GetZoneConnection())
+
                         # replicate also text layout
                         # get pivot_module_text
                         pivot_mod_text_items = get_module_text_items(mod_to_clone)
