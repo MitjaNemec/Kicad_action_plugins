@@ -111,8 +111,8 @@ def find_closest_label(sch_file, footprint, net):
         labels.append((float(label_data[2]), float(label_data[3]), loc_end))
         logger.info("Found label at: (" + label_data[2] + ", " + label_data[3] + ")")
 
-    if labels is None:
-        raise ValueError("No labels for net: " + net + " found on this sheet")
+    if not labels:
+        raise ValueError("No labels for net: " + net + " found on sheet: " + sch_file)
 
     # find component location
     component_name_index = sch_file.find(footprint)
