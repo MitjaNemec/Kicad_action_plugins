@@ -111,7 +111,7 @@ If the project is modified later it should be archived again in order to stay po
 
 ## Swap pins
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9.
+This plugin has been tested on Windows 7 Kicad nightly 2018-07-10 revision 0013e0cad.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -126,7 +126,7 @@ Example of pin swaping
 
 ## Swap units
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9.
+This plugin has been tested on Windows 7 Kicad nightly 2018-07-10 revision 0013e0cad.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
