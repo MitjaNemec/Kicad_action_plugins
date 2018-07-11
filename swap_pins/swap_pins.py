@@ -36,9 +36,13 @@ def swap(board, pad_1, pad_2):
     # get respective nets
     net_1 = pad_1.GetNet()
     net_2 = pad_2.GetNet()
+    pad_1_name = pad_1.GetName()
+    pad_2_name = pad_2.GetName()
     net_name_1 = net_1.GetNetname().split('/')[-1]
     net_name_2 = net_2.GetNetname().split('/')[-1]
-    logger.info("Swaping pins on " + footprint + " on nets " + net_name_1 + ", " + net_name_2)
+
+    logger.info("Swaping pins: " + pad_1_name + ", " + pad_2_name +
+                "on: " + footprint + " on nets: " + net_name_1 + ", " + net_name_2)
 
     # Find the sch file that has this symbol
     main_sch_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", ".sch"))
