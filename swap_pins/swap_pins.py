@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 def swap(board, pad_1, pad_2):
-    logger.info("Starting swap_pins_V2")
+    logger.info("Starting swap_pins")
 
     # get all file paths
     pcb_file = os.path.abspath(str(board.GetFileName()))
@@ -514,6 +514,7 @@ def main():
                 pad2 = pad
         pass
         swap(board, pad1, pad2)
+
 
 # for testing purposes only
 if __name__ == "__main__":
