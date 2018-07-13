@@ -55,13 +55,13 @@ class SwapPins(pcbnew.ActionPlugin):
 
         # set up logger
         logging.basicConfig(level=logging.DEBUG,
-                            filename="swap_pins.log",
+                            filename="swap_pins_V2.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S',
                             disable_existing_loggers=False)
         logger = logging.getLogger(__name__)
-        logger.info("Action plugin Swap pins started")
+        logger.info("Action plugin Swap pins V2 started")
 
         stdout_logger = logging.getLogger('STDOUT')
         sl = StreamToLogger(stdout_logger, logging.INFO)
@@ -71,14 +71,14 @@ class SwapPins(pcbnew.ActionPlugin):
         sl = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl
 
-        caption = 'Swap pins'
+        caption = 'Swap pins V2'
         message = "Is eeschema closed?"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
         res = dlg.ShowModal()
         dlg.Destroy()
 
         if res == wx.ID_NO:
-            caption = 'Swap pins'
+            caption = 'Swap pins V2'
             message = "You need to close eeschema and then run the plugin again!"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
@@ -89,7 +89,7 @@ class SwapPins(pcbnew.ActionPlugin):
         # check if there are precisely two pads selected
         selected_pads = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetPads())
         if len(selected_pads) != 2:
-            caption = 'Swap pins'
+            caption = 'Swap pins V2'
             message = "More or less than 2 pads selected. Please select exactly two pads and run the script again"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
@@ -101,7 +101,7 @@ class SwapPins(pcbnew.ActionPlugin):
         pad1 = selected_pads[0]
         pad2 = selected_pads[1]
         if pad1.GetParent().GetReference() != pad2.GetParent().GetReference():
-            caption = 'Swap pins'
+            caption = 'Swap pins V2'
             message = "Pads don't belong to the same footprint"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
@@ -110,7 +110,7 @@ class SwapPins(pcbnew.ActionPlugin):
             return
 
         # swap pins
-        swap_pins.swap(board, pad1, pad2)
+        swap_pins_v2.swap(board, pad1, pad2)
 
 
 class StreamToLogger(object):

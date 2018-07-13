@@ -178,21 +178,13 @@ F 3 "" H 2800 1750 50  0001 C CNN
 	1    2800 1750
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	3800 3400 4100 3400
-Wire Wire Line
-	3800 3500 4100 3500
-Wire Wire Line
-	3800 3600 4100 3600
-Wire Wire Line
-	3800 3700 4100 3700
-Text Label 4100 3400 0    50   ~ 0
+Text Label 3800 3400 0    50   ~ 0
 RD1
-Text Label 4100 3500 0    50   ~ 0
+Text Label 3800 3500 0    50   ~ 0
 RD2
-Text Label 4100 3600 0    50   ~ 0
+Text Label 3800 3600 0    50   ~ 0
 RD3
-Text Label 4100 3700 0    50   ~ 0
+Text Label 3800 3700 0    50   ~ 0
 RD4
 $Comp
 L Device:R R1
@@ -289,4 +281,17 @@ Wire Wire Line
 	8900 3000 9750 3000
 Wire Wire Line
 	8900 3300 9750 3300
+Text GLabel 4900 4850 2    50   Input ~ 0
+A1
+$Comp
+L Amplifier_Operational:LM324 U1
+U 2 1 5B34B8B0
+P 4600 4850
+F 0 "U1" H 4600 5050 50  0000 L CNN
+F 1 "LM324" H 4600 4650 50  0000 L CNN
+F 2 "" H 4550 4950 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 4650 5050 50  0001 C CNN
+	2    4600 4850
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

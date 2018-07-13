@@ -26,14 +26,6 @@ F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/39564c.pdf" H 3200 3450 50 
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4200 2900 4500 2900
-Wire Wire Line
-	4200 3000 4500 3000
-Wire Wire Line
-	4200 3100 4500 3100
-Wire Wire Line
-	4200 3200 4500 3200
-Wire Wire Line
 	3100 5100 3100 5200
 Wire Wire Line
 	3100 5200 3200 5200
@@ -73,12 +65,31 @@ F 3 "" H 3100 2300 50  0001 C CNN
 	1    3100 2300
 	1    0    0    -1  
 $EndComp
-Text HLabel 4500 2900 2    50   Input ~ 0
+Text HLabel 4200 2900 2    50   Input ~ 0
 RC1
-Text HLabel 4500 3000 2    50   Input ~ 0
+Text HLabel 4200 3000 2    50   Input ~ 0
 RC2
-Text HLabel 4500 3100 2    50   Input ~ 0
+Text HLabel 4200 3100 2    50   Input ~ 0
 RC3
-Text HLabel 4500 3200 2    50   Input ~ 0
+Text HLabel 4200 3200 2    50   Input ~ 0
 RC4
+$Comp
+L Amplifier_Operational:LM324 U1
+U 3 1 5B34BA87
+P 4550 5550
+F 0 "U1" H 4550 5750 50  0000 L CNN
+F 1 "LM324" H 4550 5350 50  0000 L CNN
+F 2 "" H 4500 5650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 4600 5750 50  0001 C CNN
+	3    4550 5550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4250 5650 4050 5650
+Text GLabel 4050 5650 0    50   Input ~ 0
+A4
+Wire Wire Line
+	4250 5450 4050 5450
+Text GLabel 4050 5450 0    50   Input ~ 0
+A5
 $EndSCHEMATC
