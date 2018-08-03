@@ -84,8 +84,9 @@ def extract_subsheets(filename):
         sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
         for line in sheet_reference:
             if line.startswith('F1 '):
-                subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
+                subsheet_path = line.split("\"")[1]
                 subsheet_line = file_lines.split("\n").index(line)
+ 
                 if not os.path.isabs(subsheet_path):
                     # check if path is encoded with variables
                     if "${" in subsheet_path:
@@ -113,6 +114,7 @@ def extract_subsheets(filename):
 
 def find_all_sch_files(filename, list_of_files):
     list_of_files.append(filename)
+                
     for sheet, line_nr in extract_subsheets(filename):
         logger.info("found subsheet:\n\t" + sheet +
                     "\n in:\n\t" + filename + ", line: " + str(line_nr))
@@ -208,7 +210,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     if archive_nick is None:
         archive_nick = "archive"
         logger.info("Entering archive library in sym-lib-table")
-        line_contents = "    (lib (name archive)(type Legacy)(uri ${KIPRJMOD}/" + archive_lib_name + ")(options \"\")(descr \"\"))\n"
+        line_contents = "    (lib (name archive)(type Legacy)(uri \"${KIPRJMOD}/" + archive_lib_name + "\")(options \"\")(descr \"\"))\n"
         project_sym_lib_file.insert(1, line_contents)
         with open(proj_sym_lib_file_path, "w") as f:
             f.writelines(project_sym_lib_file)
