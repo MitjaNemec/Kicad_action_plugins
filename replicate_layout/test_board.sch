@@ -1,0 +1,13 @@
+$Sheet
+S 6450 2000 1150 1000
+U 59F8DC05
+F0 "Leg1" 50
+F1 "Leg.sch" 50
+F2 "QH" I L 6450 2400 50 
+F3 "QL" I L 6450 2500 50 
+F4 "Current" O L 6450 2700 50 
+$EndSheet
+
+
+
+
