@@ -34,7 +34,7 @@
   )
 
   (setup
-    (last_trace_width 0.5)
+    (last_trace_width 0.25)
     (user_trace_width 0.4)
     (user_trace_width 0.5)
     (user_trace_width 1)
@@ -385,7 +385,7 @@
   )
 
   (module Passives:C1206M (layer F.Cu) (tedit 5A956631) (tstamp 5B773FA0)
-    (at 156.070001 66.010001)
+    (at 124.955001 142.845001)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5B767FE4/5B772791/5B7685DA)
@@ -421,7 +421,7 @@
   )
 
   (module Passives:C1206M (layer F.Cu) (tedit 5A956631) (tstamp 5B773FB1)
-    (at 161.270001 61.540001)
+    (at 130.155001 138.375001)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5B767FE4/5B772791/5B7686C7)
@@ -861,7 +861,7 @@
   )
 
   (module Discretes:D_MiniMELF (layer F.Cu) (tedit 59F95434) (tstamp 5B77408D)
-    (at 151.120001 66.055001)
+    (at 120.005001 142.890001)
     (descr "Diode Mini-MELF")
     (tags "Diode Mini-MELF")
     (path /5B767FE4/5B772791/5B76A6F5)
@@ -1102,7 +1102,7 @@
   )
 
   (module Connector:Pusa_4mm (layer F.Cu) (tedit 5A141F73) (tstamp 5B774101)
-    (at 168.340001 20.385001)
+    (at 137.225001 97.220001)
     (path /5B767FE4/5B77299E)
     (fp_text reference J202 (at 10 -1) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
@@ -1297,7 +1297,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5B77416F)
-    (at 151.180001 62.745001)
+    (at 120.065001 139.580001)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /5B767FE4/5B772791/5B768070)
@@ -1342,7 +1342,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5B774189)
-    (at 151.180001 57.785001)
+    (at 120.065001 134.620001)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /5B767FE4/5B772791/5B768110)
@@ -1867,7 +1867,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5B7742AE)
-    (at 160.620001 66.010001)
+    (at 129.505001 142.845001)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5B767FE4/5B772791/5B768234)
@@ -1903,7 +1903,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5B7742BF)
-    (at 168.780001 56.090001)
+    (at 137.665001 132.925001)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5B767FE4/5B772791/5B7682C5)
@@ -2543,7 +2543,7 @@
   )
 
   (module Package_SO:SO8 (layer F.Cu) (tedit 5B768FC1) (tstamp 5B77441B)
-    (at 162.750001 57.735001)
+    (at 131.635001 134.570001)
     (descr "8-Lead Plastic Small Outline (SN) - Narrow, 3.90 mm Body [SOIC] (see Microchip Packaging Specification 00000049BS.pdf)")
     (tags "SOIC 1.27")
     (path /5B767FE4/5B772791/5B768171)
