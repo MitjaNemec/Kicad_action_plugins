@@ -1,4 +1,4 @@
-(kicad_pcb (version 20170919) (host pcbnew "(2017-09-19 revision dddaa7e69)-makepkg")
+(kicad_pcb (version 20171130) (host pcbnew "(5.0.0)")
 
   (general
     (thickness 1.6)
@@ -1785,7 +1785,7 @@
   (zone (net 0) (net_name "") (layer F.SilkS) (tstamp 5A7472FA) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 237.325 97.155) (xy 240.5 97.155) (xy 240.5 100.33) (xy 237.325 100.33)
@@ -1795,7 +1795,7 @@
   (zone (net 13) (net_name /Veja_3/OUT) (layer F.Cu) (tstamp 5A7472F9) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 231.61 86.995) (xy 234.15 86.995) (xy 234.15 93.345) (xy 231.61 93.345)
@@ -1805,7 +1805,7 @@
   (zone (net 2) (net_name GND) (layer F.Cu) (tstamp 5A7472F8) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 238.595 90.17) (xy 238.595 93.345) (xy 239.865 94.615) (xy 239.865 95.885) (xy 240.5 95.885)
@@ -1816,7 +1816,7 @@
   (zone (net 0) (net_name "") (layer F.SilkS) (tstamp 5A7472F7) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 212.325 97.155) (xy 215.5 97.155) (xy 215.5 100.33) (xy 212.325 100.33)
@@ -1826,7 +1826,7 @@
   (zone (net 4) (net_name /Veja_2/OUT) (layer F.Cu) (tstamp 5A7472F6) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 206.61 86.995) (xy 209.15 86.995) (xy 209.15 93.345) (xy 206.61 93.345)
@@ -1836,7 +1836,7 @@
   (zone (net 2) (net_name GND) (layer F.Cu) (tstamp 5A7472F5) (hatch edge 0.508)
     (connect_pads (clearance 0.508))
     (min_thickness 0.254)
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 213.595 90.17) (xy 213.595 93.345) (xy 214.865 94.615) (xy 214.865 95.885) (xy 215.5 95.885)
