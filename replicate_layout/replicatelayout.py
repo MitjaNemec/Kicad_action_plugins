@@ -20,6 +20,8 @@
 #
 import pcbnew
 import math
+import os
+import re
 
 SCALE = 1000000.0
 
@@ -34,7 +36,8 @@ def get_module_id(module):
 def get_sheet_id(module):
     """ get sheet id """
     module_path = module.GetPath().split('/')
-    sheet_id = "/".join(module_path[0:-1])
+    sheet_id = module_path[0:-1]
+    sheet_id = [x for x in sheet_id if x]
     return sheet_id
 
 
@@ -96,8 +99,8 @@ def get_bounding_box_of_modules(module_list):
     return bounding_box
 
 
-def get_index_of_tuple(list, index, value):
-    for pos, t in enumerate(list):
+def get_index_of_tuple(list_of_tuples, index, value):
+    for pos, t in enumerate(list_of_tuples):
         if t[index] == value:
             return pos
 
@@ -108,8 +111,8 @@ def get_index_of_tuple(list, index, value):
 # this function was made by Miles Mccoo
 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
 def get_coordinate_points_of_shape_poly_set(ps):
-    str = ps.Format()
-    lines = str.split('\n')
+    string = ps.Format()
+    lines = string.split('\n')
     numpts = int(lines[2])
     pts = [[int(n) for n in x.split(" ")] for x in lines[3:-2]]  # -1 because of the extra two \n
     return pts
@@ -130,45 +133,120 @@ class Replicator:
         # find pivodmodule
         self.pivot_mod = board.FindModuleByReference(pivot_module_reference)
 
-        # find sheet ID on which the module is on
-        self.pivot_sheet_id = get_sheet_id(self.pivot_mod)
-
         # while at it, get the pivot module ID
         self.pivot_mod_id = get_module_id(self.pivot_mod)
 
-        # find all modules on the same sheet
+        # find sheet ID on which the module is on
+        self.pivot_sheet_id = get_sheet_id(self.pivot_mod)
+
+        self.project_path = os.path.dirname(os.path.abspath(self.board.GetFileName()))
+        layout_filename = os.path.abspath(board.GetFileName())
+        filename = layout_filename.replace("kicad_pcb", "sch")
+        list_of_sheets = []
+        sheet_names = list(set(self.find_all_sch_files(filename, list_of_sheets)))
+
+        self.sheet_levels = []
+        for level in self.pivot_sheet_id:
+            for sheet in sheet_names:
+                if level in sheet[1]:
+                    self.sheet_levels.append((sheet[0], level))
+
         self.pivot_modules = []
         self.pivot_modules_id = []
         self.pivot_modules_ref = []
+        self.pivot_local_nets = []
+        self.sheets_to_clone = []
+        self.pivot_bounding_box = None
+        self.pivot_bounding_box_corners = ()
+
+        self.polar_center = None
+
+        self.minimum_radius = None
+        self.minimum_angle = None
+
+        self.minimum_width = None
+
+        self.pivot_text = []
+        self.pivot_tracks = []
+        self.pivot_zones = []
+        self.only_within_bbox = False
+        self.pivot_sheet_level = 0
+
+    def get_sheet_levels(self):
+        return [i[0] for i in self.sheet_levels]
+
+    def calculate_spacing(self, sheet_level):
+        self.pivot_modules = []
+        self.pivot_modules_id = []
+        self.pivot_modules_ref = []
+        self.pivot_local_nets = []
+        self.sheets_to_clone = []
+        self.pivot_bounding_box = None
+        self.pivot_bounding_box_corners = ()
+
+        self.polar_center = None
+
+        self.minimum_radius = None
+        self.minimum_angle = None
+
+        self.minimum_width = None
+
+        self.pivot_text = []
+        self.pivot_tracks = []
+        self.pivot_zones = []
+        self.only_within_bbox = False
+        self.pivot_sheet_level = 0
+
+        # find out on which level one wants to clone
+        for level in self.sheet_levels:
+            if sheet_level == level[0]:
+                self.pivot_sheet_level = self.sheet_levels.index(level)
+
+        # find all modules on the same sheet level
         for mod in self.modules:
             module_id = get_module_id(mod)
             sheet_id = get_sheet_id(mod)
-            if sheet_id == self.pivot_sheet_id:
-                self.pivot_modules.append(mod)
-                self.pivot_modules_id.append(module_id)
-                self.pivot_modules_ref.append(mod.GetReference())
+            mod_ref = mod.GetReference()
+            # if module is in the same hiearchical level or above
+            if len(sheet_id) >= len(self.pivot_sheet_id):
+                # and if its ID matches to the level we are replication
+                a = sheet_id[0:self.pivot_sheet_level+1]
+                b = self.pivot_sheet_id[0:self.pivot_sheet_level+1]
+                if a == b:
+                    self.pivot_modules.append(mod)
+                    self.pivot_modules_id.append(module_id)
+                    self.pivot_modules_ref.append(mod.GetReference())
 
         # find all local nets
         other_modules = []
         other_modules_ref = []
+        # firstly find all other modules
         for mod in self.modules:
             if mod.GetReference() not in self.pivot_modules_ref:
                 other_modules.append(mod)
                 other_modules_ref.append(mod.GetReference())
+        # then get nets other modules are connected to
         other_nets = self.get_nets_from_modules(other_modules)
+        # then get nets only pivot modules are connected to
         pivot_nets = self.get_nets_from_modules(self.pivot_modules)
-        self.pivot_local_nets = []
+
         for net in pivot_nets:
             if net not in other_nets:
                 self.pivot_local_nets.append(net)
 
         # find all sheets to replicate
         self.sheets_to_clone = []
+        # get all the sheets all the modules are binded to
         for mod in self.modules:
             module_id = get_module_id(mod)
             sheet_id = get_sheet_id(mod)
-            if (module_id == self.pivot_mod_id) and (sheet_id != self.pivot_sheet_id) \
-                    and (sheet_id not in self.sheets_to_clone):
+            # if the module id mathce to any of pivod modules id and we have not yet added this sheet
+            # then check if sheet id below pivot_sheet_level matches pivot_sheet_id and
+            # sheet_id at pivot_sheet_level is different to pivot_sheet_id
+            # (sheet_id != self.pivot_sheet_id)
+            if (module_id == self.pivot_mod_id) and (sheet_id not in self.sheets_to_clone)\
+                    and (sheet_id[0:self.pivot_sheet_level] == self.pivot_sheet_id[0:self.pivot_sheet_level])\
+                    and (sheet_id[self.pivot_sheet_level] != self.pivot_sheet_id[self.pivot_sheet_level]):
                 # Get the number in the reference.
                 ref = [c for c in mod.GetReference() if c.isdigit()]
                 if ref:
@@ -183,7 +261,7 @@ class Replicator:
         # these numbers.
         self.sheets_to_clone = [s for r, s in sorted(self.sheets_to_clone)]
 
-        # get bounding bounding box of all modules
+        # get bounding bounding box of all pivot modules
         bounding_box = self.pivot_mod.GetFootprintRect()
         top = bounding_box.GetTop()
         bottom = bounding_box.GetBottom()
@@ -222,11 +300,7 @@ class Replicator:
 
         # get minimal width - GUI assumes horizontal replication
         self.minimum_width = (right - left) / SCALE
-
-        self.pivot_text = []
-        self.pivot_tracks = []
-        self.pivot_zones = []
-        self.only_within_bbox = False
+        pass
 
     def prepare_for_replication(self, only_within_boundingbox):
         self.only_within_bbox = only_within_boundingbox
@@ -254,8 +328,18 @@ class Replicator:
             all_zones.append(self.board.GetArea(zoneid))
         # find all zones which are completely within the pivot bounding box
 
+        # TODO, check why when toing the outer, not all six zones are added
+        pleft = self.pivot_bounding_box.GetLeft()/SCALE
+        pright = self.pivot_bounding_box.GetRight()/SCALE
+        ptop = self.pivot_bounding_box.GetTop()/SCALE
+        pbot = self.pivot_bounding_box.GetBottom()/SCALE
+
         for zone in all_zones:
             zone_bb = zone.GetBoundingBox()
+            oleft = zone_bb.GetLeft()/SCALE
+            oright = zone_bb.GetRight()/SCALE
+            otop = zone_bb.GetTop()/SCALE
+            obot = zone_bb.GetBottom()/SCALE
             if (only_within_boundingbox and self.pivot_bounding_box.Contains(zone_bb)) or\
                (not only_within_boundingbox and self.pivot_bounding_box.Intersects(zone_bb)):
                 self.pivot_zones.append(zone)
@@ -272,8 +356,66 @@ class Replicator:
                 if self.pivot_bounding_box.Intersects(text_bb):
                     self.pivot_text.append(drawing)
 
+    def extract_subsheets(self, filename):
+        with open(filename) as f:
+            file_folder = os.path.dirname(os.path.abspath(filename))
+            file_lines = f.read()
+        # alternative solution
+        # extract all sheet references
+        sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
+        endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
 
-    def get_nets_from_modules(self, modules):
+        if len(sheet_indices) != len(endsheet_indices):
+            raise LookupError("Schematic page contains errors")
+
+        sheet_locations = zip(sheet_indices, endsheet_indices)
+        for sheet_location in sheet_locations:
+            sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
+            # parse the sheed description
+            for line in sheet_reference:
+                # found sheet ID
+                if line.startswith('U '):
+                    subsheet_id = line.split()[1]
+                # found sheet filename
+                if line.startswith('F1 '):
+                    subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
+                    subsheet_line = file_lines.split("\n").index(line)
+                    if not os.path.isabs(subsheet_path):
+                        # check if path is encoded with variables
+                        if "${" in subsheet_path:
+                            start_index = subsheet_path.find("${") + 2
+                            end_index = subsheet_path.find("}")
+                            env_var = subsheet_path[start_index:end_index]
+                            path = os.getenv(env_var)
+                            # if variable is not defined rasie an exception
+                            if path is None:
+                                raise LookupError("Can not find subsheet: " + subsheet_path)
+                            # replace variable with full path
+                            subsheet_path = subsheet_path.replace("${", "") \
+                                .replace("}", "") \
+                                .replace("env_var", path)
+
+                    # if path is still not absolute, then it is relative to project
+                    if not os.path.isabs(subsheet_path):
+                        subsheet_path = os.path.join(file_folder, subsheet_path)
+
+                    subsheet_path = os.path.normpath(subsheet_path)
+                    # found subsheet reference go for the next one, no need to parse further
+                    break
+
+            file_path = os.path.abspath(subsheet_path)
+            rel_subsheet_path = os.path.relpath(file_path, self.project_path)
+
+            yield rel_subsheet_path, subsheet_line, subsheet_id
+
+    def find_all_sch_files(self, filename, list_of_files):
+        for sheet, line_nr, sheet_id in self.extract_subsheets(filename):
+            list_of_files.append((sheet, sheet_id))
+            list_of_files = self.find_all_sch_files(sheet, list_of_files)
+        return list_of_files
+
+    @staticmethod
+    def get_nets_from_modules(modules):
         # go through all modules and their pads and get the nets they are connected to
         nets = []
         for mod in modules:
@@ -307,46 +449,103 @@ class Replicator:
         sheet_modules = []
         for mod in self.modules:
             mod_sheet_id = get_sheet_id(mod)
-            if mod_sheet_id == sheet_id:
-                sheet_modules.append(mod)
+            # if on the same level
+            if len(sheet_id) == len(mod_sheet_id):
+                if mod_sheet_id == sheet_id:
+                    sheet_modules.append(mod)
+            else:
+                if len(sheet_id) < len(mod_sheet_id)\
+                        and len(set(sheet_id) & set(mod_sheet_id)) == len(sheet_id):
+                    sheet_modules.append(mod)
         # find all net pairs via same modules pads,
         net_pairs = []
         net_dict = {}
-        # go through pivot modules
+        # construct module pairs
+        mod_matches = []
         for p_mod in self.pivot_modules:
-            # and thorught sheet modules
-            for s_mod in sheet_modules:
-                # find a pair of modules
-                if get_module_id(p_mod) == get_module_id(s_mod):
-                    # get their pads
-                    p_mod_pads = p_mod.PadsList()
-                    s_mod_pads = s_mod.PadsList()
-                    # I am going to assume pads are in the same order
-                    p_nets = []
-                    s_nets = []
-                    # get nelists for each pad
-                    for p_pad in p_mod_pads:
-                        pad_name = p_pad.GetName()
-                        p_nets.append((pad_name, p_pad.GetNetname()))
-                    for s_pad in s_mod_pads:
-                        pad_name = s_pad.GetName()
-                        s_nets.append((pad_name, s_pad.GetNetname()))
-                        net_dict[s_pad.GetNetname()] = s_pad.GetNet()
-                    # sort both lists by pad name
-                    # so that they have the same order - needed in some cases
-                    # as the iterator thorugh the pads list does not return pads always in the proper order
-                    p_nets.sort(key=lambda tup: tup[0])
-                    s_nets.sort(key=lambda tup: tup[0])
-                    # build list of net tupules
-                    for net in p_nets:
-                        index = get_index_of_tuple(p_nets, 1, net[1])
-                        net_pairs.append((p_nets[index][1], s_nets[index][1]))
+            p_mod_id = get_module_id(p_mod)
+            p_sheet_id = get_sheet_id(p_mod)
+            mod_matches.append([p_mod, p_mod_id, p_sheet_id])
+
+        for s_mod in sheet_modules:
+            s_mod_id = get_module_id(s_mod)
+            s_sheet_id = get_sheet_id(s_mod)
+            for mod in mod_matches:
+                if mod[1] == s_mod_id:
+                    index = mod_matches.index(mod)
+                    mod_matches[index].append(s_mod)
+                    mod_matches[index].append(s_mod_id)
+                    mod_matches[index].append(s_sheet_id)
+        # find closest match
+        mod_pairs = []
+        mod_pairs_by_reference = []
+        for mod in mod_matches:
+            index = mod_matches.index(mod)
+            matches = (len(mod) - 3) / 3
+            if matches != 1:
+                match_len = []
+                for index in range(0, matches):
+                    match_len.append(len(set(mod[2]) & set(mod[2+3*(index+1)])))
+                index = match_len.index(max(match_len))
+                mod_pairs.append((mod[0], mod[3*(index+1)]))
+                mod_pairs_by_reference.append((mod[0].GetReference(), mod[3*(index+1)].GetReference()))
+            elif matches == 1:
+                mod_pairs.append((mod[0], mod[3]))
+                mod_pairs_by_reference.append((mod[0].GetReference(), mod[3].GetReference()))
+
+        pad_pairs = []
+        for x in range(len(mod_pairs)):
+            pad_pairs.append([])
+
+        for pair in mod_pairs:
+            index = mod_pairs.index(pair)
+            # get all footprint pads
+            p_mod_pads = pair[0].PadsList()
+            s_mod_pads = pair[1].PadsList()
+            # create a list of padsnames and pads
+            p_pads = []
+            s_pads = []
+            for pad in p_mod_pads:
+                p_pads.append((pad.GetName(), pad))
+            for pad in s_mod_pads:
+                s_pads.append((pad.GetName(), pad))
+            # sort by padnames
+            p_pads.sort(key=lambda tup: tup[0])
+            s_pads.sort(key=lambda tup: tup[0])
+            # extract pads and append them to pad pairs list
+            pad_pairs[index].append([x[1] for x in p_pads])
+            pad_pairs[index].append([x[1] for x in s_pads])
+
+        for pair in mod_pairs:
+            index = mod_pairs.index(pair)
+            p_mod = pair[0]
+            s_mod = pair[1]
+            # get their pads
+            p_mod_pads = pad_pairs[index][0]
+            s_mod_pads = pad_pairs[index][1]
+            # I am going to assume pads are in the same order
+            p_nets = []
+            s_nets = []
+            # get nelists for each pad
+            for p_pad in p_mod_pads:
+                pad_name = p_pad.GetName()
+                p_nets.append((pad_name, p_pad.GetNetname()))
+            for s_pad in s_mod_pads:
+                pad_name = s_pad.GetName()
+                s_nets.append((pad_name, s_pad.GetNetname()))
+                net_dict[s_pad.GetNetname()] = s_pad.GetNet()
+            # sort both lists by pad name
+            # so that they have the same order - needed in some cases
+            # as the iterator thorugh the pads list does not return pads always in the proper order
+            p_nets.sort(key=lambda tup: tup[0])
+            s_nets.sort(key=lambda tup: tup[0])
+            # build list of net tupules
+            for net in p_nets:
+                index = get_index_of_tuple(p_nets, 1, net[1])
+                net_pairs.append((p_nets[index][1], s_nets[index][1]))
 
         # remove duplicates
-        net_pairs_clean = []
-        for i in net_pairs:
-            if i not in net_pairs_clean:
-                net_pairs_clean.append(i)
+        net_pairs_clean = list(set(net_pairs))
 
         return net_pairs_clean, net_dict
 
@@ -446,12 +645,30 @@ class Replicator:
             for mod in self.modules:
                 module_id = get_module_id(mod)
                 sheet_id = get_sheet_id(mod)
-                # if module is on selected sheet
-                if sheet_id == sheet:
+                # if module is on selected sheet or higher
+                a = sheet_id[0:self.pivot_sheet_level+1]
+                b = sheet[0:self.pivot_sheet_level+1]
+                if a == b:
                     # find which is the corresponding pivot module
                     if module_id in self.pivot_modules_id:
                         # get coresponding pivot module and its position
-                        index = self.pivot_modules_id.index(module_id)
+                        # find the best match
+                        mod_locations = [index for index, pivot_module in enumerate(self.pivot_modules_id) if pivot_module == module_id]
+                        if len(mod_locations) > 1:
+                            max_matches = -1
+                            for loc in mod_locations:
+                                mod_ref = mod.GetReference()
+                                pivot_mod_ref = self.pivot_modules[loc].GetReference()
+                                pivot_mod_path = get_sheet_id(self.pivot_modules[loc])
+                                mod_path = sheet_id
+                                matches = len(set(mod_path) & set(pivot_mod_path))
+                                if matches > max_matches:
+                                    max_matches = matches
+                                    index = loc
+                        else:
+                            index = mod_locations[0]
+
+                        # index = self.pivot_modules_id.index(module_id)
                         mod_to_clone = self.pivot_modules[index]
                         pivot_mod_position = mod_to_clone.GetPosition()
                         pivot_mod_orientation = mod_to_clone.GetOrientationDegrees()
@@ -495,8 +712,8 @@ class Replicator:
 
                         # replicate also text layout
                         # get pivot_module_text
-                        pivot_mod_text_items = get_module_text_items(mod_to_clone)
                         # get module text
+                        pivot_mod_text_items = get_module_text_items(mod_to_clone)
                         mod_text_items = get_module_text_items(mod)
                         # replicate each text item
                         for pivot_text in pivot_mod_text_items:
@@ -644,8 +861,8 @@ class Replicator:
                 # get from which net we are clonning
                 from_net_name = zone.GetNetname()
                 # if zone is not on copper layer it does not matter on which net it is
-                if not (zone.IsOnLayer(pcbnew.B_Cu) or zone.IsOnLayer(pcbnew.F_Cu)):
-                    tup = [(from_net_name, from_net_name), ]
+                if not zone.IsOnCopperLayer():
+                    tup = [('', '')]
                 else:
                     tup = [item for item in net_pairs if item[0] == from_net_name]
 
@@ -700,6 +917,17 @@ class Replicator:
                         newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE),
                                           pt[1] + int(sheet_index*y_offset*SCALE))
 
+                # copy zone settings
+                newzone.SetPriority(zone.GetPriority())
+                newzone.SetLayerSet(zone.GetLayerSet())
+                newzone.SetFillMode(zone.GetFillMode())
+                newzone.SetThermalReliefGap(zone.GetThermalReliefGap())
+                newzone.SetThermalReliefCopperBridge(zone.GetThermalReliefCopperBridge())
+                newzone.SetIsFilled(zone.IsFilled())
+                newzone.SetZoneClearance(zone.GetZoneClearance())
+                newzone.SetPadConnection(zone.GetPadConnection())
+                newzone.SetMinThickness(zone.GetMinThickness())
+
                 # Copy the keepout properties.
                 if zone.GetIsKeepout():
                     newzone.SetIsKeepout(True)
@@ -707,7 +935,7 @@ class Replicator:
                     newzone.SetDoNotAllowCopperPour(zone.GetDoNotAllowCopperPour())
                     newzone.SetDoNotAllowTracks(zone.GetDoNotAllowTracks())
                     newzone.SetDoNotAllowVias(zone.GetDoNotAllowVias())
-                newzone.Hatch()
+                pass
 
     def replicate_layout(self, x_offset, y_offset,
                          replicate_containing_only,
@@ -730,9 +958,114 @@ class Replicator:
             self.replicate_text(x_offset, y_offset, polar)
 
 
+def test_multiple_inner(x, y, within, polar):
+    board = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
+    replicator = Replicator(board=board, pivot_module_reference='Q301')
+    # get sheet levels
+    sheet_levels = replicator.get_sheet_levels()
+    # select which level to replicate
+    replicator.calculate_spacing(sheet_levels[-1])
+
+    replicator.replicate_layout(x, y,
+                                replicate_containing_only=within,
+                                remove_existing_nets_zones=True,
+                                replicate_tracks=True,
+                                replicate_zones=True,
+                                replicate_text=True,
+                                polar=polar)
+
+    # save the board
+    filename = 'multiple_hierarchy_top.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename, board)
+
+    # compare files
+    import difflib
+    errnum = 0
+    with open('test_'+filename, 'r') as correct_board:
+        with open(filename, 'r') as tested_board:
+            diff = difflib.unified_diff(
+                correct_board.readlines(),
+                tested_board.readlines(),
+                fromfile='correct_board',
+                tofile='tested_board',
+                n=0)
+
+    # only timestamps on zones and file version information should differ
+    diffstring = []
+    for line in diff:
+        diffstring.append(line)
+    # get rid of diff information
+    del diffstring[0]
+    del diffstring[0]
+    # walktrough diff list and check for any significant differences
+    for line in diffstring:
+        index = diffstring.index(line)
+        if '@@' in line:
+            if ((('version' in diffstring[index + 1]) and ('version' in diffstring[index + 2])) or
+                (('tstamp' in diffstring[index + 1]) and ('tstamp' in diffstring[index + 2]))):
+                # this is not a problem
+                pass
+            else:
+                # this is a problem
+                errnum = errnum + 1
+    return errnum
+
+
+def test_multiple_outer(x, y, within, polar):
+    board = pcbnew.LoadBoard('multiple_hierarchy_top_done.kicad_pcb')
+    replicator = Replicator(board=board, pivot_module_reference='Q301')
+    # get sheet levels
+    sheet_levels = replicator.get_sheet_levels()
+    # select which level to replicate
+    replicator.calculate_spacing(sheet_levels[0])
+
+    replicator.replicate_layout(x, y,
+                                replicate_containing_only=within,
+                                remove_existing_nets_zones=True,
+                                replicate_tracks=True,
+                                replicate_zones=True,
+                                replicate_text=True,
+                                polar=polar)
+
+    # save the board
+    filename = 'multiple_hierarchy_base.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename, board)
+
+    # compare files
+    import difflib
+    errnum = 0
+    with open('test_'+filename, 'r') as correct_board:
+        with open(filename, 'r') as tested_board:
+            diff = difflib.unified_diff(
+                correct_board.readlines(),
+                tested_board.readlines(),
+                fromfile='correct_board',
+                tofile='tested_board',
+                n=0)
+
+    # only timestamps on zones and file version information should differ
+    diffstring = []
+    for line in diff:
+        diffstring.append(line)
+    # get rid of diff information
+    del diffstring[0]
+    del diffstring[0]
+    # walktrough diff list and check for any significant differences
+    for line in diffstring:
+        index = diffstring.index(line)
+        if '@@' in line:
+            if ((('version' in diffstring[index + 1]) and ('version' in diffstring[index + 2])) or
+                (('tstamp' in diffstring[index + 1]) and ('tstamp' in diffstring[index + 2]))):
+                # this is not a problem
+                pass
+            else:
+                # this is a problem
+                errnum = errnum + 1
+    return errnum
+
+
 def test_replicate(x, y, within, polar):
     import difflib
-    import os
 
     filename = ''
     if within is True and polar is False:
@@ -746,6 +1079,9 @@ def test_replicate(x, y, within, polar):
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
     # run the replicator
     replicator = Replicator(board=board, pivot_module_reference='Q2002')
+    sheet_levels = replicator.get_sheet_levels()
+    # select which level to replicate
+    replicator.calculate_spacing(sheet_levels[0])
     replicator.replicate_layout(x, y,
                                 replicate_containing_only=within,
                                 remove_existing_nets_zones=True,
@@ -758,17 +1094,14 @@ def test_replicate(x, y, within, polar):
 
     # compare files
     errnum = 0
-    with open('temp_'+filename, 'r') as correct_board:
-        with open(filename, 'r') as tested_board:
+    with open('temp_'+filename, 'r') as tested_board:
+        with open(filename, 'r') as correct_board:
             diff = difflib.unified_diff(
                 correct_board.readlines(),
                 tested_board.readlines(),
                 fromfile='correct_board',
                 tofile='tested_board',
                 n=0)
-
-    # remove temp file
-    #os.remove('temp'+filename)
 
     # only timestamps on zones and file version information should differ
     diffstring = []
@@ -796,16 +1129,29 @@ def main():
     errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
-    if errnum_all == 0 and errnum_within == 0 and errnum_polar == 0:
+    os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/multiple_hierarchy")
+    errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)
+    errnum_multiple_outer = test_multiple_outer(50, 0.0, within=False, polar=False)
+
+    if errnum_all == 0\
+       and errnum_within == 0\
+       and errnum_all == 0\
+       and errnum_polar == 0\
+       and errnum_multiple_inner == 0\
+       and errnum_multiple_outer == 0:
         print "passed all tests"
-    if errnum_all == 0 and errnum_within != 0 and errnum_polar == 0:
+
+    if errnum_within != 0:
         print "failed replicating only containing"
-    if errnum_all != 0 and errnum_within == 0 and errnum_polar == 0:
+    if errnum_all != 0:
         print "failed replicating complete (with intersections)"
-    if errnum_all == 0 and errnum_within == 0 and errnum_polar != 0:
+    if errnum_polar != 0:
         print "failed replicating polar"
-    if errnum_all != 0 and errnum_within != 0 and errnum_polar != 0:
-        print "failed all tests"
+    if errnum_multiple_inner != 0:
+        print "failed replicating multiple inner"
+    if errnum_multiple_outer != 0:
+        print "failed replicating multiple outer"
+
 
 # for testing purposes only
 if __name__ == "__main__":
