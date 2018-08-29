@@ -137,7 +137,7 @@ class Replicator:
         self.pivot_mod_id = get_module_id(self.pivot_mod)
 
         # find sheet ID on which the module is on
-        self.pivot_sheet_id = get_sheet_id(self.pivot_mod)
+        self.pivot_sheet_sel_id = get_sheet_id(self.pivot_mod)
 
         self.project_path = os.path.dirname(os.path.abspath(self.board.GetFileName()))
         layout_filename = os.path.abspath(board.GetFileName())
@@ -146,7 +146,7 @@ class Replicator:
         sheet_names = list(set(self.find_all_sch_files(filename, list_of_sheets)))
 
         self.sheet_levels = []
-        for level in self.pivot_sheet_id:
+        for level in self.pivot_sheet_sel_id:
             for sheet in sheet_names:
                 if level in sheet[1]:
                     self.sheet_levels.append((sheet[0], level))
@@ -201,18 +201,16 @@ class Replicator:
         for level in self.sheet_levels:
             if sheet_level == level[0]:
                 self.pivot_sheet_level = self.sheet_levels.index(level)
+                self.pivot_sheet_id = self.pivot_sheet_sel_id[0:self.pivot_sheet_level+1]
 
         # find all modules on the same sheet level
         for mod in self.modules:
             module_id = get_module_id(mod)
             sheet_id = get_sheet_id(mod)
-            mod_ref = mod.GetReference()
             # if module is in the same hiearchical level or above
             if len(sheet_id) >= len(self.pivot_sheet_id):
                 # and if its ID matches to the level we are replication
-                a = sheet_id[0:self.pivot_sheet_level+1]
-                b = self.pivot_sheet_id[0:self.pivot_sheet_level+1]
-                if a == b:
+                if sheet_id[0:self.pivot_sheet_level+1] == self.pivot_sheet_id[0:self.pivot_sheet_level+1]:
                     self.pivot_modules.append(mod)
                     self.pivot_modules_id.append(module_id)
                     self.pivot_modules_ref.append(mod.GetReference())
@@ -235,16 +233,15 @@ class Replicator:
                 self.pivot_local_nets.append(net)
 
         # find all sheets to replicate
-        self.sheets_to_clone = []
         # get all the sheets all the modules are binded to
         for mod in self.modules:
             module_id = get_module_id(mod)
             sheet_id = get_sheet_id(mod)
-            # if the module id mathce to any of pivod modules id and we have not yet added this sheet
+            # if the module id mathches to any of pivod modules id and we have not yet added this sheet
             # then check if sheet id below pivot_sheet_level matches pivot_sheet_id and
             # sheet_id at pivot_sheet_level is different to pivot_sheet_id
-            # (sheet_id != self.pivot_sheet_id)
-            if (module_id == self.pivot_mod_id) and (sheet_id not in self.sheets_to_clone)\
+            if (module_id == self.pivot_mod_id) \
+                    and not any(sheet_id[0:self.pivot_sheet_level+1] in sheet for sheet in self.sheets_to_clone)\
                     and (sheet_id[0:self.pivot_sheet_level] == self.pivot_sheet_id[0:self.pivot_sheet_level])\
                     and (sheet_id[self.pivot_sheet_level] != self.pivot_sheet_id[self.pivot_sheet_level]):
                 # Get the number in the reference.
@@ -255,7 +252,7 @@ class Replicator:
                     refnum = -1
 
                 # Add the number and the sheet ID.
-                self.sheets_to_clone.append((refnum, sheet_id))
+                self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1]))
 
         # Sort by the number of the replicated modules, and then discard
         # these numbers.
@@ -447,16 +444,19 @@ class Replicator:
         """ find all net pairs between pivot sheet and current sheet"""
         # find all modules, pads and nets on this sheet
         sheet_modules = []
+        sheet_modules_ref = []
         for mod in self.modules:
             mod_sheet_id = get_sheet_id(mod)
             # if on the same level
             if len(sheet_id) == len(mod_sheet_id):
                 if mod_sheet_id == sheet_id:
                     sheet_modules.append(mod)
+                    sheet_modules_ref.append(mod.GetReference())
             else:
                 if len(sheet_id) < len(mod_sheet_id)\
                         and len(set(sheet_id) & set(mod_sheet_id)) == len(sheet_id):
                     sheet_modules.append(mod)
+                    sheet_modules_ref.append(mod.GetReference())
         # find all net pairs via same modules pads,
         net_pairs = []
         net_dict = {}
@@ -965,6 +965,8 @@ def test_multiple_inner(x, y, within, polar):
     sheet_levels = replicator.get_sheet_levels()
     # select which level to replicate
     replicator.calculate_spacing(sheet_levels[-1])
+    replicator.calculate_spacing(sheet_levels[0])
+    replicator.calculate_spacing(sheet_levels[-1])
 
     replicator.replicate_layout(x, y,
                                 replicate_containing_only=within,
@@ -1013,7 +1015,7 @@ def test_multiple_inner(x, y, within, polar):
 
 def test_multiple_outer(x, y, within, polar):
     board = pcbnew.LoadBoard('multiple_hierarchy_top_done.kicad_pcb')
-    replicator = Replicator(board=board, pivot_module_reference='Q301')
+    replicator = Replicator(board=board, pivot_module_reference='Q301') # J201 ali Q301
     # get sheet levels
     sheet_levels = replicator.get_sheet_levels()
     # select which level to replicate
@@ -1125,6 +1127,12 @@ def test_replicate(x, y, within, polar):
 
 
 def main():
+    errnum_within = 0
+    errnum_all = 0
+    errnum_polar = 0
+    errnum_multiple_inner = 0
+    errnum_multiple_outer = 0
+
     errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
     errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)

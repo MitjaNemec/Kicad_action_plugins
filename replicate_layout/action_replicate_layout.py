@@ -47,8 +47,10 @@ class ReplicateLayoutDialog(wx.Dialog):
         bSizer111.Add(self.m_staticText3, 0, wx.ALL, 5)
 
         list_levelsChoices = self.replicator.get_sheet_levels()
-        self.list_levels = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_levelsChoices, 0)
+        self.list_levels = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_levelsChoices, 0 )
         self.list_levels.SetMaxSize(wx.Size(110, -1))
+        self.list_levels.SetSelection(len(self.replicator.sheet_levels)-1)
+
 
         bSizer111.Add(self.list_levels, 0, wx.ALL, 5)
 
@@ -155,7 +157,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.rad_btn_Linear.Bind(wx.EVT_RADIOBUTTON, self.coordinate_system_changed)
         self.rad_btn_Circular.Bind(wx.EVT_RADIOBUTTON, self.coordinate_system_changed)
 
-        self.list_levels.Bind(wx.EVT_LISTBOX, self.level_changed)
+        self.Bind(wx.EVT_LISTBOX, self.level_changed)
 
         self.minimum_radius = self.replicator.minimum_radius
         self.minimum_width = self.replicator.minimum_width
@@ -166,34 +168,29 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.val_y_angle.SetValue(u"0.0")
 
     def level_changed(self, event):
-        lst = event.GetEventObject()
-        index = lst.GetSelection()
+        index = self.list_levels.GetSelection()
 
         self.replicator.calculate_spacing(self.levels[index])
+
         self.minimum_radius = self.replicator.minimum_radius
         self.minimum_width = self.replicator.minimum_width
         self.minimum_angle = self.replicator.minimum_angle
 
-        if self.rad_btn_Linear.GetValue:
-            self.rad_btn_Linear.SetValue(True)
-            self.rad_btn_Circular.SetValue(False)
+        if self.rad_btn_Linear.GetValue():
             self.lbl_x_mag.SetLabelText(u"x offset (mm)")
             self.lbl_y_angle.SetLabelText(u"y offset (mm)")
             self.val_x_mag.SetValue("%.2f" % self.minimum_width)
             self.val_y_angle.SetValue(u"0.0")
         else:
-            self.rad_btn_Linear.SetValue(False)
-            self.rad_btn_Circular.SetValue(True)
             self.lbl_x_mag.SetLabelText(u"radius (mm)")
             self.lbl_y_angle.SetLabelText(u"angle (deg)")
             self.val_x_mag.SetValue("%.2f" % self.minimum_radius)
             self.val_y_angle.SetValue("%.2f" % self.minimum_angle)
-        pass
+        event.Skip()
 
     def coordinate_system_changed(self, event):
-        rb = event.GetEventObject() 
         # if cartesian
-        if rb.GetLabel() == u"Linear":
+        if self.rad_btn_Linear.GetValue():
             self.rad_btn_Linear.SetValue(True)
             self.rad_btn_Circular.SetValue(False)
             self.lbl_x_mag.SetLabelText(u"x offset (mm)")
@@ -292,6 +289,9 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                     polar = False
                     if dlg.rad_btn_Circular.GetValue():
                         polar = True
+                    # failsafe somtimes on my machine wx does not genereta a listbox event
+                    index = dlg.list_levels.GetSelection()
+                    replicator.calculate_spacing(dlg.levels[index])
 
                     # replicate now
                     replicator.replicate_layout(x_offset, y_offset,
