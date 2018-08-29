@@ -2323,7 +2323,7 @@
   )
 
   (module Package_SO:TSSOP-38_4.4x9.7mm_P0.5mm (layer F.Cu) (tedit 5A02F25C) (tstamp 5B7743C4)
-    (at 155.440001 130.935001)
+    (at 91.059 91.186)
     (descr "TSSOP38: plastic thin shrink small outline package; 38 leads; body width 4.4 mm (see NXP SSOP-TSSOP-VSO-REFLOW.pdf and sot510-1_po.pdf)")
     (tags "SSOP 0.5")
     (path /5B767F29)
