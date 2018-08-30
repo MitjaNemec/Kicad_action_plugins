@@ -105,10 +105,26 @@ class ArchiveProject(pcbnew.ActionPlugin):
         sl = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl
 
+        # find pcbnew frame
         _pcbnew_frame = \
             filter(lambda w: w.GetTitle().startswith('Pcbnew'),
                    wx.GetTopLevelWindows()
                    )[0]
+        # check if eeschema is running
+        top_level_windows = wx.wx.GetTopLevelWindows()
+        names = []
+        for x in top_level_windows:
+            names.append(x.GetTitle())
+        is_eecshema_open = any('Eeschema' in s for s in names)
+
+        if is_eecshema_open:
+            caption = 'Archive project'
+            message = "You need to close eeschema and then run the plugin again!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logger.info("Exiting as eeschema is opened")
+            return
 
         # only testing if keypress simulation works
         key_simulator = wx.UIActionSimulator()
@@ -132,22 +148,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
         # if user clicked OK
         if main_res == wx.ID_OK:
             if main_dialog.chkbox_sch.GetValue():
-                # show the dialog informing the user that eeschema should be closed
-                caption = 'Archive project'
-                message = "Is eeschema closed?"
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-                res = dlg.ShowModal()
-                dlg.Destroy()
-
-                if res == wx.ID_NO:
-                    caption = 'Archive project'
-                    message = "You need to close eeschema and then run the plugin again!"
-                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-                    logger.info("Exiting as eeschema is opened")
-                    return
-
                 # archive schematics
                 try:
                     logger.info("Starting schematics archiving")
