@@ -324,19 +324,8 @@ class Replicator:
         for zoneid in range(self.board.GetAreaCount()):
             all_zones.append(self.board.GetArea(zoneid))
         # find all zones which are completely within the pivot bounding box
-
-        # TODO, check why when toing the outer, not all six zones are added
-        pleft = self.pivot_bounding_box.GetLeft()/SCALE
-        pright = self.pivot_bounding_box.GetRight()/SCALE
-        ptop = self.pivot_bounding_box.GetTop()/SCALE
-        pbot = self.pivot_bounding_box.GetBottom()/SCALE
-
         for zone in all_zones:
             zone_bb = zone.GetBoundingBox()
-            oleft = zone_bb.GetLeft()/SCALE
-            oright = zone_bb.GetRight()/SCALE
-            otop = zone_bb.GetTop()/SCALE
-            obot = zone_bb.GetBottom()/SCALE
             if (only_within_boundingbox and self.pivot_bounding_box.Contains(zone_bb)) or\
                (not only_within_boundingbox and self.pivot_bounding_box.Intersects(zone_bb)):
                 self.pivot_zones.append(zone)
