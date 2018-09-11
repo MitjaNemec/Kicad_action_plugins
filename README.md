@@ -5,7 +5,7 @@ This repo contains Kicad pcbnew Action Plugins()
 
 ## Replicate layout
 
-This plugin has been tested on Windows 7 Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -41,7 +41,7 @@ Example of replication of complex hierarchical project
 
 ## Delete Selected
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-03-03 revision aeae32b1a.
+This plugin has been tested with Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -59,7 +59,7 @@ To run the plugin:
 
 ## pad2pad track distance
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-03-03 revision aeae32b1a.
+This plugin has been tested with Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -80,7 +80,7 @@ To run the plugin:
 
 ## Archive project
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-07-05 revision 07e7340a9. The testing has not been thorough. The plugin works correctly only when KiCad language is English. For other languages lines 225-243 have to be changed.
+This plugin has been tested with Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled. The plugin does not work with post 5.0.0 nightlies (most likely since around 20.7.2018). The testing has not been thorough. The plugin works correctly only when KiCad language is English. For other languages lines 225-243 have to be changed.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -88,7 +88,7 @@ Within the plugin folder only *.py files are required for operation.
 
 This plugin archives the project thus making it portable.
 
-The schematics archive is achieved via project cache library. The project cache library is copied to project-archive.lib which is modified and added to project symbol library table (if the table does not exist it is created). Also the links to the symbols within the schematics are modified so that they point to the symbols within archive library.
+The schematics archive is achieved via project cache library. The project cache library is copied to project-archive.lib which is modified and added to project symbol library table (if the table does not exist it is created). Also the links to the symbols within the schematics are modified so that they point to the symbols within archive library. Afterwards, the cache library is not refreshed until any change is made in schematics.
 
 The archiving of the pcb and its footprints is already implemented within pcbnew.
 
@@ -101,7 +101,7 @@ If the project is modified later it should be archived again in order to stay po
 
 ## Swap pins
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-07-10 revision 0013e0cad.
+This plugin has been tested with Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
@@ -116,7 +116,7 @@ Example of pin swaping
 
 ## Swap units
 
-This plugin has been tested on Windows 7 Kicad nightly 2018-07-10 revision 0013e0cad.
+This plugin has been tested with Kicad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md).
 
