@@ -113,8 +113,12 @@ class SwapUnits(pcbnew.ActionPlugin):
             return
 
         # swap pins
-        swap_units.swap(board, pad1, pad2)
-        
+        try:
+            swap_units.swap(board, pad1, pad2)
+        except Exception:
+            logger.exception("Fatal error when swapping units")
+            raise
+
         
 class StreamToLogger(object):
     """

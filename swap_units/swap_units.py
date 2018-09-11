@@ -120,6 +120,8 @@ def swap(board, pad_1, pad_2):
     logger.info("Units to swap are: " + unit_1 + ", " + unit_2)
 
     # find pages containing specific units
+    page_1 = None
+    page_2 = None
     for page in relevant_sch_files:
         with open(page) as f:
             current_sch_file = f.read()
@@ -134,49 +136,51 @@ def swap(board, pad_1, pad_2):
                                 if fields.split()[1] == unit_2:
                                     page_2 = page
     logger.info("Files where the unites are:\n\t"
-                + page_1 + "\n\t"
-                + page_2)
+                + page_1 or "None" + "\n\t"
+                + page_2 or "None")
 
     # swap units in schematics
-    with open(page_1) as f:
-        current_sch_file = f.read()
-        # find location of specific unit
-        comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
-        comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
-        for comp in zip(comp_starts, comp_ends):
-            data = current_sch_file[comp[0]:comp[1]].split('\n')
-            if footprint_reference in data[1]:
-                if unit_1 in data[2].split()[1]:
-                    # +2 +1 account for splits
-                    unit_1_loc = data[2].split()[1].find(unit_1)\
-                               + comp[0]\
-                               + len(data[0])\
-                               + len(data[1])\
-                               + len(data[2].split()[0])\
-                               + 2 + 1
-                    break
-        # swap the unit
-        unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
+    if page_1 is not None:
+        with open(page_1) as f:
+            current_sch_file = f.read()
+            # find location of specific unit
+            comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
+            comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
+            for comp in zip(comp_starts, comp_ends):
+                data = current_sch_file[comp[0]:comp[1]].split('\n')
+                if footprint_reference in data[1]:
+                    if unit_1 in data[2].split()[1]:
+                        # +2 +1 account for splits
+                        unit_1_loc = data[2].split()[1].find(unit_1)\
+                                   + comp[0]\
+                                   + len(data[0])\
+                                   + len(data[1])\
+                                   + len(data[2].split()[0])\
+                                   + 2 + 1
+                        break
+            # swap the unit
+            unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
 
-    with open(page_2) as f:
-        current_sch_file = f.read()
-        # find location of specific unit
-        comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
-        comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
-        for comp in zip(comp_starts, comp_ends):
-            data = current_sch_file[comp[0]:comp[1]].split('\n')
-            if footprint_reference in data[1]:
-                if unit_2 in data[2].split()[1]:
-                    # +2 +1 account for splits
-                    unit_2_loc = data[2].split()[1].find(unit_2)\
-                               + comp[0]\
-                               + len(data[0])\
-                               + len(data[1])\
-                               + len(data[2].split()[0])\
-                               + 2 + 1
-                    break
-        # swap the unit
-        unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
+    if page_2 is not None:
+        with open(page_2) as f:
+            current_sch_file = f.read()
+            # find location of specific unit
+            comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
+            comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
+            for comp in zip(comp_starts, comp_ends):
+                data = current_sch_file[comp[0]:comp[1]].split('\n')
+                if footprint_reference in data[1]:
+                    if unit_2 in data[2].split()[1]:
+                        # +2 +1 account for splits
+                        unit_2_loc = data[2].split()[1].find(unit_2)\
+                                   + comp[0]\
+                                   + len(data[0])\
+                                   + len(data[1])\
+                                   + len(data[2].split()[0])\
+                                   + 2 + 1
+                        break
+            # swap the unit
+            unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
 
     # if files are the same, then merge two strings
     if page_1 == page_2:
@@ -192,15 +196,19 @@ def swap(board, pad_1, pad_2):
     # if files are different, then there is no problem, write both of them and be done with it
     else:
         if __name__ == "__main__":
-            with open(page_1+'_alt', 'w') as f:
-                f.write(unit_1_sch_file)
-            with open(page_2+'_alt', 'w') as f:
-                f.write(unit_2_sch_file)
+            if page_1 is not None:
+                with open(page_1+'_alt', 'w') as f:
+                    f.write(unit_1_sch_file)
+            if page_2 is not None:
+                with open(page_2+'_alt', 'w') as f:
+                    f.write(unit_2_sch_file)
         else:
-            with open(page_1, 'w') as f:
-                f.write(unit_1_sch_file)
-            with open(page_2, 'w') as f:
-                f.write(unit_2_sch_file)
+            if page_1 is not None:
+                with open(page_1, 'w') as f:
+                    f.write(unit_1_sch_file)
+            if page_2 is not None:
+                with open(page_2, 'w') as f:
+                    f.write(unit_2_sch_file)
     logger.info("Saved the schematics.")
 
     # swap pins in layout
