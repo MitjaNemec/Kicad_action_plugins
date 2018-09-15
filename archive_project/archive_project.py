@@ -402,25 +402,34 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             filepath = model_without_extension + ".wrl"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
-        except:
+        except shutil.Error:
+            copied_at_least_one = True
+        except OSError:
             pass
         try:
             filepath = model_without_extension + ".step"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
-        except:
+        # src and dest are the same
+        except shutil.Error:
+            copied_at_least_one = True
+        except OSError:
             pass
         try:
             filepath = model_without_extension + ".stp"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
-        except:
+        except shutil.Error:
+            copied_at_least_one = True
+        except OSError:
             pass
         try:
             filepath = model_without_extension + ".igs"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
-        except:
+        except shutil.Error:
+            copied_at_least_one = True
+        except OSError:
             pass
         if not copied_at_least_one:
             not_copied.append(model)
