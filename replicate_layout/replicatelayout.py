@@ -727,6 +727,13 @@ class Replicator:
                             mod_text_items[index].SetTextWidth(pivot_text.GetTextWidth())
                             # height
                             mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
+                            # rest of the parameters
+                            mod_text_items[index].SetItalic(pivot_text.IsItalic())
+                            mod_text_items[index].SetBold(pivot_text.IsBold())
+                            mod_text_items[index].SetMirrored(pivot_text.IsMirrored())
+                            mod_text_items[index].SetMultilineAllowed(pivot_text.IsMultilineAllowed())
+                            mod_text_items[index].SetHorizJustify(pivot_text.GetHorizJustify())
+                            mod_text_items[index].SetVertJustify(pivot_text.GetVertJustify())
                             # set visibility
                             mod_text_items[index].SetVisible(pivot_text.IsVisible())
 
