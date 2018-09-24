@@ -721,7 +721,12 @@ class Replicator:
 
                             # set orientation
                             mod_text_items[index].SetTextAngle(pivot_text.GetTextAngle())
-
+                            # thickness
+                            mod_text_items[index].SetThickness(pivot_text.GetThickness())
+                            # width
+                            mod_text_items[index].SetTextWidth(pivot_text.GetTextWidth())
+                            # height
+                            mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
                             # set visibility
                             mod_text_items[index].SetVisible(pivot_text.IsVisible())
 
