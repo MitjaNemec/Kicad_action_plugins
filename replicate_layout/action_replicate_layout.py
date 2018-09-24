@@ -34,7 +34,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.replicator = replicator
 
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Replicate layout", pos=wx.DefaultPosition,
-                           size=wx.Size(270, 387), style=wx.DEFAULT_DIALOG_STYLE)
+                           size=wx.Size(283,414), style=wx.DEFAULT_DIALOG_STYLE)
 
         bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
@@ -67,6 +67,10 @@ class ReplicateLayoutDialog(wx.Dialog):
         bSizer9.Add( self.rad_btn_Circular, 0, wx.ALL, 5 )
 
         bSizer1.Add(bSizer9, 1, wx.EXPAND, 5)
+
+        self.btn_grab_offset = wx.Button(self, wx.ID_ANY, u"Grab offset from layout", wx.DefaultPosition,
+                                         wx.DefaultSize, 0)
+        bSizer1.Add(self.btn_grab_offset, 0, wx.ALL, 5)
 
         bSizer2 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -157,6 +161,8 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.rad_btn_Linear.Bind(wx.EVT_RADIOBUTTON, self.coordinate_system_changed)
         self.rad_btn_Circular.Bind(wx.EVT_RADIOBUTTON, self.coordinate_system_changed)
 
+        self.btn_grab_offset.Bind(wx.EVT_BUTTON, self.grab_offest)
+
         self.Bind(wx.EVT_LISTBOX, self.level_changed)
 
         self.minimum_radius = self.replicator.minimum_radius
@@ -205,6 +211,14 @@ class ReplicateLayoutDialog(wx.Dialog):
             self.val_x_mag.SetValue("%.2f" % self.minimum_radius)
             self.val_y_angle.SetValue("%.2f" % self.minimum_angle)
         pass
+
+    def grab_offest(self, event):
+        # recalculate spacing, in order to grab pivot_module_clones
+        index = self.list_levels.GetSelection()
+        self.replicator.calculate_spacing(self.levels[index])
+        offset_x, offset_y = self.replicator.estimate_offset()
+        self.val_x_mag.SetValue("%.2f" % offset_x)
+        self.val_y_angle.SetValue("%.2f" % offset_y)
 
 
 class ReplicateLayout(pcbnew.ActionPlugin):

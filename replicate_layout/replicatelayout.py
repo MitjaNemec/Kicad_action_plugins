@@ -152,6 +152,7 @@ class Replicator:
                     self.sheet_levels.append((sheet[0], level))
 
         self.pivot_modules = []
+        self.pivot_module_clones = []
         self.pivot_modules_id = []
         self.pivot_modules_ref = []
         self.pivot_local_nets = []
@@ -177,6 +178,7 @@ class Replicator:
 
     def calculate_spacing(self, sheet_level):
         self.pivot_modules = []
+        self.pivot_module_clones = []
         self.pivot_modules_id = []
         self.pivot_modules_ref = []
         self.pivot_local_nets = []
@@ -252,11 +254,13 @@ class Replicator:
                     refnum = -1
 
                 # Add the number and the sheet ID.
+                self.pivot_module_clones.append((refnum, mod.GetReference()))
                 self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1]))
 
         # Sort by the number of the replicated modules, and then discard
         # these numbers.
         self.sheets_to_clone = [s for r, s in sorted(self.sheets_to_clone)]
+        self.pivot_module_clones = [s for r, s in sorted(self.pivot_module_clones)]
 
         # get bounding bounding box of all pivot modules
         bounding_box = self.pivot_mod.GetFootprintRect()
@@ -298,6 +302,12 @@ class Replicator:
         # get minimal width - GUI assumes horizontal replication
         self.minimum_width = (right - left) / SCALE
         pass
+
+    def estimate_offset(self):
+        mod = self.board.FindModuleByReference(self.pivot_module_clones[0])
+        pivot_mod = self.pivot_mod
+        offset = ((mod.GetPosition()[0] - pivot_mod.GetPosition()[0])/SCALE, (mod.GetPosition()[1] - pivot_mod.GetPosition()[1])/SCALE)
+        return offset
 
     def prepare_for_replication(self, only_within_boundingbox):
         self.only_within_bbox = only_within_boundingbox
@@ -728,6 +738,7 @@ class Replicator:
                             # height
                             mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
                             # rest of the parameters
+                            # TODO check SetEffects method, might be better
                             mod_text_items[index].SetItalic(pivot_text.IsItalic())
                             mod_text_items[index].SetBold(pivot_text.IsBold())
                             mod_text_items[index].SetMirrored(pivot_text.IsMirrored())
@@ -1085,6 +1096,7 @@ def test_replicate(x, y, within, polar):
     sheet_levels = replicator.get_sheet_levels()
     # select which level to replicate
     replicator.calculate_spacing(sheet_levels[0])
+    x_offset, y_offset = replicator.estimate_offset()
     replicator.replicate_layout(x, y,
                                 replicate_containing_only=within,
                                 remove_existing_nets_zones=True,
