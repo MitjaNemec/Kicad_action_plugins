@@ -385,7 +385,7 @@
       (net 3 /subsheet/OUT))
     (pad 2 thru_hole oval (at 5.08 0) (size 2.08 3.6) (drill 1.4) (layers *.Cu *.Mask)
       (net 2 GND))
-    (model D:\Mitja\Plate\Kicad_libs\action_plugins\archive_project\PhoenixContact_MSTBA_2,5_2-G-5,08_1x02_P5.08mm_Horizontal.wrl 
+    (model D:\Mitja\Plate\Kicad_libs\action_plugins\archive_project\fresh_test_project\PhoenixContact_MSTBA_2,5_2-G-5,08_1x02_P5.08mm_Horizontal.wrl 
       (at (xyz 0 0 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 0))
