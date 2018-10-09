@@ -1,0 +1,194 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# Passives:C1206
+#
+DEF Passives:C1206 C 0 10 N Y 1 F N
+F0 "C" 100 50 50 H V L CNN
+F1 "Passives:C1206" 100 -50 50 H V L CNN
+F2 "Passives:C1206M" 50 -100 50 H I L CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 0 1 20 -80 -30 80 -30 N
+P 2 0 1 20 -80 30 80 30 N
+X ~ 1 0 100 60 D 50 50 1 1 P
+X ~ 2 0 -100 60 U 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# archive:Amplifier_Operational_LM318J
+#
+DEF archive:Amplifier_Operational_LM318J U 0 10 Y Y 1 F N
+F0 "U" 150 150 50 H V L CNN
+F1 "archive:Amplifier_Operational_LM318J" 150 -150 50 H V L CNN
+F2 "Package_DIP:DIP-14_W7.62mm" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ DIP*W7.62mm*
+$ENDFPLIST
+DRAW
+P 4 0 1 10 200 0 -200 200 -200 -200 200 0 f
+X NC 1 -200 100 100 D 50 50 1 1 N N
+X ~ 10 300 0 100 L 50 50 1 1 O
+X V+ 11 -100 300 150 D 50 50 1 1 W
+X ~ 12 0 300 200 D 50 50 1 1 P
+X NC 13 0 100 100 D 50 50 1 1 N N
+X NC 14 0 -100 100 U 50 50 1 1 N N
+X NC 2 -100 100 100 D 50 50 1 1 N N
+X ~ 3 0 -300 200 U 50 50 1 1 P
+X - 4 -300 -100 100 R 50 50 1 1 I
+X + 5 -300 100 100 R 50 50 1 1 I
+X V- 6 -100 -300 150 U 50 50 1 1 W
+X NC 7 -200 -100 100 U 50 50 1 1 N N
+X NC 8 -100 -100 100 U 50 50 1 1 N N
+X ~ 9 100 -300 250 U 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# archive:Connector_Generic_Conn_01x02
+#
+DEF archive:Connector_Generic_Conn_01x02 J 0 40 Y N 1 F N
+F0 "J" 0 100 50 H V C CNN
+F1 "archive:Connector_Generic_Conn_01x02" 0 -200 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ Connector*:*_1x??_*
+$ENDFPLIST
+DRAW
+S -50 -95 0 -105 1 1 6 N
+S -50 5 0 -5 1 1 6 N
+S -50 50 50 -150 1 1 10 f
+X Pin_1 1 -200 0 150 R 50 50 1 1 P
+X Pin_2 2 -200 -100 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# archive:Connector_Screw_Terminal_01x02
+#
+DEF archive:Connector_Screw_Terminal_01x02 J 0 40 Y N 1 F N
+F0 "J" 0 100 50 H V C CNN
+F1 "archive:Connector_Screw_Terminal_01x02" 0 -200 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ TerminalBlock*:*
+$ENDFPLIST
+DRAW
+C 0 -100 25 1 1 6 N
+C 0 0 25 1 1 6 N
+S -50 50 50 -150 1 1 10 f
+P 2 1 1 6 -21 -87 13 -120 N
+P 2 1 1 6 -21 13 13 -20 N
+P 2 1 1 6 -14 -80 20 -113 N
+P 2 1 1 6 -14 20 20 -13 N
+X Pin_1 1 -200 0 150 R 50 50 1 1 P
+X Pin_2 2 -200 -100 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# archive:Device_C
+#
+DEF archive:Device_C C 0 10 N Y 1 F N
+F0 "C" 25 100 50 H V L CNN
+F1 "archive:Device_C" 25 -100 50 H V L CNN
+F2 "" 38 -150 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ C_*
+$ENDFPLIST
+DRAW
+P 2 0 1 20 -80 -30 80 -30 N
+P 2 0 1 20 -80 30 80 30 N
+X ~ 1 0 150 110 D 50 50 1 1 P
+X ~ 2 0 -150 110 U 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# archive:Device_R
+#
+DEF archive:Device_R R 0 0 N Y 1 F N
+F0 "R" 80 0 50 V V C CNN
+F1 "archive:Device_R" 0 0 50 V V C CNN
+F2 "" -70 0 50 V I C CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ R_*
+$ENDFPLIST
+DRAW
+S -40 -100 40 100 0 1 10 N
+X ~ 1 0 150 50 D 50 50 1 1 P
+X ~ 2 0 -150 50 U 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# archive:power_+15V
+#
+DEF archive:power_+15V #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -150 50 H I C CNN
+F1 "archive:power_+15V" 0 140 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 0 1 0 -30 50 0 100 N
+P 2 0 1 0 0 0 0 100 N
+P 2 0 1 0 0 100 30 50 N
+X +15V 1 0 0 0 U 50 50 1 1 W N
+ENDDRAW
+ENDDEF
+#
+# archive:power_GND
+#
+DEF archive:power_GND #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -250 50 H I C CNN
+F1 "archive:power_GND" 0 -150 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 6 0 1 0 0 0 0 -50 50 -50 0 -100 -50 -50 0 -50 N
+X GND 1 0 0 0 D 50 50 1 1 W N
+ENDDRAW
+ENDDEF
+#
+# archive:power_PWR_FLAG
+#
+DEF archive:power_PWR_FLAG #FLG 0 0 N N 1 F P
+F0 "#FLG" 0 75 50 H I C CNN
+F1 "archive:power_PWR_FLAG" 0 150 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 6 0 1 0 0 0 0 50 -40 75 0 100 40 75 0 50 N
+X pwr 1 0 0 0 U 50 50 0 0 w
+ENDDRAW
+ENDDEF
+#
+# power:+15V
+#
+DEF power:+15V #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -150 50 H I C CNN
+F1 "power:+15V" 0 140 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 2 0 1 0 -30 50 0 100 N
+P 2 0 1 0 0 0 0 100 N
+P 2 0 1 0 0 100 30 50 N
+X +15V 1 0 0 0 U 50 50 1 1 W N
+ENDDRAW
+ENDDEF
+#
+# power:GND
+#
+DEF power:GND #PWR 0 0 Y Y 1 F P
+F0 "#PWR" 0 -250 50 H I C CNN
+F1 "power:GND" 0 -150 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+P 6 0 1 0 0 0 0 -50 50 -50 0 -100 -50 -50 0 -50 N
+X GND 1 0 0 0 D 50 50 1 1 W N
+ENDDRAW
+ENDDEF
+#
+#End Library
