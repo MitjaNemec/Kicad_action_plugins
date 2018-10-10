@@ -136,7 +136,10 @@ class ArchiveProject(pcbnew.ActionPlugin):
         if main_res == wx.ID_OK:
             # warn about backing up project before proceeding
             caption = 'Archive project'
-            message = "The project should be backed-up before proceeding"
+            message = "The project should be backed-up before proceeding! \n" \
+                      "After succesful archivation, -cache.lib will be deleted!\n" \
+                      "The -cache.lib will be reconstruced on the next schematic save event\n" \
+                      "All symbols will be available in -archive.lib file!"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_QUESTION)
             dlg.ShowModal()
             dlg.Destroy()

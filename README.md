@@ -88,7 +88,7 @@ Within the plugin folder only *.py files are required for operation.
 
 This plugin archives the project thus making it portable.
 
-The schematics archive is achieved via project cache library. The project cache library is copied to project-archive.lib which is modified and added to project symbol library table (if the table does not exist it is created). Also the links to the symbols within the schematics are modified so that they point to the symbols within archive library. Afterwards, the cache library is not refreshed until any change is made in schematics.
+The schematics archive is achieved via project cache library. The project cache library is copied to project-archive.lib which is modified and added to project symbol library table (if the table does not exist it is created). Also the links to the symbols within the schematics are modified so that they point to the symbols within archive library. Afterwards, the cache library is deleted. Eeschema will recreate correct cache library next time when editing schematics.
 
 The archiving of the pcb and its footprints is already implemented within pcbnew.
 

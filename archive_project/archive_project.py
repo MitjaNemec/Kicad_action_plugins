@@ -2,10 +2,10 @@ import pcbnew
 import os
 import os.path
 import shutil
-import wx
 import sys
 import logging
 import re
+import hashlib
 from shutil import copyfile
 
 logger = logging.getLogger(__name__)
@@ -59,14 +59,6 @@ def remove_braced_content(args):
     return " ".join(parts)
 
 
-def is_pcbnew_running():
-    windows = wx.GetTopLevelWindows()
-    if len(windows) == 0:
-        return False
-    else:
-        return True
-
-
 def extract_subsheets(filename):
     with open(filename) as f:
         file_folder = os.path.dirname(os.path.abspath(filename))
@@ -117,13 +109,14 @@ def find_all_sch_files(filename, list_of_files):
                 
     for sheet, line_nr in extract_subsheets(filename):
         logger.info("found subsheet:\n\t" + sheet +
-                    "\n in:\n\t" + filename + ", line: " + str(line_nr))
+                    "\n\t in:\n\t" + filename + ", line: " + str(line_nr))
         seznam = find_all_sch_files(sheet, list_of_files)
         list_of_files = seznam
     return list_of_files
 
 
 def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
+    global __name__
     logger.info("Starting to archive symbols")
     # get project name
     pcb_filename = board.GetFileName()
@@ -134,7 +127,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     logger.info("Pcb filename:" + pcb_filename)
 
     # load system symbol library table
-    if is_pcbnew_running():
+    if __name__ != "__main__":
         sys_path = os.path.normpath(pcbnew.GetKicadConfigPath())
     else:
         # hardcode the path for my machine - testing works only on my machine
@@ -230,25 +223,62 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     with open(os.path.join(proj_path, archive_lib_name)) as f:
         project_archive_file = f.readlines()
 
-    # get list of symbols in archive library and correct any colons into underscores
-    archive_symbols_list = []
+    # first find all symbols in the library
+    symbols_list = []
     for line in project_archive_file:
         line_contents = line.split()
         if line_contents[0] == "DEF":
-            # replace colon with underscore
-            symbol = line_contents[1].replace(":", "_")
-            # send replacement back to file
-            line_nr = project_archive_file.index(line)
-            line_new = list(line_contents)
-            line_new[1] = symbol
-            line_new = " ".join(line_new) + "\n"
-            project_archive_file[line_nr] = line_new
-            # remove any "~"
-            symbol = symbol.replace("~", "")
-            archive_symbols_list.append(symbol)
+            symbols_list.append(line_contents[1].replace("~", ""))
+
+    # find all symbol referneces and replace them with correct ones
+    for symbol in symbols_list:
+        # modify the symbol reference
+        if symbol.startswith(archive_nick):
+            new_symbol = symbol.replace(archive_nick+":", "")
+        else:
+            new_symbol = symbol.replace(":", "_")
+        for line in project_archive_file:
+            index = project_archive_file.index(line)
+            if symbol in line and not line.startswith("F2"):
+                project_archive_file[index] = line.replace(symbol, new_symbol)
+
+    # scan for duplicate symbols and remove them
+    # TODO
+    start_indeces = []
+    stop_indeces = []
+    for index, line in enumerate(project_archive_file):
+        if line.startswith("DEF"):
+            start_indeces.append(index-3)
+        if line.startswith("ENDDEF"):
+            stop_indeces.append(index+1)
+    component_locations = zip(start_indeces, stop_indeces)
+
+    # first add initiali lines
+    project_archive_file_output = project_archive_file[0:start_indeces[0]]
+    # then only add components which are not duplicated
+    tested_components_hash = set()
+    for loc in component_locations:
+        component = project_archive_file[loc[0]:loc[1]]
+        hash_value = hashlib.md5("".join(component)).hexdigest()
+        if hash_value not in tested_components_hash:
+            tested_components_hash.add(hash_value)
+            project_archive_file_output.extend(project_archive_file[loc[0]:loc[1]])
+        else:
+            print "found one duplicate"
+    # add remaining lines
+    project_archive_file_output.extend(project_archive_file[stop_indeces[-1]:])
+
     # writeback the archive file
     with open(os.path.join(proj_path, archive_lib_name), "w") as f:
-        f.writelines(project_archive_file)
+        f.writelines(project_archive_file_output)
+
+    archive_symbols_list = []
+    for sym in symbols_list:
+        if sym.startswith(archive_nick):
+            archive_symbols_list.append(sym.split(':', 1)[-1])
+        else:
+            archive_symbols_list.append(sym.replace(":","_"))
+    archive_symbols_list = list(set(archive_symbols_list))
 
     # find all .sch files
     # open main schematics file and look fo any sbuhiearchical files. In any subhierachical file scan for any sub-sub
@@ -275,7 +305,11 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
                 libraryname = line_contents[1].split(":")[0]
                 symbolname = line_contents[1].split(":")[1]
                 # replace colon with underscore
-                new_name = line_contents[1].replace(":", "_")
+                if libraryname == archive_nick:
+                    new_name = symbolname.split(archive_nick+'_', 1)[-1]
+                else:
+                    new_name = line_contents[1].replace(":", "_")
+
                 # make sure that the symbol is in cache and append cache nickname
                 if new_name in archive_symbols_list:
                     line_contents[1] = archive_nick + ":" + new_name
@@ -304,17 +338,21 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
                             "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
 
     # if no exceptions has been raised write files
-    logger.info("Writing schematics file")
+    logger.info("Writing schematics file(s)")
     for key in out_files:
         filename = key
         # write
         if alt_files:
-            filename = key + "_alt"
+            parts = filename.rsplit(".")
+            parts[0] = parts[0]+ "_alt"
+            filename = ".".join(parts)
 
         with open(filename, "w") as f:
             f.writelines(out_files[key])
-            pass
-    pass
+
+    # if not testing, delete cache file
+    if not alt_files:
+        os.remove(os.path.join(proj_path, cache_lib_name))
 
 
 def archive_3D_models(board, allow_missing_models=False, alt_files=False):
@@ -361,7 +399,10 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
     # prepare folder for 3dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
-    model_folder_path = os.path.normpath(proj_path + "//shapes3D")
+    if alt_files:
+        model_folder_path = os.path.normpath(proj_path + "//shapes3D_alt")
+    else:
+        model_folder_path = os.path.normpath(proj_path + "//shapes3D")
     if not os.path.exists(model_folder_path):
         os.makedirs(model_folder_path)
 
@@ -369,12 +410,17 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     cleaned_models = []
     for model in models:
         # check if path is encoded with variables
-        if "${" or "$(" in model:
+        if "${" in model or "$(" in model:
             start_index = model.find("${")+2 or model.find("$(")+2
             end_index = model.find("}") or model.find(")")
             env_var = model[start_index:end_index]
             if env_var != "KISYS3DMOD":
-                path = os.getenv(env_var)
+                global __name__
+                if __name__ == "__main__":
+                    if env_var == "KIPRJMOD":
+                        path = os.path.abspath(os.path.dirname(board.GetFileName()))
+                else:
+                    path = os.getenv(env_var)
             else:
                 path = model_library_path
             # if variable is defined, find proper model path
@@ -383,14 +429,17 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 cleaned_models.append(model)
             # if variable is not defined, we can not find the model. Thus don't put it on the list
             else:
-                pass
+                logger.info("Can not find model defined with enviroment variable:\n" + model)
         # check if there is no path (model is local to project
         elif model == os.path.basename(model):
             model = os.path.normpath(proj_path + "//" + model)
             cleaned_models.append(model)
-        # if model is referenced with absolute path, we don't need to do anything
-        else:
+        # check if model is given with absolute path
+        elif os.path.exists(model):
             cleaned_models.append(model)
+        # otherwise we don't know how to parse the path ignorring it
+        else:
+            logger.info("Can not find model:\n" + model)
 
     # copy the models
     not_copied = []
@@ -402,9 +451,11 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             filepath = model_without_extension + ".wrl"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
+        # src and dest are the same
         except shutil.Error:
             copied_at_least_one = True
-        except OSError:
+        # file not found
+        except (OSError, IOError):
             pass
         try:
             filepath = model_without_extension + ".step"
@@ -413,23 +464,28 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
         # src and dest are the same
         except shutil.Error:
             copied_at_least_one = True
-        except OSError:
+        # file not found
+        except (OSError, IOError):
             pass
         try:
             filepath = model_without_extension + ".stp"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
+        # src and dest are the same
         except shutil.Error:
             copied_at_least_one = True
-        except OSError:
+        # file not found
+        except (OSError, IOError):
             pass
         try:
             filepath = model_without_extension + ".igs"
             shutil.copy2(filepath, model_folder_path)
             copied_at_least_one = True
+        # src and dest are the same
         except shutil.Error:
             copied_at_least_one = True
-        except OSError:
+        # file not found
+        except (OSError, IOError):
             pass
         if not copied_at_least_one:
             not_copied.append(model)
@@ -450,7 +506,10 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
         for mod in models:
             if mod in line:
                 model_name = os.path.basename(os.path.normpath(mod)).strip('"')
-                new_model_path = "${KIPRJMOD}/" + "shapes3D/" + model_name
+                if alt_files:
+                    new_model_path = "${KIPRJMOD}/" + "shapes3D_alt/" + model_name
+                else:
+                    new_model_path = "${KIPRJMOD}/" + "shapes3D/" + model_name
                 # if enclosed with doublequotes, enclose line_new also
                 if "\"" in mod:
                     new_model_path = "\"" + new_model_path + "\""
@@ -459,7 +518,9 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
         out_file.append(line_new)
     # write
     if alt_files:
-        filename = filename + "_alt"
+        parts = filename.rsplit(".")
+        parts[0] = parts[0] + "_alt"
+        filename = ".".join(parts)
     with open(filename, "w") as f:
         logger.info("Writing to pcb layout file:"+filename)
         f.writelines(out_file)
@@ -467,17 +528,14 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    board = pcbnew.LoadBoard('archive_test_project.kicad_pcb')
-
-    #board = pcbnew.LoadBoard('D:\\Mitja\Plate\\Kicad_libs\\action_plugins\\archive_project\\USB breakout Test\\USB_Breakout_v3.0.kicad_pcb')
-    
+    #board = pcbnew.LoadBoard('fresh_test_project/archive_test_project.kicad_pcb')
+    board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=True)
     except (ValueError, IOError, LookupError), error:
         print str(error)
     except NameError as error:
         print str(error)
-    
     try:
         archive_3D_models(board, allow_missing_models=False, alt_files=True)
     except IOError as error:
@@ -487,7 +545,6 @@ def main():
 
 # for testing purposes only
 if __name__ == "__main__":
-
     file_handler = logging.FileHandler(filename='archive_project.log', mode='w')
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
@@ -503,3 +560,7 @@ if __name__ == "__main__":
     logger.info("Archive plugin started in standalone mode")
 
     main()
+
+
+
+
