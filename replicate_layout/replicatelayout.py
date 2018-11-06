@@ -22,6 +22,10 @@ import pcbnew
 import math
 import os
 import re
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
 
 SCALE = 1000000.0
 
@@ -121,6 +125,7 @@ def get_coordinate_points_of_shape_poly_set(ps):
 class Replicator:
     def __init__(self, board, pivot_module_reference):
         """ initialize base object needed to replicate module layout, track layout and zone layout"""
+        logger.info("Initializing replicator object")
         # take care of different APIs
         if hasattr(pcbnew, "LAYER_ID_COUNT"):
             pcbnew.PCB_LAYER_ID_COUNT = pcbnew.LAYER_ID_COUNT
@@ -177,6 +182,7 @@ class Replicator:
         return [i[0] for i in self.sheet_levels]
 
     def calculate_spacing(self, sheet_level):
+        logger.info("Calculating spacing")
         self.pivot_modules = []
         self.pivot_module_clones = []
         self.pivot_modules_id = []
@@ -310,6 +316,7 @@ class Replicator:
         return offset
 
     def prepare_for_replication(self, only_within_boundingbox):
+        logger.info("Preparing for replication")
         self.only_within_bbox = only_within_boundingbox
         # find all tracks within the pivot bounding box
         all_tracks = self.board.GetTracks()
@@ -549,6 +556,7 @@ class Replicator:
         return net_pairs_clean, net_dict
 
     def remove_zones_tracks(self):
+        logger.info("Removing tracks and zones")
         for sheet in self.sheets_to_clone:
             # get modules on a sheet
             mod_sheet = []
@@ -637,6 +645,7 @@ class Replicator:
 
     def replicate_modules(self, x_offset, y_offset, polar):
         global SCALE
+        logger.info("Replicating modules")
         """ method which replicates modules"""
         for sheet in self.sheets_to_clone:
             sheet_index = self.sheets_to_clone.index(sheet) + 1
@@ -749,6 +758,7 @@ class Replicator:
                             mod_text_items[index].SetVisible(pivot_text.IsVisible())
 
     def replicate_text(self, x_offset, y_offset, polar):
+        logger.info("Replicating text")
         global SCALE
         # start cloning
         for sheet_index, sheet in enumerate(self.sheets_to_clone, 1):
@@ -780,6 +790,7 @@ class Replicator:
 
     def replicate_tracks(self, x_offset, y_offset, polar):
         """ method which replicates tracks"""
+        logger.info("Replicating tracks")
         global SCALE
         # start cloning
         for sheet in self.sheets_to_clone:
@@ -863,6 +874,7 @@ class Replicator:
 
     def replicate_zones(self, x_offset, y_offset, polar):
         """ method which replicates zones"""
+        logger.info("Replicating zones")
         global SCALE
         # start cloning
         for sheet in self.sheets_to_clone:
@@ -956,6 +968,7 @@ class Replicator:
                          replicate_zones,
                          replicate_text,
                          polar):
+        logger.info("Replicating layout")
         self.prepare_for_replication(replicate_containing_only)
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
@@ -971,6 +984,7 @@ class Replicator:
 
 
 def test_multiple_inner(x, y, within, polar):
+    logger.info("Testing multiple hierarchy - inner levels")
     board = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
     replicator = Replicator(board=board, pivot_module_reference='Q301')
     # get sheet levels
@@ -1026,6 +1040,7 @@ def test_multiple_inner(x, y, within, polar):
 
 
 def test_multiple_outer(x, y, within, polar):
+    logger.info("Testing multiple hierarchy - outer levels")
     board = pcbnew.LoadBoard('multiple_hierarchy_top_done.kicad_pcb')
     replicator = Replicator(board=board, pivot_module_reference='Q301') # J201 ali Q301
     # get sheet levels
@@ -1079,6 +1094,8 @@ def test_multiple_outer(x, y, within, polar):
 
 
 def test_replicate(x, y, within, polar):
+    logger.info("Testing basic operation")
+
     import difflib
 
     filename = ''
@@ -1140,12 +1157,6 @@ def test_replicate(x, y, within, polar):
 
 
 def main():
-    errnum_within = 0
-    errnum_all = 0
-    errnum_polar = 0
-    errnum_multiple_inner = 0
-    errnum_multiple_outer = 0
-
     errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
     errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)
@@ -1176,4 +1187,17 @@ def main():
 
 # for testing purposes only
 if __name__ == "__main__":
+    file_handler = logging.FileHandler(filename='replicate_layout.log', mode='w')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    handlers = [file_handler, stdout_handler]
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                        datefmt='%m-%d %H:%M:%S',
+                        handlers=handlers
+                        )
+
+    logger = logging.getLogger(__name__)
+    logger.info("Replicate layout plugin started in standalone mode")
+
     main()

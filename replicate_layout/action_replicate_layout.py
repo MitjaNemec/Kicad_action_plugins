@@ -24,6 +24,8 @@ import wx
 import pcbnew
 import replicatelayout
 import os
+import logging
+import sys
 
 ___version___ = "1.0"
 
@@ -237,16 +239,34 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         self.description = "Replicate layout of a hierchical sheet"
 
     def Run(self):
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().startswith('Pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
-
         # load board
         board = pcbnew.GetBoard()
 
         # go to the project folder - so that log will be in proper place
         os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
+
+        # set up logger
+        logging.basicConfig(level=logging.DEBUG,
+                            filename="replicate_layout.log",
+                            filemode='w',
+                            format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                            datefmt='%m-%d %H:%M:%S',
+                            disable_existing_loggers=False)
+        logger = logging.getLogger(__name__)
+        logger.info("Action plugin Replicate layout started")
+
+        stdout_logger = logging.getLogger('STDOUT')
+        sl_out = StreamToLogger(stdout_logger, logging.INFO)
+        sys.stdout = sl_out
+
+        stderr_logger = logging.getLogger('STDERR')
+        sl_err = StreamToLogger(stderr_logger, logging.ERROR)
+        sys.stderr = sl_err
+
+        _pcbnew_frame = \
+            filter(lambda w: w.GetTitle().startswith('Pcbnew'),
+                   wx.GetTopLevelWindows()
+                   )[0]
 
         # check if there is exactly one module selected
         selected_modules = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetModules())
@@ -254,29 +274,32 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         for mod in selected_modules:
             selected_names.append("{}".format(mod.GetReference()))
 
+        # if more or less than one show only a messagebox
+        if len(selected_names) != 1:
+            caption = 'Replicate Layout'
+            message = "More or less than 1 module selected. Please select exactly one module and run the script again"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
         # if exactly one module is selected
-        if len(selected_names) == 1:
-            process_canceled = False
+        else:
             # this is a pivot module
             pivot_module_reference = selected_names[0]
 
             # prepare the replicator
+            logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
             replicator = replicatelayout.Replicator(pcbnew.GetBoard(), pivot_module_reference)
 
             sheet_levels = replicator.get_sheet_levels()
+            logger.debug("Calculating initial spacing")
             replicator.calculate_spacing(sheet_levels[-1])
 
             # show dialog
+            logger.debug("Showing dialog")
             x_offset = None
             y_offset = None
             dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator)
             res = dlg.ShowModal()
-
-            replicate_containing_only = False
-            remove_existing_nets_zones = False
-            rep_text = False
-            rep_tracks = False
-            rep_zones = False
 
             if res == wx.ID_OK:
                 process_canceled = False
@@ -293,44 +316,44 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                 rep_tracks = dlg.chkbox_tracks.GetValue()
                 rep_zones = dlg.chkbox_zones.GetValue()
                 rep_text = dlg.chkbox_text.GetValue()
+                polar = dlg.rad_btn_Circular.GetValue()
             else:
-                process_canceled = True
+                return
 
-            if not process_canceled:
-                # execute replicate_layout
-                if (x_offset is not None) and (y_offset is not None):
-                    # are we replicating in polar coordinate system
-                    polar = False
-                    if dlg.rad_btn_Circular.GetValue():
-                        polar = True
-                    # failsafe somtimes on my machine wx does not genereta a listbox event
-                    index = dlg.list_levels.GetSelection()
-                    replicator.calculate_spacing(dlg.levels[index])
+            # execute replicate_layout
+            if (x_offset is None) or (y_offset is None):
+                logger.info("error parsing x offset and/or y offset input values")
+                caption = 'Replicate Layout'
+                message = "error parsing x offset and/or y offset input values"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+            else:
+                # failsafe somtimes on my machine wx does not generate a listbox event
+                index = dlg.list_levels.GetSelection()
+                replicator.calculate_spacing(dlg.levels[index])
 
-                    # replicate now
-                    replicator.replicate_layout(x_offset, y_offset,
-                                                replicate_containing_only,
-                                                remove_existing_nets_zones,
-                                                rep_tracks,
-                                                rep_zones, rep_text,
-                                                polar)
-
-                    pcbnew.Refresh()
-                else:
-                    caption = 'Replicate Layout'
-                    message = "error parsing x offset and/or y offset input values"
-                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-
-        # if more or less than one show only a messagebox
-        else:
-            caption = 'Replicate Layout'
-            message = "More or less than 1 module selected. Please select exactly one module and run the script again"
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-
-        pass
+                # replicate now
+                logger.info("Replicating layout")
+                replicator.replicate_layout(x_offset, y_offset,
+                                            replicate_containing_only,
+                                            remove_existing_nets_zones,
+                                            rep_tracks,
+                                            rep_zones, rep_text,
+                                            polar)
+                logger.info("Replication complete")
+                pcbnew.Refresh()
 
 
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
