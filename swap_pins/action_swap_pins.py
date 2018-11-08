@@ -43,7 +43,7 @@ class SwapPins(pcbnew.ActionPlugin):
 
     def Run(self):
         _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().startswith('Pcbnew'),
+            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
                    wx.GetTopLevelWindows()
                    )[0]
         # check if eeschema is running

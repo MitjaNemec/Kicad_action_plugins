@@ -107,7 +107,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
 
         # find pcbnew frame
         _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().startswith('Pcbnew'),
+            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
                    wx.GetTopLevelWindows()
                    )[0]
         # check if eeschema is running

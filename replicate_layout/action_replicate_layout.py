@@ -264,7 +264,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         sys.stderr = sl_err
 
         _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().startswith('Pcbnew'),
+            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
                    wx.GetTopLevelWindows()
                    )[0]
 
