@@ -148,13 +148,14 @@ class Replicator:
         layout_filename = os.path.abspath(board.GetFileName())
         filename = layout_filename.replace("kicad_pcb", "sch")
         list_of_sheets = []
-        sheet_names = list(set(self.find_all_sch_files(filename, list_of_sheets)))
+        sheet_names_full = self.find_all_sch_files(filename, list_of_sheets)
+        self.sheet_names = list(set(sheet_names_full))
 
         self.sheet_levels = []
         for level in self.pivot_sheet_sel_id:
-            for sheet in sheet_names:
+            for sheet in self.sheet_names:
                 if level in sheet[1]:
-                    self.sheet_levels.append((sheet[0], level))
+                    self.sheet_levels.append((sheet[0], level, sheet[2]))
 
         self.pivot_modules = []
         self.pivot_module_clones = []
@@ -180,6 +181,13 @@ class Replicator:
 
     def get_sheet_levels(self):
         return [i[0] for i in self.sheet_levels]
+
+    def get_list_of_sheets_to_replicate(self, sheet_level):
+        for level in self.sheet_levels:
+            if sheet_level == level[0]:
+                pivot_sheet_level = level
+        list_of_sheets = [x[2] for x in self.sheet_names if x[0] == pivot_sheet_level[0] and x[2] != pivot_sheet_level[2]]
+        return list_of_sheets
 
     def calculate_spacing(self, sheet_level):
         logger.info("Calculating spacing")
@@ -267,6 +275,9 @@ class Replicator:
         # these numbers.
         self.sheets_to_clone = [s for r, s in sorted(self.sheets_to_clone)]
         self.pivot_module_clones = [s for r, s in sorted(self.pivot_module_clones)]
+
+        # filter the sheets if necessary
+        # TODO
 
         # get bounding bounding box of all pivot modules
         bounding_box = self.pivot_mod.GetFootprintRect()
@@ -379,6 +390,9 @@ class Replicator:
                 # found sheet ID
                 if line.startswith('U '):
                     subsheet_id = line.split()[1]
+                # found sheet name
+                if line.startswith('F0 '):
+                    subsheet_name = line.split()[1].rstrip("\"").lstrip("\"")
                 # found sheet filename
                 if line.startswith('F1 '):
                     subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
@@ -409,11 +423,11 @@ class Replicator:
             file_path = os.path.abspath(subsheet_path)
             rel_subsheet_path = os.path.relpath(file_path, self.project_path)
 
-            yield rel_subsheet_path, subsheet_line, subsheet_id
+            yield rel_subsheet_path, subsheet_line, subsheet_id, subsheet_name
 
     def find_all_sch_files(self, filename, list_of_files):
-        for sheet, line_nr, sheet_id in self.extract_subsheets(filename):
-            list_of_files.append((sheet, sheet_id))
+        for sheet, line_nr, sheet_id, sheet_name in self.extract_subsheets(filename):
+            list_of_files.append((sheet, sheet_id, sheet_name))
             list_of_files = self.find_all_sch_files(sheet, list_of_files)
         return list_of_files
 
@@ -1157,9 +1171,12 @@ def test_replicate(x, y, within, polar):
 
 
 def main():
-    errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
-    errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
-    errnum_polar = test_replicate(20, 60, within=False, polar=True)
+    errnum_within = 0
+    errnum_all = 0
+    errnum_polar = 0
+    #errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
+    #errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
+    #errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
     os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/multiple_hierarchy")
     errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)

@@ -34,13 +34,16 @@ class ReplicateLayoutDialog(wx.Dialog):
     def __init__(self, parent, replicator):
 
         self.replicator = replicator
+        self.levels = self.replicator.get_sheet_levels()
 
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Replicate layout", pos=wx.DefaultPosition,
-                           size=wx.Size(283,414), style=wx.DEFAULT_DIALOG_STYLE)
+                           size=wx.Size(440, 435), style=wx.DEFAULT_DIALOG_STYLE)
 
-        bSizer1 = wx.BoxSizer(wx.VERTICAL)
+        bSizer1 = wx.BoxSizer(wx.HORIZONTAL)
 
-        bSizer111 = wx.BoxSizer(wx.HORIZONTAL)
+        bSizer14 = wx.BoxSizer(wx.VERTICAL)
+
+        bSizer111 = wx.BoxSizer(wx.VERTICAL)
 
         self.m_staticText3 = wx.StaticText(self, wx.ID_ANY, u"Hierarchy level:", wx.DefaultPosition, wx.DefaultSize, 0)
         self.m_staticText3.Wrap(-1)
@@ -48,15 +51,14 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer111.Add(self.m_staticText3, 0, wx.ALL, 5)
 
-        list_levelsChoices = self.replicator.get_sheet_levels()
+        list_levelsChoices = self.levels
         self.list_levels = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_levelsChoices, 0 )
         self.list_levels.SetMaxSize(wx.Size(110, -1))
         self.list_levels.SetSelection(len(self.replicator.sheet_levels)-1)
 
-
         bSizer111.Add(self.list_levels, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer111, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer111, 1, wx.EXPAND, 5)
 
         bSizer9 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -68,11 +70,11 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.rad_btn_Circular.SetValue(False)
         bSizer9.Add( self.rad_btn_Circular, 0, wx.ALL, 5 )
 
-        bSizer1.Add(bSizer9, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer9, 1, wx.EXPAND, 5)
 
         self.btn_grab_offset = wx.Button(self, wx.ID_ANY, u"Grab offset from layout", wx.DefaultPosition,
                                          wx.DefaultSize, 0)
-        bSizer1.Add(self.btn_grab_offset, 0, wx.ALL, 5)
+        bSizer14.Add(self.btn_grab_offset, 0, wx.ALL, 5)
 
         bSizer2 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -87,7 +89,7 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer2.Add(self.val_x_mag, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer2, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer2, 1, wx.EXPAND, 5)
 
         bSizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -102,7 +104,7 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer3.Add(self.val_y_angle, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer3, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer3, 1, wx.EXPAND, 5)
 
         bSizer8 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -110,7 +112,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.chkbox_tracks.SetValue(True)
         bSizer8.Add(self.chkbox_tracks, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer8, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer8, 1, wx.EXPAND, 5)
 
         bSizer5 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -118,7 +120,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.chkbox_zones.SetValue(True)
         bSizer5.Add(self.chkbox_zones, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer5, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer5, 1, wx.EXPAND, 5)
 
         bSizer6 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -126,14 +128,14 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.chkbox_text.SetValue(True)
         bSizer6.Add(self.chkbox_text, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer6, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer6, 1, wx.EXPAND, 5)
 
         bSizer10 = wx.BoxSizer(wx.HORIZONTAL)
 
         self.chkbox_intersecting = wx.CheckBox( self, wx.ID_ANY, u"Replicate intersecting tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
         bSizer10.Add(self.chkbox_intersecting, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer10, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer10, 1, wx.EXPAND, 5)
 
         bSizer11 = wx.BoxSizer(wx.VERTICAL)
 
@@ -141,7 +143,7 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         bSizer11.Add(self.chkbox_remove, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer11, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer11, 1, wx.EXPAND, 5)
 
         bSizer12 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -152,7 +154,31 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.btn_cancel = wx.Button(self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0)
         bSizer12.Add(self.btn_cancel, 0, wx.ALL, 5)
 
-        bSizer1.Add(bSizer12, 1, wx.EXPAND, 5)
+        bSizer14.Add(bSizer12, 1, wx.EXPAND, 5)
+
+        bSizer14.Add((0, 0), 1, wx.EXPAND, 5)
+
+        bSizer1.Add(bSizer14, 1, wx.EXPAND, 5)
+
+        bSizer15 = wx.BoxSizer(wx.VERTICAL)
+
+        self.m_staticText4 = wx.StaticText(self, wx.ID_ANY, u"Sheets to replicate:", wx.DefaultPosition, wx.DefaultSize,
+                                           0)
+        self.m_staticText4.Wrap(-1)
+        bSizer15.Add(self.m_staticText4, 0, wx.ALL, 5)
+
+        index = self.list_levels.GetSelection()
+        list_sheetsChoices = self.replicator.get_list_of_sheets_to_replicate(self.levels[index])
+        self.list_sheets = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(-1, 195), list_sheetsChoices,
+                                      wx.LB_MULTIPLE | wx.LB_NEEDED_SB)
+        bSizer15.Add(self.list_sheets, 0, wx.ALL, 5)
+
+        # by default select all sheets
+        number_of_items = self.list_sheets.GetCount()
+        for i in range(number_of_items):
+            self.list_sheets.Select(i)
+
+        bSizer1.Add(bSizer15, 1, wx.EXPAND, 5)
 
         self.SetSizer(bSizer1)
         self.Layout()
@@ -165,7 +191,7 @@ class ReplicateLayoutDialog(wx.Dialog):
 
         self.btn_grab_offset.Bind(wx.EVT_BUTTON, self.grab_offest)
 
-        self.Bind(wx.EVT_LISTBOX, self.level_changed)
+        self.list_levels.Bind(wx.EVT_LISTBOX, self.level_changed)
 
         self.minimum_radius = self.replicator.minimum_radius
         self.minimum_width = self.replicator.minimum_width
@@ -179,6 +205,17 @@ class ReplicateLayoutDialog(wx.Dialog):
         index = self.list_levels.GetSelection()
 
         self.replicator.calculate_spacing(self.levels[index])
+        list_sheetsChoices = self.replicator.get_list_of_sheets_to_replicate(self.levels[index])
+
+        # clear levels
+        self.list_sheets.Clear()
+        list_sheetsChoices = self.replicator.get_list_of_sheets_to_replicate(self.levels[index])
+        self.list_sheets.AppendItems(list_sheetsChoices)
+
+        # by default select all sheets
+        number_of_items = self.list_sheets.GetCount()
+        for i in range(number_of_items):
+            self.list_sheets.Select(i)
 
         self.minimum_radius = self.replicator.minimum_radius
         self.minimum_width = self.replicator.minimum_width
@@ -302,7 +339,12 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             res = dlg.ShowModal()
 
             if res == wx.ID_OK:
-                process_canceled = False
+
+                selected_items = dlg.list_sheets.GetSelections()
+                slected_names = []
+                for sel in selected_items:
+                    slected_names.append(dlg.list_sheets.GetString(sel))
+
                 try:
                     x_offset = float(dlg.val_x_mag.GetValue())
                 except:
