@@ -44,7 +44,7 @@
             <property name="minimum_size">-1,-1</property>
             <property name="name">ReplicateLayoutDialog</property>
             <property name="pos"></property>
-            <property name="size">440,435</property>
+            <property name="size">427,521</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
             <property name="subclass">; forward_declare</property>
             <property name="title">Replicate layout</property>
@@ -196,7 +196,7 @@
                                 </object>
                                 <object class="sizeritem" expanded="0">
                                     <property name="border">5</property>
-                                    <property name="flag">wxALL</property>
+                                    <property name="flag">wxALL|wxEXPAND</property>
                                     <property name="proportion">0</property>
                                     <object class="wxListBox" expanded="0">
                                         <property name="BottomDockable">1</property>
@@ -328,7 +328,7 @@
                                         <property name="label">Linear</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>
-                                        <property name="maximum_size"></property>
+                                        <property name="maximum_size">-1,-1</property>
                                         <property name="min_size"></property>
                                         <property name="minimize_button">0</property>
                                         <property name="minimum_size"></property>
@@ -416,7 +416,7 @@
                                         <property name="label">Circular</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>
-                                        <property name="maximum_size"></property>
+                                        <property name="maximum_size">-1,-1</property>
                                         <property name="min_size"></property>
                                         <property name="minimize_button">0</property>
                                         <property name="minimum_size"></property>
@@ -1717,7 +1717,7 @@
                         </object>
                         <object class="sizeritem" expanded="1">
                             <property name="border">5</property>
-                            <property name="flag">wxALL</property>
+                            <property name="flag">wxALL|wxEXPAND</property>
                             <property name="proportion">0</property>
                             <object class="wxListBox" expanded="1">
                                 <property name="BottomDockable">1</property>
@@ -1801,6 +1801,16 @@
                                 <event name="OnSetFocus"></event>
                                 <event name="OnSize"></event>
                                 <event name="OnUpdateUI"></event>
+                            </object>
+                        </object>
+                        <object class="sizeritem" expanded="1">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">1</property>
+                            <object class="spacer" expanded="1">
+                                <property name="height">0</property>
+                                <property name="permission">protected</property>
+                                <property name="width">0</property>
                             </object>
                         </object>
                     </object>
