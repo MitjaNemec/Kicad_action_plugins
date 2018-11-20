@@ -673,6 +673,7 @@ class Replicator:
                 if a == b:
                     # find which is the corresponding pivot module
                     if module_id in self.pivot_modules_id:
+                        logger.info("Replicating module: " + mod.GetReference())
                         # get coresponding pivot module and its position
                         # find the best match
                         mod_locations = [index for index, pivot_module in enumerate(self.pivot_modules_id) if pivot_module == module_id]
@@ -983,6 +984,7 @@ class Replicator:
                          replicate_text,
                          polar):
         logger.info("Replicating layout")
+        logger.info("Will replicate sheets:\n\t" + "\n\t".join(str(x) for x in self.sheets_to_clone))
         self.prepare_for_replication(replicate_containing_only)
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
