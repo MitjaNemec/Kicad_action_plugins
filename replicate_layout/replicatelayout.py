@@ -279,7 +279,7 @@ class Replicator:
         # filter the sheets if necessary
         # TODO
 
-        # get bounding bounding box of all pivot modules
+        # get the pivot bounding box
         bounding_box = self.pivot_mod.GetFootprintRect()
         top = bounding_box.GetTop()
         bottom = bounding_box.GetBottom()
@@ -985,6 +985,7 @@ class Replicator:
                          polar):
         logger.info("Replicating layout")
         logger.info("Will replicate sheets:\n\t" + "\n\t".join(str(x) for x in self.sheets_to_clone))
+        logger.info("Pivot modules are:\n\t" + "\n\t".join(x.GetReference() for x in self.pivot_modules))
         self.prepare_for_replication(replicate_containing_only)
         if remove_existing_nets_zones:
             self.remove_zones_tracks()
