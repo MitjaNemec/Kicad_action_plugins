@@ -29,6 +29,15 @@ import sys
 
 logger = logging.getLogger(__name__)
 
+def str_diff(str1, str2):
+    num_diffs = 0
+    diff_str = ""
+    for a, b in zip(str1, str2):
+        if a != b:
+            num_diffs = num_diffs + 1
+            diff_str = diff_str + a
+    return num_diffs, diff_str
+
 
 def swap(board, pad_1, pad_2):
     logger.info("Starting swap_pins")
@@ -99,6 +108,7 @@ def swap(board, pad_1, pad_2):
         raise ValueError("No coresponding symbols found in the schematics")
 
     # load the symbol from cache library
+    logger.info("Loooking for: " + relevant_sch_files[0][3] + " in cache.lib")
     with open(cache_file) as f:
         contents = f.read()
         def_indices = [m.start() for m in re.finditer('DEF ', contents)]
@@ -108,12 +118,17 @@ def swap(board, pad_1, pad_2):
             raise LookupError("Cache library contains errors")
         symbol_locations = zip(def_indices, enddef_indices)
         # go through all the symbols in the library
+        symbol = None
         for sym_location in symbol_locations:
             sym = contents[sym_location[0]:sym_location[1]].split('\n')
-            # go throguh all lines in the symbol and find a mathc
+            # go throguh all lines in the symbol and find a match
             for line in sym:
                 if line.startswith('DEF '):
-                    if relevant_sch_files[0][3] in line.split()[1]:
+                    cache_sym_name = line.split()[1]
+                    sch_sym_name = relevant_sch_files[0][3]
+                    num, diff = str_diff(cache_sym_name, sch_sym_name)
+                    # support old and new style of cache symbol entry (undersore or colon)
+                    if (num == 1 and diff == "_") or num == 0:
                         # found a match, break from both loops
                         symbol = sym
                         logger.info("Found symbol in cache library")
@@ -123,6 +138,10 @@ def swap(board, pad_1, pad_2):
                 continue
             # Inner loop was broken, break the outer.
             break
+        # here I should test if symbol was found
+        if symbol is None:
+            logger.info("Did not find symbol in the cache library. Cache library is not fresh")
+            raise ValueError("Did not find symbol in the cache library. Cache library is not fresh")
 
     # get the number of units
     for field in symbol:
