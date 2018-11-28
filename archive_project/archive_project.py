@@ -288,6 +288,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     all_sch_files = find_all_sch_files(main_sch_file, all_sch_files)
     all_sch_files = list(set(all_sch_files))
 
+    logger.info("found all subsheets")
     # go through each .sch file
     out_files = {}
     symbols_form_missing_libraries = set()
@@ -295,13 +296,33 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
         out_files[filename] = []
         with open(filename) as f:
             sch_file = f.readlines()
+            logger.info("Archiving file: " + filename)
+
+        # go throught the symbols only
+        def_indices = []
+        enddef_indices = []
+        for index, line in enumerate(sch_file):
+            if line.startswith('$Comp'):
+                def_indices.append(index)
+            if line.startswith('$EndComp'):
+                enddef_indices.append(index)
+        if len(def_indices) != len(enddef_indices):
+            logger.info("Cache library contains errors")
+            raise LookupError("Cache library contains errors")
+        symbol_locations = zip(def_indices, enddef_indices)
 
         sch_file_out = []
         # find line starting with L and next word until colon mathes library nickname
-        for line in sch_file:
+        for index, line in enumerate(sch_file):
+
             line_contents = line.split()
-            # find symbol name
-            if line_contents[0] == "L":
+            # if line is within the componend description and line denotes a symbol label
+            line_in_component_decription = False
+            for sym_loc in symbol_locations:
+                if (sym_loc[0] < index) and (index < sym_loc[1]):
+                    line_in_component_decription = True
+                    break
+            if line_in_component_decription and line_contents[0] == "L":
                 libraryname = line_contents[1].split(":")[0]
                 symbolname = line_contents[1].split(":")[1]
                 # replace colon with underscore
