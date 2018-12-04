@@ -174,9 +174,9 @@ def swap(board, pad_1, pad_2):
     page_2_loc = filter(lambda x: x[1] == unit_2, relevant_sch_files)[0][2]
 
     logger.info("Unit 1 on page: " + page_1 +
-                "at: " + str(page_1_loc[0]) + ", " + str(page_1_loc[1]))
+                " at: " + str(page_1_loc[0]) + ", " + str(page_1_loc[1]))
     logger.info("Unit 2 on page: " + page_2 +
-                "at: " + str(page_2_loc[0]) + ", " + str(page_2_loc[1]))
+                " at: " + str(page_2_loc[0]) + ", " + str(page_2_loc[1]))
 
     # get pin locations within schematics
     pin_1_loc = (str(int(page_1_loc[0]) + int(relevant_pins[0][3])), str(int(page_1_loc[1]) - int(relevant_pins[0][4])))
