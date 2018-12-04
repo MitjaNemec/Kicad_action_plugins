@@ -221,13 +221,13 @@ def swap(board, pad_1, pad_2):
                 next_line_1 = shematics_1[line_index_1 + 1]
                 # if label is precisely at pin location
                 if line_fields[2] == pin_1_loc[0] and line_fields[3] == pin_1_loc[1]:
-                    list_line_1.append( (line, next_line_1, line_index_1, 0.0) )
+                    list_line_1.append((line, next_line_1, line_index_1, 0.0))
                     logger.info("Found label at pin 1")
                 # or if label text matches the net name and is close enoght
                 if next_line_1.rstrip() == net_name_1:
                     label_location = (line_fields[2], line_fields[3])
                     distance = get_distance(pin_1_loc, label_location)
-                    list_line_1.append( (line, next_line_1, line_index_1, distance) )
+                    list_line_1.append((line, next_line_1, line_index_1, distance))
                     logger.info("Found label near pin 1")
 
     # remove duplicates
@@ -252,7 +252,7 @@ def swap(board, pad_1, pad_2):
                 next_line_2 = shematics_2[line_index_2 + 1]
                 # if label is precisely at pin location
                 if line_fields[2] == pin_2_loc[0] and line_fields[3] == pin_2_loc[1]:
-                    list_line_2 = (line, next_line_2, line_index_2)
+                    list_line_2.append((line, next_line_2, line_index_2))
                     logger.info("Found label at pin 2")
                 # or if label text matches the net name and is close enoght
                 if next_line_2.rstrip() == net_name_2:
