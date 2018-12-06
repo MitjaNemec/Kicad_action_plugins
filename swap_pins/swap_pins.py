@@ -63,7 +63,7 @@ def swap(board, pad_1, pad_2):
     footprint_reference = pad_2.GetParent().GetReference()
 
     logger.info("Swaping pins: " + pad_nr_1 + ", " + pad_nr_2 +
-                "on: " + footprint_reference + " on nets: " + net_name_1 + ", " + net_name_2)
+                " on: " + footprint_reference + " on nets: " + net_name_1 + ", " + net_name_2)
 
     # get all schematic pages
     all_sch_files = []
@@ -100,6 +100,7 @@ def swap(board, pad_1, pad_2):
                         if line.startswith('P '):
                             symbol_loc = (line.split()[1], line.split()[2])
                             relevant_sch_files.append((page, symbol_unit, symbol_loc, symbol_name))
+                            logger.info(symbol_name + " unit: " + symbol_unit + " present on page: " + page)
                             break
 
     # if no symbol has been found raise an expcetion
@@ -164,8 +165,12 @@ def swap(board, pad_1, pad_2):
         if pin[2] == pad_nr_2:
             relevant_pins.append(pin)
 
+    logger.info("Relevant pins are: name: " + relevant_pins[0][1] + ", number: " + relevant_pins[0][2] + "; " +
+                                   "name: " + relevant_pins[1][1] + ", number: " + relevant_pins[1][2])
+
     unit_1 = relevant_pins[0][9]
     unit_2 = relevant_pins[1][9]
+    logger.info("Relevant pins are on units: " + unit_1 + ", " + unit_2)
 
     # get the pages of correcsponding unit
     page_1 = filter(lambda x: x[1] == unit_1, relevant_sch_files)[0][0]
@@ -213,11 +218,11 @@ def swap(board, pad_1, pad_2):
         shematics_1 = f.readlines()
     # parse it and find text labels at pin locations
     list_line_1 = []
-    for line in shematics_1:
+    for index, line in enumerate(shematics_1):
         if line.startswith('Text '):
             line_fields = line.split()
             if line_fields[1] == 'Label' or line_fields[1] == 'GLabel' or line_fields[1] == 'HLabel':
-                line_index_1 = shematics_1.index(line)
+                line_index_1 = index
                 next_line_1 = shematics_1[line_index_1 + 1]
                 # if label is precisely at pin location
                 if line_fields[2] == pin_1_loc[0] and line_fields[3] == pin_1_loc[1]:
@@ -244,11 +249,11 @@ def swap(board, pad_1, pad_2):
         shematics_2 = f.readlines()
 
     list_line_2 = []
-    for line in shematics_2:
+    for index, line in enumerate(shematics_1):
         if line.startswith('Text '):
             line_fields = line.split()
             if line_fields[1] == 'Label' or line_fields[1] == 'GLabel' or line_fields[1] == 'HLabel':
-                line_index_2 = shematics_2.index(line)
+                line_index_2 = index
                 next_line_2 = shematics_2[line_index_2 + 1]
                 # if label is precisely at pin location
                 if line_fields[2] == pin_2_loc[0] and line_fields[3] == pin_2_loc[1]:
@@ -443,7 +448,7 @@ def main():
     # across_hierarchy - swap to label accross different hiarchical levels
     # across_hierarchy_wire - swap two labels connected thorugh wire across hirarchical levels
     # across_hierarchy_partial_wire - swap one label connected thorugh wire across hierarchical levels
-    test = 'across_hierarchy_partial_wire'
+    test = 'across_hierarchy'
 
     if test == 'local':
         board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
@@ -530,6 +535,28 @@ def main():
             if pad.GetPadName() == u'2':
                 pad1 = pad
             if pad.GetPadName() == u'9':
+                pad2 = pad
+        pass
+        swap(board, pad1, pad2)
+    if test == 'label_orientation_both':
+        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+        mod = board.FindModuleByReference('U101')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'13':
+                pad1 = pad
+            if pad.GetPadName() == u'15':
+                pad2 = pad
+        pass
+        swap(board, pad1, pad2)
+    if test == 'label_orientation_single':
+        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+        mod = board.FindModuleByReference('U101')
+        pads = mod.Pads()
+        for pad in pads:
+            if pad.GetPadName() == u'13':
+                pad1 = pad
+            if pad.GetPadName() == u'16':
                 pad2 = pad
         pass
         swap(board, pad1, pad2)
