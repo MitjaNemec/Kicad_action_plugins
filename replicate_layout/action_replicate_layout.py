@@ -36,7 +36,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         self.replicator = replicator
         self.levels = self.replicator.get_sheet_levels()
 
-        wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 427,521 ), style = wx.DEFAULT_DIALOG_STYLE )
+        wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 427,521 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
         
         self.SetSizeHintsSz( wx.Size( -1,-1 ), wx.Size( -1,-1 ) )
         
