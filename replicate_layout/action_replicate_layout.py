@@ -27,7 +27,6 @@ import os
 import logging
 import sys
 
-___version___ = "1.0"
 
 
 class ReplicateLayoutDialog(wx.Dialog):
