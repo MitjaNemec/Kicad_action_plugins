@@ -22,6 +22,7 @@
 import pcbnew
 import Tkinter as tk
 import tkMessageBox
+import threading
 
 
 class NoWxpython(pcbnew.ActionPlugin):
@@ -34,10 +35,15 @@ class NoWxpython(pcbnew.ActionPlugin):
         self.description = "Replicate layout of a hierchical sheet"
 
     def Run(self):
-        root = tk.Tk()
-        root.wm_attributes("-topmost", "true")
-        root.withdraw()
-        root.update_idletasks()
-        root.grab_set()
-        mb = tkMessageBox.showerror("Replicate layout", "Wxpython is not supported with this KiCad build.")
+        def messagebox_task():
+            root = tk.Tk()
+            root.wm_attributes("-topmost", "true")
+            root.withdraw()
+            root.update_idletasks()
+            root.grab_set()
+            mb = tkMessageBox.showerror("Replicate layout", "Wxpython is not supported with this KiCad build.")
+            root.destroy()
+        t = threading.Thread(target=messagebox_task)
+        t.start()
+        t.join()
 
