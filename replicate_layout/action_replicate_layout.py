@@ -326,7 +326,15 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
             # prepare the replicator
             logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
-            replicator = replicatelayout.Replicator(pcbnew.GetBoard(), pivot_module_reference)
+            try:
+                replicator = replicatelayout.Replicator(pcbnew.GetBoard(), pivot_module_reference)
+            except ValueError:
+                caption = 'Replicate Layout'
+                message = "Selected module is on root page of schematics hierarchy!"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
             sheet_levels = replicator.get_sheet_levels()
             logger.debug("Calculating initial spacing")

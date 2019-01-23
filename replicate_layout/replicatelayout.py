@@ -144,6 +144,11 @@ class Replicator:
         # find sheet ID on which the module is on
         self.pivot_sheet_sel_id = get_sheet_id(self.pivot_mod)
 
+        # if module is on root sheet, the list is empty - raise exception
+        if not self.pivot_sheet_sel_id:
+            logger.error("Selected module is on root page of schematics hierarchy!")
+            raise ValueError("Selected module is on root page of schematics hierarchy!")
+
         self.project_path = os.path.dirname(os.path.abspath(self.board.GetFileName()))
         layout_filename = os.path.abspath(board.GetFileName())
         filename = layout_filename.replace("kicad_pcb", "sch")
@@ -1172,18 +1177,43 @@ def test_replicate(x, y, within, polar):
                 errnum = errnum + 1
     return errnum
 
+def test_brajnik(x, y, within, polar):
+    logger.info("Testing brajnik - invalid selection")
+    board = pcbnew.LoadBoard('Seminar.kicad_pcb')
+    try:
+        replicator = Replicator(board=board, pivot_module_reference='U2')  # J201 ali Q301
+    except ValueError:
+        return
+    # get sheet levels
+    sheet_levels = replicator.get_sheet_levels()
+    # select which level to replicate
+    replicator.calculate_spacing(sheet_levels[-1])
+
+    replicator.replicate_layout(x, y,
+                                replicate_containing_only=within,
+                                remove_existing_nets_zones=True,
+                                replicate_tracks=True,
+                                replicate_zones=True,
+                                replicate_text=True,
+                                polar=polar)
+
+    # save the board
+    filename = 'Seminar_base.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename, board)
 
 def main():
-    errnum_within = 0
-    errnum_all = 0
-    errnum_polar = 0
-    #errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
-    #errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
-    #errnum_polar = test_replicate(20, 60, within=False, polar=True)
+    """
+    errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
+    errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
+    errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
     os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/multiple_hierarchy")
     errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)
     errnum_multiple_outer = test_multiple_outer(50, 0.0, within=False, polar=False)
+    """
+    os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/brajnik_test")
+    errnum_brajnik = test_brajnik(25, 0.0, within=False, polar=False)
+
 
     if errnum_all == 0\
        and errnum_within == 0\
