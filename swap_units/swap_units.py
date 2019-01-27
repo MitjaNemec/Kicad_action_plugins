@@ -76,13 +76,33 @@ def swap(board, pad_1, pad_2):
 
     logger.info("Symbol name is: " + symbol_name)
 
+    lib_name = symbol_name.rsplit(":", 1)[0]
+    sym_name = symbol_name.rsplit(":", 1)[1]
+
     # load the symbol from cache library
     with open(cache_file) as f:
         contents = f.read()
         symbols = contents.split('ENDDEF')
+        # go throught all symbols and when you hit the correct one, yield
         for sym in symbols:
-            if symbol_name in sym:
-                break
+            # find line stating with DEF
+            sym_lines = sym.split("\n")
+            for line in sym_lines:
+                if line.startswith('DEF'):
+                    if lib_name in line and sym_name in line:
+                        logger.info("Found symbol " + symbol_name + " in -cache.lib")
+                        break
+            else:
+                continue
+            break
+        else:
+            sym = None
+
+    if sym is None:
+        logger.error("Did not find: " + symbol_name + " in -cache.lib")
+        raise LookupError("Symbol is missing from -cache.lib")
+
+
     # cleanup everything before DEF
     symbol = sym.split('DEF')[1]
 
