@@ -170,6 +170,11 @@ def swap(board, pad_1, pad_2):
 
     unit_1 = relevant_pins[0][9]
     unit_2 = relevant_pins[1][9]
+    
+    if unit_1 == "0" or unit_2 == "0":
+        logger.info("Swapping common pins is not currently supported!")
+        raise ValueError("Swapping common pins is not currently supported!")
+    
     logger.info("Relevant pins are on units: " + unit_1 + ", " + unit_2)
 
     # get the pages of correcsponding unit
@@ -249,7 +254,7 @@ def swap(board, pad_1, pad_2):
         shematics_2 = f.readlines()
 
     list_line_2 = []
-    for index, line in enumerate(shematics_1):
+    for index, line in enumerate(shematics_2):
         if line.startswith('Text '):
             line_fields = line.split()
             if line_fields[1] == 'Label' or line_fields[1] == 'GLabel' or line_fields[1] == 'HLabel':

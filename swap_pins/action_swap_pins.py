@@ -110,8 +110,11 @@ class SwapPins(pcbnew.ActionPlugin):
             return
 
         # swap pins
-        # TODO Wrap in exception and save if it fails
-        swap_pins.swap(board, pad1, pad2)
+        try:
+            swap_pins.swap(board, pad1, pad2)
+        except Exception:
+            logger.exception("Fatal error when swapping units")
+            raise
 
 
 class StreamToLogger(object):

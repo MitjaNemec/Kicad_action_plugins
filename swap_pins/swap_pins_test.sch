@@ -251,4 +251,8 @@ Wire Wire Line
 	3700 5600 3500 5600
 Text GLabel 3500 5600 0    50   Input ~ 0
 A6
+Text GLabel 2300 3600 0    50   Input ~ 0
+RB5
+Text GLabel 4300 2600 2    50   Input ~ 0
+RB6
 $EndSCHEMATC
