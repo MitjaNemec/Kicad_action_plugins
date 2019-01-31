@@ -262,7 +262,7 @@ def swap(board, pad_1, pad_2):
                 next_line_2 = shematics_2[line_index_2 + 1]
                 # if label is precisely at pin location
                 if line_fields[2] == pin_2_loc[0] and line_fields[3] == pin_2_loc[1]:
-                    list_line_2.append((line, next_line_2, line_index_2))
+                    list_line_2.append((line, next_line_2, line_index_2, 0.0))
                     logger.info("Found label at pin 2")
                 # or if label text matches the net name and is close enoght
                 if next_line_2.rstrip() == net_name_2:
@@ -273,6 +273,7 @@ def swap(board, pad_1, pad_2):
 
     # remove duplicates
     list_line_2 = list(set(list_line_2))
+
     # find closest label
     if len(list_line_2) == 0:
         line_2 = None
@@ -445,6 +446,9 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
+    test_list = ('local', 'local_partial', 'global', 'global_partial_vertical',
+                 'hierarchical', 'across_hierarchy', 'across_hierarchy_wire', 'across_hierarchy_partial_wire',
+                 'label_orientation_both', 'label_orientation_single')
     # local - swap two local labels
     # local_partial - swap one local label
     # global - swap two global labels
@@ -453,118 +457,120 @@ def main():
     # across_hierarchy - swap to label accross different hiarchical levels
     # across_hierarchy_wire - swap two labels connected thorugh wire across hirarchical levels
     # across_hierarchy_partial_wire - swap one label connected thorugh wire across hierarchical levels
-    test = 'across_hierarchy'
+    # label_orientation_both ??
+    # label_orientation_single ??
+    for test in test_list:
 
-    if test == 'local':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U201')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'21':
-                pad1 = pad
-            if pad.GetPadName() == u'22':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'local_partial':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U201')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'27':
-                pad1 = pad
-            if pad.GetPadName() == u'28':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'global_partial_vertical':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U101')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'37':
-                pad1 = pad
-            if pad.GetPadName() == u'12':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'hierarchical':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U301')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'17':
-                pad1 = pad
-            if pad.GetPadName() == u'18':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'global':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U101')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'35':
-                pad1 = pad
-            if pad.GetPadName() == u'36':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'across_hierarchy':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U1')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'1':
-                pad1 = pad
-            if pad.GetPadName() == u'8':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'across_hierarchy_wire':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U1')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'3':
-                pad1 = pad
-            if pad.GetPadName() == u'10':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'across_hierarchy_partial_wire':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U1')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'2':
-                pad1 = pad
-            if pad.GetPadName() == u'9':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'label_orientation_both':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U101')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'13':
-                pad1 = pad
-            if pad.GetPadName() == u'15':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
-    if test == 'label_orientation_single':
-        board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
-        mod = board.FindModuleByReference('U101')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'13':
-                pad1 = pad
-            if pad.GetPadName() == u'16':
-                pad2 = pad
-        pass
-        swap(board, pad1, pad2)
+        if test == 'local':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U201')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'21':
+                    pad1 = pad
+                if pad.GetPadName() == u'22':
+                    pad2 = pad
+            logger.info("Testing local")
+            swap(board, pad1, pad2)
+        if test == 'local_partial':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U201')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'27':
+                    pad1 = pad
+                if pad.GetPadName() == u'28':
+                    pad2 = pad
+            logger.info("Testing local_partial")
+            swap(board, pad1, pad2)
+        if test == 'global_partial_vertical':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U101')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'37':
+                    pad1 = pad
+                if pad.GetPadName() == u'12':
+                    pad2 = pad
+            logger.info("Testing global_partial_vertical")
+            swap(board, pad1, pad2)
+        if test == 'hierarchical':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U301')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'17':
+                    pad1 = pad
+                if pad.GetPadName() == u'18':
+                    pad2 = pad
+            logger.info("Testing hierarchical")
+            swap(board, pad1, pad2)
+        if test == 'global':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U101')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'35':
+                    pad1 = pad
+                if pad.GetPadName() == u'36':
+                    pad2 = pad
+            logger.info("Testing global")
+            swap(board, pad1, pad2)
+        if test == 'across_hierarchy':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U1')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'1':
+                    pad1 = pad
+                if pad.GetPadName() == u'8':
+                    pad2 = pad
+            logger.info("Testing across_hierarchy")
+            swap(board, pad1, pad2)
+        if test == 'across_hierarchy_wire':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U1')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'3':
+                    pad1 = pad
+                if pad.GetPadName() == u'10':
+                    pad2 = pad
+            logger.info("Testing across_hierarchy_wire")
+            swap(board, pad1, pad2)
+        if test == 'across_hierarchy_partial_wire':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U1')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'2':
+                    pad1 = pad
+                if pad.GetPadName() == u'9':
+                    pad2 = pad
+            logger.info("Testing across_hierarchy_partial_wire")
+            swap(board, pad1, pad2)
+        if test == 'label_orientation_both':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U101')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'13':
+                    pad1 = pad
+                if pad.GetPadName() == u'15':
+                    pad2 = pad
+            logger.info("Testing label_orientation_both")
+            swap(board, pad1, pad2)
+        if test == 'label_orientation_single':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U101')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'13':
+                    pad1 = pad
+                if pad.GetPadName() == u'16':
+                    pad2 = pad
+            logger.info("Testing label_orientation_single")
+            swap(board, pad1, pad2)
 
 
 # for testing purposes only
