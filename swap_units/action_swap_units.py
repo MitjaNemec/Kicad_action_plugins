@@ -50,8 +50,8 @@ class SwapUnits(pcbnew.ActionPlugin):
         top_level_windows = wx.wx.GetTopLevelWindows()
         names = []
         for x in top_level_windows:
-            names.append(x.GetTitle())
-        is_eecshema_open = any('Eeschema' in s for s in names)
+            names.append(x.GetTitle().lower())
+        is_eecshema_open = any('eeschema' in s for s in names)
 
         # load board
         board = pcbnew.GetBoard()
