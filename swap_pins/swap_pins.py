@@ -575,6 +575,9 @@ def main():
 
 # for testing purposes only
 if __name__ == "__main__":
+    # if debugging outside of this folder change the folder
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     file_handler = logging.FileHandler(filename='swap_pins_V2.log', mode='w')
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
