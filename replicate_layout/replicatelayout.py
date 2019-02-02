@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  replicatelayout.py
 #
 # Copyright (C) 2018 Mitja Nemec, Stephen Walker-Weinshenker
@@ -257,8 +258,14 @@ class Replicator:
         # get all the sheets all the modules are binded to
         for mod in self.modules:
             module_id = get_module_id(mod)
+            module_ref = mod.GetReference()
             sheet_id = get_sheet_id(mod)
-            # if the module id mathches to any of pivod modules id and we have not yet added this sheet
+            # TODO fix if the sheets to replicate are not on the same hierarchical level
+            # TODO tole bo zahtevalo poglobljen razmislek najbrz bo treba pogoj zaostriti
+            # TODO ali pa razdeliti dva primera. ce sem na level2 in zelim replicirati level1
+            # TODO lahko pa sem na level1, pa nad menoj ni nikogar več, potem pa zelim replicirati
+            # TODO kopije, ki so na level2
+            # if the module id mathches to any of pivot modules id and we have not yet added this sheet
             # then check if sheet id below pivot_sheet_level matches pivot_sheet_id and
             # sheet_id at pivot_sheet_level is different to pivot_sheet_id
             if (module_id == self.pivot_mod_id) \
@@ -273,8 +280,19 @@ class Replicator:
                     refnum = -1
 
                 # Add the number and the sheet ID.
-                self.pivot_module_clones.append((refnum, mod.GetReference()))
-                self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1]))
+                # if pivot and current are on the same hierarchical level
+                delta_level = len(sheet_id) - len(self.pivot_sheet_sel_id)
+                if delta_level == 0:
+                    self.pivot_module_clones.append((refnum, mod.GetReference()))
+                    self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1]))
+                # if current module is deeper within hierarchy
+                if delta_level > 0:
+                    self.pivot_module_clones.append((refnum, mod.GetReference()))
+                    self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1+delta_level]))
+                # if current module is shallower within hierarchy
+                if delta_level < 0:
+                    logger.error("Trying to replicate where the pivot is deeper within the hierarchy")
+                    raise ValueError("Functionality not yet implemented")
 
         # Sort by the number of the replicated modules, and then discard
         # these numbers.
@@ -670,11 +688,15 @@ class Replicator:
             sheet_index = self.sheets_to_clone.index(sheet) + 1
             # begin with modules
             for mod in self.modules:
+                mod_ref = mod.GetReference()
                 module_id = get_module_id(mod)
                 sheet_id = get_sheet_id(mod)
                 # if module is on selected sheet or higher
-                a = sheet_id[0:self.pivot_sheet_level+1]
-                b = sheet[0:self.pivot_sheet_level+1]
+                # TODO refine this in order to copy module only from this sheet and this sheet only
+                #a = sheet_id[0:self.pivot_sheet_level+1]
+                #b = sheet[0:self.pivot_sheet_level+1]
+                a = sheet_id[0:len(sheet)]
+                b = sheet
                 if a == b:
                     # find which is the corresponding pivot module
                     if module_id in self.pivot_modules_id:
@@ -682,6 +704,9 @@ class Replicator:
                         # get coresponding pivot module and its position
                         # find the best match
                         mod_locations = [index for index, pivot_module in enumerate(self.pivot_modules_id) if pivot_module == module_id]
+                        # TODO - needs comment, as I don't know anymore, what this is handling
+                        # presumably this is handling the case, where  we're replicating  a sheet which in itself
+                        # consists of two of the same subsheets thus we have more than one module with same id
                         if len(mod_locations) > 1:
                             max_matches = -1
                             for loc in mod_locations:
@@ -1177,11 +1202,11 @@ def test_replicate(x, y, within, polar):
                 errnum = errnum + 1
     return errnum
 
-def test_brajnik(x, y, within, polar):
-    logger.info("Testing brajnik - invalid selection")
-    board = pcbnew.LoadBoard('Seminar.kicad_pcb')
+def test_eksoticna_hierarhija(x, y, within, polar):
+    logger.info("Testing eksoticna hierarhija")
+    board = pcbnew.LoadBoard('drawingcircuits.kicad_pcb')
     try:
-        replicator = Replicator(board=board, pivot_module_reference='U2')  # J201 ali Q301
+        replicator = Replicator(board=board, pivot_module_reference='Q6')
     except ValueError:
         return
     # get sheet levels
@@ -1198,24 +1223,54 @@ def test_brajnik(x, y, within, polar):
                                 polar=polar)
 
     # save the board
-    filename = 'Seminar_base.kicad_pcb'
+    filename = 'drawingcircuits_base.kicad_pcb'
     saved = pcbnew.SaveBoard(filename, board)
+    return 0
+
+def test_eksoticna_hierarhija_obratno(x, y, within, polar):
+    logger.info("Testing eksoticna hierarhija")
+    board = pcbnew.LoadBoard('drawingcircuits.kicad_pcb')
+    try:
+        replicator = Replicator(board=board, pivot_module_reference='Q3')
+    except ValueError:
+        return -1
+    # get sheet levels
+    sheet_levels = replicator.get_sheet_levels()
+    # select which level to replicate
+    replicator.calculate_spacing(sheet_levels[-1])
+
+    replicator.replicate_layout(x, y,
+                                replicate_containing_only=within,
+                                remove_existing_nets_zones=True,
+                                replicate_tracks=True,
+                                replicate_zones=True,
+                                replicate_text=True,
+                                polar=polar)
+
+    # save the board
+    filename = 'drawingcircuits_base.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename, board)
+    return 0
 
 def main():
-    """
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "reproducer"))
+    #os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/reproducer")
+    errnum_eksoticna_hierarhija = test_eksoticna_hierarhija(25, 0.0, within=False, polar=False)
+
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
+    #os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/multiple_hierarchy")
+    errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)
+    errnum_multiple_outer = test_multiple_outer(50, 0.0, within=False, polar=False)
+
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "basic_tests"))
+    #os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/basic_tests")
     errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
     errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
-    os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/multiple_hierarchy")
-    errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)
-    errnum_multiple_outer = test_multiple_outer(50, 0.0, within=False, polar=False)
-    """
-    os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/brajnik_test")
-    errnum_brajnik = test_brajnik(25, 0.0, within=False, polar=False)
-
 
     if errnum_all == 0\
+       and errnum_eksoticna_hierarhija == 0\
        and errnum_within == 0\
        and errnum_all == 0\
        and errnum_polar == 0\
@@ -1233,10 +1288,15 @@ def main():
         print "failed replicating multiple inner"
     if errnum_multiple_outer != 0:
         print "failed replicating multiple outer"
+    if errnum_eksoticna_hierarhija != 0:
+        print "failed replicating eksoticna hierarhija"
 
 
 # for testing purposes only
 if __name__ == "__main__":
+    # if debugging outside of this folder change the folder
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+    
     file_handler = logging.FileHandler(filename='replicate_layout.log', mode='w')
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
