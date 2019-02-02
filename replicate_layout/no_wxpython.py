@@ -41,7 +41,7 @@ class NoWxpython(pcbnew.ActionPlugin):
             root.withdraw()
             root.update_idletasks()
             root.grab_set()
-            mb = tkMessageBox.showerror("Replicate layout", "Wxpython is not supported with this KiCad build.")
+            mb = tkMessageBox.showerror("Replicate layout", "Error while registering plugin.\nMost likely Wxpython is not supported with this KiCad build.")
             root.destroy()
         t = threading.Thread(target=messagebox_task)
         t.start()
