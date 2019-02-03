@@ -25,6 +25,7 @@ import os
 import re
 import logging
 import sys
+import compare_boards
 
 logger = logging.getLogger(__name__)
 
@@ -1029,7 +1030,7 @@ class Replicator:
         if replicate_text:
             self.replicate_text(x_offset, y_offset, polar)
 
-
+  
 def test_multiple_inner(x, y, within, polar):
     logger.info("Testing multiple hierarchy - inner levels")
     board = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
@@ -1050,40 +1051,11 @@ def test_multiple_inner(x, y, within, polar):
                                 polar=polar)
 
     # save the board
-    filename = 'multiple_hierarchy_top.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename, board)
+    filename1 = 'multiple_hierarchy_top.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename1, board)
+    filename2 = 'test_'+filename1
 
-    # compare files
-    import difflib
-    errnum = 0
-    with open('test_'+filename, 'r') as correct_board:
-        with open(filename, 'r') as tested_board:
-            diff = difflib.unified_diff(
-                correct_board.readlines(),
-                tested_board.readlines(),
-                fromfile='correct_board',
-                tofile='tested_board',
-                n=0)
-
-    # only timestamps on zones and file version information should differ
-    diffstring = []
-    for line in diff:
-        diffstring.append(line)
-    # get rid of diff information
-    del diffstring[0]
-    del diffstring[0]
-    # walktrough diff list and check for any significant differences
-    for line in diffstring:
-        index = diffstring.index(line)
-        if '@@' in line:
-            if ((('version' in diffstring[index + 1]) and ('version' in diffstring[index + 2])) or
-                (('tstamp' in diffstring[index + 1]) and ('tstamp' in diffstring[index + 2]))):
-                # this is not a problem
-                pass
-            else:
-                # this is a problem
-                errnum = errnum + 1
-    return errnum
+    return compare_boards.compare_boards(filename1, filename2)
 
 
 def test_multiple_outer(x, y, within, polar):
@@ -1104,40 +1076,11 @@ def test_multiple_outer(x, y, within, polar):
                                 polar=polar)
 
     # save the board
-    filename = 'multiple_hierarchy_base.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename, board)
-
-    # compare files
-    import difflib
-    errnum = 0
-    with open('test_'+filename, 'r') as correct_board:
-        with open(filename, 'r') as tested_board:
-            diff = difflib.unified_diff(
-                correct_board.readlines(),
-                tested_board.readlines(),
-                fromfile='correct_board',
-                tofile='tested_board',
-                n=0)
-
-    # only timestamps on zones and file version information should differ
-    diffstring = []
-    for line in diff:
-        diffstring.append(line)
-    # get rid of diff information
-    del diffstring[0]
-    del diffstring[0]
-    # walktrough diff list and check for any significant differences
-    for line in diffstring:
-        index = diffstring.index(line)
-        if '@@' in line:
-            if ((('version' in diffstring[index + 1]) and ('version' in diffstring[index + 2])) or
-                (('tstamp' in diffstring[index + 1]) and ('tstamp' in diffstring[index + 2]))):
-                # this is not a problem
-                pass
-            else:
-                # this is a problem
-                errnum = errnum + 1
-    return errnum
+    filename1 = 'multiple_hierarchy_base.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename1, board)
+    filename2 = 'test_'+filename1
+    
+    return compare_boards.compare_boards(filename1, filename2)
 
 
 def test_replicate(x, y, within, polar):
@@ -1145,13 +1088,13 @@ def test_replicate(x, y, within, polar):
 
     import difflib
 
-    filename = ''
+    filename1 = ''
     if within is True and polar is False:
-        filename = 'test_board_only_within.kicad_pcb'
+        filename1 = 'test_board_only_within.kicad_pcb'
     if within is False and polar is False:
-        filename = 'test_board_all.kicad_pcb'
+        filename1 = 'test_board_all.kicad_pcb'
     if within is False and polar is True:
-        filename = 'test_board_polar.kicad_pcb'
+        filename1 = 'test_board_polar.kicad_pcb'
 
     # load test board
     board = pcbnew.LoadBoard('test_board.kicad_pcb')
@@ -1169,38 +1112,11 @@ def test_replicate(x, y, within, polar):
                                 replicate_text=True,
                                 polar=polar)
     # save the board
-    saved = pcbnew.SaveBoard('temp_'+filename, board)
+    filename2 = 'temp_'+filename1
+    saved = pcbnew.SaveBoard('temp_'+filename1, board)
 
     # compare files
-    errnum = 0
-    with open('temp_'+filename, 'r') as tested_board:
-        with open(filename, 'r') as correct_board:
-            diff = difflib.unified_diff(
-                correct_board.readlines(),
-                tested_board.readlines(),
-                fromfile='correct_board',
-                tofile='tested_board',
-                n=0)
-
-    # only timestamps on zones and file version information should differ
-    diffstring = []
-    for line in diff:
-        diffstring.append(line)
-    # get rid of diff information
-    del diffstring[0]
-    del diffstring[0]
-    # walktrough diff list and check for any significant differences
-    for line in diffstring:
-        index = diffstring.index(line)
-        if '@@' in line:
-            if ((('version' in diffstring[index + 1]) and ('version' in diffstring[index + 2])) or
-                (('tstamp' in diffstring[index + 1]) and ('tstamp' in diffstring[index + 2]))):
-                # this is not a problem
-                pass
-            else:
-                # this is a problem
-                errnum = errnum + 1
-    return errnum
+    return compare_boards.compare_boards(filename1, filename2)
 
 def test_eksoticna_hierarhija(x, y, within, polar):
     logger.info("Testing eksoticna hierarhija")
@@ -1248,7 +1164,7 @@ def test_eksoticna_hierarhija_obratno(x, y, within, polar):
                                 polar=polar)
 
     # save the board
-    filename = 'drawingcircuits_base.kicad_pcb'
+    filename = 'drawingcircuits_base_obratno.kicad_pcb'
     saved = pcbnew.SaveBoard(filename, board)
     return 0
 
