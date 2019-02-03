@@ -1057,7 +1057,6 @@ def test_multiple_inner(x, y, within, polar):
 
     return compare_boards.compare_boards(filename1, filename2)
 
-
 def test_multiple_outer(x, y, within, polar):
     logger.info("Testing multiple hierarchy - outer levels")
     board = pcbnew.LoadBoard('multiple_hierarchy_top_done.kicad_pcb')
@@ -1081,7 +1080,6 @@ def test_multiple_outer(x, y, within, polar):
     filename2 = 'test_'+filename1
     
     return compare_boards.compare_boards(filename1, filename2)
-
 
 def test_replicate(x, y, within, polar):
     logger.info("Testing basic operation")
@@ -1139,12 +1137,15 @@ def test_eksoticna_hierarhija(x, y, within, polar):
                                 polar=polar)
 
     # save the board
-    filename = 'drawingcircuits_base.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename, board)
-    return 0
+    filename1 = 'drawingcircuits_base.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename1, board)
+    filename2 = 'test_'+filename1
+    
+    err = compare_boards.compare_boards(filename1, filename2)
+    return err
 
 def test_eksoticna_hierarhija_obratno(x, y, within, polar):
-    logger.info("Testing eksoticna hierarhija")
+    logger.info("Testing eksoticna hierarhija obratno")
     board = pcbnew.LoadBoard('drawingcircuits.kicad_pcb')
     try:
         replicator = Replicator(board=board, pivot_module_reference='Q3')
@@ -1154,6 +1155,9 @@ def test_eksoticna_hierarhija_obratno(x, y, within, polar):
     sheet_levels = replicator.get_sheet_levels()
     # select which level to replicate
     replicator.calculate_spacing(sheet_levels[-1])
+    sheets = replicator.get_list_of_sheets_to_replicate(sheet_levels[-1])
+    replicator.calculate_spacing(sheet_levels[0])
+    sheets = replicator.get_list_of_sheets_to_replicate(sheet_levels[0])
 
     replicator.replicate_layout(x, y,
                                 replicate_containing_only=within,
@@ -1164,28 +1168,31 @@ def test_eksoticna_hierarhija_obratno(x, y, within, polar):
                                 polar=polar)
 
     # save the board
-    filename = 'drawingcircuits_base_obratno.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename, board)
-    return 0
+    filename1 = 'drawingcircuits_obratno_base.kicad_pcb'
+    saved = pcbnew.SaveBoard(filename1, board)
+    filename2 = 'test_'+filename1
+    
+    err = compare_boards.compare_boards(filename1, filename2)
+    return err
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "reproducer"))
-    #os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/reproducer")
     errnum_eksoticna_hierarhija = test_eksoticna_hierarhija(25, 0.0, within=False, polar=False)
+    errnum_eksoticna_hierarhija_obratno = test_eksoticna_hierarhija_obratno(25, 0.0, within=False, polar=False)
+    
 
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
-    #os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/multiple_hierarchy")
     errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)
     errnum_multiple_outer = test_multiple_outer(50, 0.0, within=False, polar=False)
 
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "basic_tests"))
-    #os.chdir("D:/Mitja/Plate/Kicad_libs/action_plugins/replicate_layout/basic_tests")
     errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
     errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
     errnum_polar = test_replicate(20, 60, within=False, polar=True)
 
 
     if errnum_all == 0\
+       and errnum_eksoticna_hierarhija_obratno == 0\
        and errnum_eksoticna_hierarhija == 0\
        and errnum_within == 0\
        and errnum_all == 0\
@@ -1206,6 +1213,8 @@ def main():
         print "failed replicating multiple outer"
     if errnum_eksoticna_hierarhija != 0:
         print "failed replicating eksoticna hierarhija"
+    if errnum_eksoticna_hierarhija_obratno != 0:
+        print "failed replicating eksoticna hierarhija obratno"
 
 
 # for testing purposes only

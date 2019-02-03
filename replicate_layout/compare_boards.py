@@ -52,6 +52,7 @@ def remove_kicad_pcb_header(file_contents):
         -page info
         -layers
         -setup info
+        -title info
     """
     index_version_start = file_contents.find("(version")
     index_version_stop = getIndex(file_contents, index_version_start)+1
@@ -74,6 +75,10 @@ def remove_kicad_pcb_header(file_contents):
     trimmed_contents = trimmed_contents[0:index_version_start] + trimmed_contents[index_version_stop:-1]
 
     index_version_start = trimmed_contents.find("(setup")
+    index_version_stop = getIndex(trimmed_contents, index_version_start)+1
+    trimmed_contents = trimmed_contents[0:index_version_start] + trimmed_contents[index_version_stop:-1]
+
+    index_version_start = trimmed_contents.find("(title_block")
     index_version_stop = getIndex(trimmed_contents, index_version_start)+1
     trimmed_contents = trimmed_contents[0:index_version_start] + trimmed_contents[index_version_stop:-1]
 
@@ -101,6 +106,9 @@ def compare_boards(filename1, filename2):
     diffstring = []
     for line in diff:
         diffstring.append(line)
+    # if files are the same, finish now    
+    if not diffstring:
+        return 0
     # get rid of diff information
     del diffstring[0]
     del diffstring[0]
