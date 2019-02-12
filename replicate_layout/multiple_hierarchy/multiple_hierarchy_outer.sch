@@ -1,10 +1,10 @@
 EESchema Schematic File Version 4
 LIBS:multiple_hierarchy-cache
-EELAYER 26 0
+EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 13
+Sheet 1 14
 Title ""
 Date ""
 Rev ""
@@ -83,11 +83,11 @@ Wire Wire Line
 Wire Wire Line
 	6450 2700 6350 2700
 Wire Wire Line
-	6350 2700 6350 1200
+	6350 2700 6350 850 
 Wire Wire Line
-	6350 1200 2150 1200
+	6350 850  2150 850 
 Wire Wire Line
-	2150 1200 2150 2400
+	2150 850  2150 2400
 Wire Wire Line
 	2150 2400 2700 2400
 Wire Wire Line
@@ -165,8 +165,6 @@ F 3 "" H 3800 1900 50  0001 C CNN
 	1    3800 1900
 	1    0    0    -1  
 $EndComp
-NoConn ~ 5700 3000
-NoConn ~ 5700 3100
 NoConn ~ 5700 3300
 NoConn ~ 5700 3500
 NoConn ~ 5700 3600
@@ -188,4 +186,27 @@ NoConn ~ 2700 3900
 NoConn ~ 2700 4000
 NoConn ~ 2700 4100
 NoConn ~ 2700 4200
+$Sheet
+S 6700 1000 900  800 
+U 5C575278
+F0 "Power_extra" 50
+F1 "Power.sch" 50
+F2 "OUT" I R 7600 1400 50 
+F3 "QH" I L 6700 1300 50 
+F4 "Ql" I L 6700 1450 50 
+$EndSheet
+Wire Wire Line
+	7900 1400 7600 1400
+Wire Wire Line
+	5800 1300 5800 3000
+Wire Wire Line
+	5800 3000 5700 3000
+Wire Wire Line
+	5800 1300 6700 1300
+Wire Wire Line
+	5850 1450 5850 3100
+Wire Wire Line
+	5850 3100 5700 3100
+Wire Wire Line
+	5850 1450 6700 1450
 $EndSCHEMATC

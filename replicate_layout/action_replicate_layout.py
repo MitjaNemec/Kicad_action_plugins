@@ -30,235 +30,101 @@ import sys
 
 
 class ReplicateLayoutDialog(wx.Dialog):
-    def __init__(self, parent, replicator):
+    def __init__(self, parent, replicator, mod_ref):
+        wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 257,491 ), style = wx.DEFAULT_DIALOG_STYLE )
 
-        self.replicator = replicator
-        self.levels = self.replicator.get_sheet_levels()
+        self.SetSizeHintsSz( wx.Size( 257,409 ), wx.DefaultSize )
 
-        wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 427,521 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
-        
-        self.SetSizeHintsSz( wx.Size( -1,-1 ), wx.Size( -1,-1 ) )
-        
-        bSizer1 = wx.BoxSizer( wx.HORIZONTAL )
-        
         bSizer14 = wx.BoxSizer( wx.VERTICAL )
-        
-        bSizer111 = wx.BoxSizer( wx.VERTICAL )
-        
-        self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Hierarchy level:", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText3.Wrap( -1 )
-        self.m_staticText3.SetMinSize( wx.Size( 95,-1 ) )
-        
-        bSizer111.Add( self.m_staticText3, 0, wx.ALL, 5 )
-        
-        list_levelsChoices = self.levels
-        self.list_levels = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_levelsChoices, 0 )
-        self.list_levels.SetMaxSize( wx.Size( 110,-1 ) )
-        self.list_levels.SetSelection(len(self.replicator.sheet_levels)-1)
-        
-        bSizer111.Add( self.list_levels, 0, wx.ALL|wx.EXPAND, 5 )
-        
-        
-        bSizer14.Add( bSizer111, 1, wx.EXPAND, 5 )
-        
-        bSizer9 = wx.BoxSizer( wx.HORIZONTAL )
-        
-        self.rad_btn_Linear = wx.RadioButton( self, wx.ID_ANY, u"Linear", wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
-        self.rad_btn_Linear.SetValue( True ) 
-        bSizer9.Add( self.rad_btn_Linear, 0, wx.ALL, 5 )
-        
-        self.rad_btn_Circular = wx.RadioButton( self, wx.ID_ANY, u"Circular", wx.DefaultPosition, wx.DefaultSize )
-        self.rad_btn_Circular.SetValue(False)
-        bSizer9.Add( self.rad_btn_Circular, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer9, 1, wx.EXPAND, 5 )
-        
-        self.btn_grab_offset = wx.Button( self, wx.ID_ANY, u"Grab offset from layout", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer14.Add( self.btn_grab_offset, 0, wx.ALL, 5 )
-        
-        bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
-        
-        self.lbl_x_mag = wx.StaticText( self, wx.ID_ANY, u"x offset (mm)", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.lbl_x_mag.Wrap( -1 )
-        self.lbl_x_mag.SetMinSize( wx.Size( 95,-1 ) )
-        
-        bSizer2.Add( self.lbl_x_mag, 0, wx.ALL, 5 )
-        
-        self.val_x_mag = wx.TextCtrl( self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.val_x_mag.SetMaxSize( wx.Size( 110,-1 ) )
-        
-        bSizer2.Add( self.val_x_mag, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer2, 1, wx.EXPAND, 5 )
-        
-        bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
-        
-        self.lbl_y_angle = wx.StaticText( self, wx.ID_ANY, u"y offset (mm)", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.lbl_y_angle.Wrap( -1 )
-        self.lbl_y_angle.SetMinSize( wx.Size( 95,-1 ) )
-        
-        bSizer3.Add( self.lbl_y_angle, 0, wx.ALL, 5 )
-        
-        self.val_y_angle = wx.TextCtrl( self, wx.ID_ANY, u"0.0", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.val_y_angle.SetMaxSize( wx.Size( 110,-1 ) )
-        
-        bSizer3.Add( self.val_y_angle, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer3, 1, wx.EXPAND, 5 )
-        
-        bSizer8 = wx.BoxSizer( wx.HORIZONTAL )
-        
+
+        self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Hierarchy level:", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText5.Wrap( -1 )
+        bSizer14.Add( self.m_staticText5, 0, wx.ALL, 5 )
+
+        bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
+
+        list_levelsChoices = []
+        self.list_levels = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_levelsChoices, wx.LB_SINGLE )
+        bSizer18.Add( self.list_levels, 0, wx.ALL|wx.EXPAND, 5 )
+        self.list_levels.Bind( wx.EVT_LISTBOX, self.level_changed)
+
+        bSizer14.Add( bSizer18, 1, wx.EXPAND, 5 )
+
+        self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Sheets to replicate:", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText6.Wrap( -1 )
+        bSizer14.Add( self.m_staticText6, 0, wx.ALL, 5 )
+
+        bSizer16 = wx.BoxSizer( wx.HORIZONTAL )
+
+        list_sheetsChoices = []
+        self.list_sheets = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_sheetsChoices, wx.LB_MULTIPLE|wx.LB_NEEDED_SB )
+        bSizer16.Add( self.list_sheets, 0, wx.ALL|wx.EXPAND, 5 )
+
+
+        bSizer14.Add( bSizer16, 2, wx.EXPAND, 5 )
+
         self.chkbox_tracks = wx.CheckBox( self, wx.ID_ANY, u"Replicate tracks", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkbox_tracks.SetValue(True) 
-        bSizer8.Add( self.chkbox_tracks, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer8, 1, wx.EXPAND, 5 )
-        
-        bSizer5 = wx.BoxSizer( wx.HORIZONTAL )
-        
+        bSizer14.Add( self.chkbox_tracks, 0, wx.ALL, 5 )
+
         self.chkbox_zones = wx.CheckBox( self, wx.ID_ANY, u"Replicate zones", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkbox_zones.SetValue(True) 
-        bSizer5.Add( self.chkbox_zones, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer5, 1, wx.EXPAND, 5 )
-        
-        bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
-        
+        bSizer14.Add( self.chkbox_zones, 0, wx.ALL, 5 )
+
         self.chkbox_text = wx.CheckBox( self, wx.ID_ANY, u"Replicate text", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkbox_text.SetValue(True) 
-        bSizer6.Add( self.chkbox_text, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer6, 1, wx.EXPAND, 5 )
-        
-        bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
-        
-        self.chkbox_intersecting = wx.CheckBox( self, wx.ID_ANY, u"Replicate intersecting tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer10.Add( self.chkbox_intersecting, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer10, 1, wx.EXPAND, 5 )
-        
-        bSizer11 = wx.BoxSizer( wx.VERTICAL )
-        
-        self.chkbox_remove = wx.CheckBox( self, wx.ID_ANY, u"Remove existing tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer14.Add( self.chkbox_text, 0, wx.ALL, 5 )
 
-        bSizer11.Add( self.chkbox_remove, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer11, 1, wx.EXPAND, 5 )
-        
-        bSizer12 = wx.BoxSizer( wx.HORIZONTAL )
-        
-        self.btn_ok = wx.Button( self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.btn_ok.SetDefault() 
-        bSizer12.Add( self.btn_ok, 0, wx.ALL, 5 )
-        
+        self.chkbox_intersecting = wx.CheckBox( self, wx.ID_ANY, u"Replicate intersecting tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer14.Add( self.chkbox_intersecting, 0, wx.ALL, 5 )
+
+        self.chkbox_remove = wx.CheckBox( self, wx.ID_ANY, u"Remove existing tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer14.Add( self.chkbox_remove, 0, wx.ALL, 5 )
+
+        bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.btn_ok = wx.Button( self, wx.ID_OK, u"Ok", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer15.Add( self.btn_ok, 0, wx.ALL, 5 )
+
         self.btn_cancel = wx.Button( self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer12.Add( self.btn_cancel, 0, wx.ALL, 5 )
-        
-        bSizer14.Add( bSizer12, 1, wx.EXPAND, 5 )
-        
-        bSizer14.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-        
-        bSizer1.Add( bSizer14, 1, wx.EXPAND, 5 )
-        
-        bSizer15 = wx.BoxSizer( wx.VERTICAL )
-        
-        self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"Sheets to replicate:", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText4.Wrap( -1 )
-        bSizer15.Add( self.m_staticText4, 0, wx.ALL, 5 )
-        
-        index = self.list_levels.GetSelection()
-        list_sheetsChoices = self.replicator.get_list_of_sheets_to_replicate(self.levels[index])
-        self.list_sheets = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,195 ), list_sheetsChoices, wx.LB_MULTIPLE|wx.LB_NEEDED_SB )
-        bSizer15.Add( self.list_sheets, 0, wx.ALL|wx.EXPAND, 5 )
-        
-        
-        bSizer15.Add( ( 0, 0), 1, wx.EXPAND, 5 )
-        
-        # by default select all sheets
-        number_of_items = self.list_sheets.GetCount()
-        for i in range(number_of_items):
-            self.list_sheets.Select(i)
-        
-        bSizer1.Add( bSizer15, 1, wx.EXPAND, 5 )
-        
-        self.SetSizer( bSizer1 )
+        bSizer15.Add( self.btn_cancel, 0, wx.ALL, 5 )
+
+
+        bSizer14.Add( bSizer15, 0, 0, 5 )
+
+
+        self.SetSizer( bSizer14 )
         self.Layout()
-        
+
         self.Centre( wx.BOTH )
 
         # Connect Events
-        self.rad_btn_Linear.Bind(wx.EVT_RADIOBUTTON, self.coordinate_system_changed)
-        self.rad_btn_Circular.Bind(wx.EVT_RADIOBUTTON, self.coordinate_system_changed)
+        self.Bind( wx.EVT_LISTBOX, self.level_changed, id=26 )
 
-        self.btn_grab_offset.Bind(wx.EVT_BUTTON, self.grab_offest)
+        self.replicator = replicator
+        self.pivot_mod = self.replicator.get_mod_by_ref(mod_ref)
+        self.levels = self.pivot_mod.filename
 
-        self.list_levels.Bind(wx.EVT_LISTBOX, self.level_changed)
-
-        self.minimum_radius = self.replicator.minimum_radius
-        self.minimum_width = self.replicator.minimum_width
-        self.minimum_angle = self.replicator.minimum_angle
-        self.levels = self.replicator.get_sheet_levels()
-
-        self.val_x_mag.SetValue("%.2f" % self.minimum_width)
-        self.val_y_angle.SetValue(u"0.0")
-
+        # clear levels
+        self.list_levels.Clear()
+        self.list_levels.AppendItems(self.levels)
+        
     def level_changed(self, event):
         index = self.list_levels.GetSelection()
 
-        self.replicator.calculate_spacing(self.levels[index])
-        list_sheetsChoices = self.replicator.get_list_of_sheets_to_replicate(self.levels[index])
+        list_sheetsChoices = self.replicator.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
 
+        list = [('/').join(x) for x in list_sheetsChoices]
         # clear levels
         self.list_sheets.Clear()
-        list_sheetsChoices = self.replicator.get_list_of_sheets_to_replicate(self.levels[index])
-        self.list_sheets.AppendItems(list_sheetsChoices)
+        self.list_sheets.AppendItems(list)
 
         # by default select all sheets
         number_of_items = self.list_sheets.GetCount()
         for i in range(number_of_items):
             self.list_sheets.Select(i)
 
-        self.minimum_radius = self.replicator.minimum_radius
-        self.minimum_width = self.replicator.minimum_width
-        self.minimum_angle = self.replicator.minimum_angle
-
-        if self.rad_btn_Linear.GetValue():
-            self.lbl_x_mag.SetLabelText(u"x offset (mm)")
-            self.lbl_y_angle.SetLabelText(u"y offset (mm)")
-            self.val_x_mag.SetValue("%.2f" % self.minimum_width)
-            self.val_y_angle.SetValue(u"0.0")
-        else:
-            self.lbl_x_mag.SetLabelText(u"radius (mm)")
-            self.lbl_y_angle.SetLabelText(u"angle (deg)")
-            self.val_x_mag.SetValue("%.2f" % self.minimum_radius)
-            self.val_y_angle.SetValue("%.2f" % self.minimum_angle)
         event.Skip()
-
-    def coordinate_system_changed(self, event):
-        # if cartesian
-        if self.rad_btn_Linear.GetValue():
-            self.rad_btn_Linear.SetValue(True)
-            self.rad_btn_Circular.SetValue(False)
-            self.lbl_x_mag.SetLabelText(u"x offset (mm)")
-            self.lbl_y_angle.SetLabelText(u"y offset (mm)")
-            self.val_x_mag.SetValue("%.2f" % self.minimum_width)
-            self.val_y_angle.SetValue(u"0.0")
-        else:
-            self.rad_btn_Linear.SetValue(False)
-            self.rad_btn_Circular.SetValue(True)
-            self.lbl_x_mag.SetLabelText(u"radius (mm)")
-            self.lbl_y_angle.SetLabelText(u"angle (deg)")
-            self.val_x_mag.SetValue("%.2f" % self.minimum_radius)
-            self.val_y_angle.SetValue("%.2f" % self.minimum_angle)
-        pass
-
-    def grab_offest(self, event):
-        # recalculate spacing, in order to grab pivot_module_clones
-        index = self.list_levels.GetSelection()
-        self.replicator.calculate_spacing(self.levels[index])
-        offset_x, offset_y = self.replicator.estimate_offset()
-        self.val_x_mag.SetValue("%.2f" % offset_x)
-        self.val_y_angle.SetValue("%.2f" % offset_y)
 
 
 class ReplicateLayout(pcbnew.ActionPlugin):
@@ -326,25 +192,22 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
             # prepare the replicator
             logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
-            try:
-                replicator = replicatelayout.Replicator(pcbnew.GetBoard(), pivot_module_reference)
-            except ValueError:
+            
+            replicator = replicatelayout.Replicator(board)
+            pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
+            
+            list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
+            if not list_of_modules:
                 caption = 'Replicate Layout'
-                message = "Selected module is on root page of schematics hierarchy!"
+                message = "Selected module is uniqe in the pcb (only one module with this ID)"
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
                 return
 
-            sheet_levels = replicator.get_sheet_levels()
-            logger.debug("Calculating initial spacing")
-            replicator.calculate_spacing(sheet_levels[-1])
-
             # show dialog
-            logger.debug("Showing dialog")
-            x_offset = None
-            y_offset = None
-            dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator)
+            logger.info("Showing dialog")
+            dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference)
             res = dlg.ShowModal()
 
             if res == wx.ID_OK:
@@ -354,46 +217,36 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                 for sel in selected_items:
                     slected_names.append(dlg.list_sheets.GetString(sel))
 
-                try:
-                    x_offset = float(dlg.val_x_mag.GetValue())
-                except:
-                    x_offset = None
-                try:
-                    y_offset = float(dlg.val_y_angle.GetValue())
-                except:
-                    y_offset = None
                 replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
                 remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
                 rep_tracks = dlg.chkbox_tracks.GetValue()
                 rep_zones = dlg.chkbox_zones.GetValue()
                 rep_text = dlg.chkbox_text.GetValue()
-                polar = dlg.rad_btn_Circular.GetValue()
             else:
+                logger.info("User canceled the dialog")
                 return
 
-            # execute replicate_layout
-            if (x_offset is None) or (y_offset is None):
-                logger.info("error parsing x offset and/or y offset input values")
-                caption = 'Replicate Layout'
-                message = "error parsing x offset and/or y offset input values"
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-                dlg.ShowModal()
-                dlg.Destroy()
-            else:
-                # failsafe somtimes on my machine wx does not generate a listbox event
-                index = dlg.list_levels.GetSelection()
-                replicator.calculate_spacing(dlg.levels[index])
+            # failsafe somtimes on my machine wx does not generate a listbox event
+            level = dlg.list_levels.GetSelection()
+            selection_indeces = dlg.list_sheets.GetSelections()
+            sheets_on_a_level = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[level])
+            sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
 
-                # replicate now
-                logger.info("Replicating layout")
-                replicator.replicate_layout(x_offset, y_offset,
-                                            replicate_containing_only,
-                                            remove_existing_nets_zones,
-                                            rep_tracks,
-                                            rep_zones, rep_text,
-                                            polar)
+            # replicate now
+            logger.info("Replicating layout")
+
+            try:
+                replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:level+1], sheets_for_replication,
+                                            containing=replicate_containing_only,
+                                            remove=remove_existing_nets_zones,
+                                            tracks=rep_tracks,
+                                            zones=rep_zones,
+                                            text=rep_text)
                 logger.info("Replication complete")
                 pcbnew.Refresh()
+            except Exception:
+                logger.exception("Fatal error when replicating")
+                raise
 
 
 class StreamToLogger(object):

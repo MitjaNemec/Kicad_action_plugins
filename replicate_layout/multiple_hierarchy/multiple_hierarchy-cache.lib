@@ -1,16 +1,15 @@
 EESchema-LIBRARY Version 2.4
 #encoding utf-8
 #
-# Connector:Pusa_4mm
+# Connector_Pusa_4mm
 #
-DEF Connector:Pusa_4mm J 0 40 Y N 1 F N
+DEF Connector_Pusa_4mm J 0 40 Y N 1 F N
 F0 "J" 0 100 50 H V C CNN
-F1 "Connector:Pusa_4mm" 75 25 50 H V L CNN
+F1 "Connector_Pusa_4mm" 75 25 50 H V L CNN
 F2 "Connector:Pusa_4mm" 75 -50 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
- Connector*Terminal*Block*:*
- TerminalBlock*
+ Connector:Pusa_4mm
 $ENDFPLIST
 DRAW
 C 0 0 25 1 1 6 N
@@ -21,11 +20,11 @@ X Pin_1 1 -200 0 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# Discretes:CSD19531KCS
+# Discretes_CSD19531KCS
 #
-DEF Discretes:CSD19531KCS Q 0 0 Y N 1 F N
+DEF Discretes_CSD19531KCS Q 0 0 Y N 1 F N
 F0 "Q" 200 100 50 H V L CNN
-F1 "Discretes:CSD19531KCS" 200 0 50 H V L CNN
+F1 "Discretes_CSD19531KCS" 200 0 50 H V L CNN
 F2 "Discretes:TO-220" 200 -100 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -56,11 +55,11 @@ X S 3 100 -200 100 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# Discretes:LL4148
+# Discretes_LL4148
 #
-DEF Discretes:LL4148 D 0 40 N N 1 F N
+DEF Discretes_LL4148 D 0 40 N N 1 F N
 F0 "D" -100 175 50 H V L CNN
-F1 "Discretes:LL4148" -100 100 50 H V L CNN
+F1 "Discretes_LL4148" -100 100 50 H V L CNN
 F2 "Discretes:D_MiniMELF" -100 -100 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -75,12 +74,12 @@ X A 2 150 0 100 L 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# ICs:INA240
+# ICs_INA240
 #
-DEF ICs:INA240 U 0 40 Y Y 1 F N
+DEF ICs_INA240 U 0 40 Y Y 1 F N
 F0 "U" 100 500 60 H V L CNN
-F1 "ICs:INA240" 100 400 60 H V L CNN
-F2 "Package_SSOP:TSSOP-8_4.4x3mm_P0.65mm" 100 600 60 H I L CNN
+F1 "ICs_INA240" 100 400 60 H V L CNN
+F2 "Package_SO:TSSOP-8_4.4x3mm_P0.65mm" 100 600 60 H I L CNN
 F3 "" 0 0 60 H I C CNN
 DRAW
 S -300 300 300 -300 0 1 10 f
@@ -95,12 +94,12 @@ X OUT 8 500 0 200 L 50 50 1 1 O
 ENDDRAW
 ENDDEF
 #
-# ICs:IR2181
+# ICs_IR2181
 #
-DEF ICs:IR2181 U 0 40 Y Y 1 F N
+DEF ICs_IR2181 U 0 40 Y Y 1 F N
 F0 "U" -200 400 50 H V L CNN
-F1 "ICs:IR2181" -200 325 50 H V L CNN
-F2 "Package_SOIC:SO8" -200 250 50 H I L CNN
+F1 "ICs_IR2181" -200 325 50 H V L CNN
+F2 "Package_SO:SO8" -200 250 50 H I L CNN
 F3 "" -200 500 50 H I L CNN
 $FPLIST
  ICs:SO8
@@ -118,12 +117,12 @@ X VB 8 300 100 100 L 50 50 1 1 I
 ENDDRAW
 ENDDEF
 #
-# ICs:TMS320F28027DA
+# ICs_TMS320F28027DA
 #
-DEF ICs:TMS320F28027DA U 0 40 Y Y 1 F N
+DEF ICs_TMS320F28027DA U 0 40 Y Y 1 F N
 F0 "U" 300 1700 50 H V L CNN
-F1 "ICs:TMS320F28027DA" 300 1600 50 H V L CNN
-F2 "Package_SSOP:TSSOP-38_4.4x9.7mm_P0.5mm" 300 1500 50 H I L CNN
+F1 "ICs_TMS320F28027DA" 300 1600 50 H V L CNN
+F2 "Package_SO:TSSOP-38_4.4x9.7mm_P0.5mm" 300 1500 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
 S -1200 -900 1200 1399 0 1 10 f
@@ -168,11 +167,11 @@ X GPIO6/EPWM4A/EPWMSYNCI/EPWMSYNCO 9 1500 600 300 L 50 50 1 1 B
 ENDDRAW
 ENDDEF
 #
-# Passives:C1206
+# Passives_C1206
 #
-DEF Passives:C1206 C 0 10 N Y 1 F N
+DEF Passives_C1206 C 0 10 N Y 1 F N
 F0 "C" 100 50 50 H V L CNN
-F1 "Passives:C1206" 100 -50 50 H V L CNN
+F1 "Passives_C1206" 100 -50 50 H V L CNN
 F2 "Passives:C1206M" 50 -100 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -183,11 +182,11 @@ X ~ 2 0 -100 60 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# Passives:GND
+# Passives_GND
 #
-DEF ~Passives:GND #PWR 0 0 Y Y 1 F P
+DEF ~Passives_GND #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "Passives:GND" 150 -50 50 H I C CNN
+F1 "Passives_GND" 150 -50 50 H I C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -197,11 +196,11 @@ X GND 1 0 0 50 D 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# Passives:R1206
+# Passives_R1206
 #
-DEF Passives:R1206 R 0 0 N Y 1 F N
+DEF Passives_R1206 R 0 0 N Y 1 F N
 F0 "R" -100 200 50 H V L CNN
-F1 "Passives:R1206" -100 100 50 H V L CNN
+F1 "Passives_R1206" -100 100 50 H V L CNN
 F2 "Passives:R1206M" -100 -100 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -214,11 +213,11 @@ X ~ 2 200 0 100 L 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# Passives:R_Shunt
+# Passives_R_Shunt
 #
-DEF Passives:R_Shunt R 0 0 N Y 1 F N
+DEF Passives_R_Shunt R 0 0 N Y 1 F N
 F0 "R" -200 -100 50 V V L CNN
-F1 "Passives:R_Shunt" -100 -100 50 V V L CNN
+F1 "Passives_R_Shunt" -100 -100 50 V V L CNN
 F2 "" -70 0 50 V I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -235,11 +234,11 @@ X 4 4 0 -200 100 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# power:+15V
+# power_+15V
 #
-DEF power:+15V #PWR 0 0 Y Y 1 F P
+DEF power_+15V #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "power:+15V" 0 140 50 H V C CNN
+F1 "power_+15V" 0 140 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -250,11 +249,11 @@ X +15V 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# power:+3.3V
+# power_+3.3V
 #
-DEF power:+3.3V #PWR 0 0 Y Y 1 F P
+DEF power_+3.3V #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "power:+3.3V" 0 140 50 H V C CNN
+F1 "power_+3.3V" 0 140 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 ALIAS +3.3V
@@ -266,11 +265,11 @@ X +3V3 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# power:+VDC
+# power_+VDC
 #
-DEF power:+VDC #PWR 0 0 Y Y 1 F P
+DEF power_+VDC #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -100 50 H I C CNN
-F1 "power:+VDC" 0 250 50 H V C CNN
+F1 "power_+VDC" 0 250 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -282,11 +281,11 @@ X +VDC 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# power:-VDC
+# power_-VDC
 #
-DEF power:-VDC #PWR 0 0 Y Y 1 F P
+DEF power_-VDC #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -100 50 H I C CNN
-F1 "power:-VDC" 0 250 50 H V C CNN
+F1 "power_-VDC" 0 250 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW

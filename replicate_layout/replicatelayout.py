@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-#  replicatelayout.py
+#  replicate_layout_V2.py
 #
-# Copyright (C) 2018 Mitja Nemec, Stephen Walker-Weinshenker
+# Copyright (C) 2019 Mitja Nemec, Stephen Walker-Weinshenker
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -19,33 +19,18 @@
 #  MA 02110-1301, USA.
 #
 #
+from __future__ import absolute_import, division, print_function
 import pcbnew
-import math
+from collections import namedtuple
 import os
-import re
-import logging
 import sys
-import compare_boards
+import logging
+import itertools
+import re
+import math
 
+Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
-
-SCALE = 1000000.0
-
-
-def get_module_id(module):
-    """ get module id """
-    module_path = module.GetPath().split('/')
-    module_id = "/".join(module_path[-1:])
-    return module_id
-
-
-def get_sheet_id(module):
-    """ get sheet id """
-    module_path = module.GetPath().split('/')
-    sheet_id = module_path[0:-1]
-    sheet_id = [x for x in sheet_id if x]
-    return sheet_id
-
 
 def rotate_around_center(coordinates, angle):
     """ rotate coordinates for a defined angle in degrees around coordinate center"""
@@ -68,50 +53,21 @@ def rotate_around_pivot_point(old_position, pivot_point, angle):
     return new_position
 
 
-def get_module_text_items(module):
-    """ get all text item belonging to a modules """
-    list_of_items = [module.Reference(), module.Value()]
-
-    module_items = module.GraphicalItemsList()
-    for item in module_items:
-        if type(item) is pcbnew.TEXTE_MODULE:
-            list_of_items.append(item)
-    return list_of_items
-
-
-def get_bounding_box_of_modules(module_list):
-    """ get bounding box encompasing all modules """
-    top = None
-    bottom = None
-    left = None
-    right = None
-    for mod in module_list:
-        if top is None:
-            bounding_box = mod.GetFootprintRect()
-            top = bounding_box.GetTop()
-            bottom = bounding_box.GetBottom()
-            left = bounding_box.GetLeft()
-            right = bounding_box.GetRight()
-        else:
-            mod_box = mod.GetFootprintRect()
-            top = min(top, mod_box.GetTop())
-            bottom = max(bottom, mod_box.GetBottom())
-            left = min(left, mod_box.GetLeft())
-            right = max(right, mod_box.GetRight())
-
-    position = pcbnew.wxPoint(left, top)
-    size = pcbnew.wxSize(right - left, bottom - top)
-    bounding_box = pcbnew.EDA_RECT(position, size)
-    return bounding_box
-
-
 def get_index_of_tuple(list_of_tuples, index, value):
     for pos, t in enumerate(list_of_tuples):
         if t[index] == value:
             return pos
 
-    # Matches behavior of list.index
-    raise ValueError("list.index(x): x not in list")
+
+def get_module_text_items(module):
+    """ get all text item belonging to a modules """
+    list_of_items = [module.mod.Reference(), module.mod.Value()]
+
+    module_items = module.mod.GraphicalItemsList()
+    for item in module_items:
+        if type(item) is pcbnew.TEXTE_MODULE:
+            list_of_items.append(item)
+    return list_of_items
 
 
 # this function was made by Miles Mccoo
@@ -124,277 +80,9 @@ def get_coordinate_points_of_shape_poly_set(ps):
     return pts
 
 
-class Replicator:
-    def __init__(self, board, pivot_module_reference):
-        """ initialize base object needed to replicate module layout, track layout and zone layout"""
-        logger.info("Initializing replicator object")
-        # take care of different APIs
-        if hasattr(pcbnew, "LAYER_ID_COUNT"):
-            pcbnew.PCB_LAYER_ID_COUNT = pcbnew.LAYER_ID_COUNT
-
-        self.board = board
-
-        # load all modules
-        self.modules = board.GetModules()
-
-        # find pivodmodule
-        self.pivot_mod = board.FindModuleByReference(pivot_module_reference)
-
-        # while at it, get the pivot module ID
-        self.pivot_mod_id = get_module_id(self.pivot_mod)
-
-        # find sheet ID on which the module is on
-        self.pivot_sheet_sel_id = get_sheet_id(self.pivot_mod)
-
-        # if module is on root sheet, the list is empty - raise exception
-        if not self.pivot_sheet_sel_id:
-            logger.error("Selected module is on root page of schematics hierarchy!")
-            raise ValueError("Selected module is on root page of schematics hierarchy!")
-
-        self.project_path = os.path.dirname(os.path.abspath(self.board.GetFileName()))
-        layout_filename = os.path.abspath(board.GetFileName())
-        filename = layout_filename.replace("kicad_pcb", "sch")
-        list_of_sheets = []
-        sheet_names_full = self.find_all_sch_files(filename, list_of_sheets)
-        self.sheet_names = list(set(sheet_names_full))
-
-        self.sheet_levels = []
-        for level in self.pivot_sheet_sel_id:
-            for sheet in self.sheet_names:
-                if level in sheet[1]:
-                    self.sheet_levels.append((sheet[0], level, sheet[2]))
-
-        self.pivot_modules = []
-        self.pivot_module_clones = []
-        self.pivot_modules_id = []
-        self.pivot_modules_ref = []
-        self.pivot_local_nets = []
-        self.sheets_to_clone = []
-        self.pivot_bounding_box = None
-        self.pivot_bounding_box_corners = ()
-
-        self.polar_center = None
-
-        self.minimum_radius = None
-        self.minimum_angle = None
-
-        self.minimum_width = None
-
-        self.pivot_text = []
-        self.pivot_tracks = []
-        self.pivot_zones = []
-        self.only_within_bbox = False
-        self.pivot_sheet_level = 0
-
-    def get_sheet_levels(self):
-        return [i[0] for i in self.sheet_levels]
-
-    def get_list_of_sheets_to_replicate(self, sheet_level):
-        for level in self.sheet_levels:
-            if sheet_level == level[0]:
-                pivot_sheet_level = level
-        list_of_sheets = [x[2] for x in self.sheet_names if x[0] == pivot_sheet_level[0] and x[2] != pivot_sheet_level[2]]
-        return list_of_sheets
-
-    def calculate_spacing(self, sheet_level):
-        logger.info("Calculating spacing")
-        self.pivot_modules = []
-        self.pivot_module_clones = []
-        self.pivot_modules_id = []
-        self.pivot_modules_ref = []
-        self.pivot_local_nets = []
-        self.sheets_to_clone = []
-        self.pivot_bounding_box = None
-        self.pivot_bounding_box_corners = ()
-
-        self.polar_center = None
-
-        self.minimum_radius = None
-        self.minimum_angle = None
-
-        self.minimum_width = None
-
-        self.pivot_text = []
-        self.pivot_tracks = []
-        self.pivot_zones = []
-        self.only_within_bbox = False
-        self.pivot_sheet_level = 0
-
-        # find out on which level one wants to clone
-        for level in self.sheet_levels:
-            if sheet_level == level[0]:
-                self.pivot_sheet_level = self.sheet_levels.index(level)
-                self.pivot_sheet_id = self.pivot_sheet_sel_id[0:self.pivot_sheet_level+1]
-
-        # find all modules on the same sheet level
-        for mod in self.modules:
-            module_id = get_module_id(mod)
-            sheet_id = get_sheet_id(mod)
-            # if module is in the same hiearchical level or above
-            if len(sheet_id) >= len(self.pivot_sheet_id):
-                # and if its ID matches to the level we are replication
-                if sheet_id[0:self.pivot_sheet_level+1] == self.pivot_sheet_id[0:self.pivot_sheet_level+1]:
-                    self.pivot_modules.append(mod)
-                    self.pivot_modules_id.append(module_id)
-                    self.pivot_modules_ref.append(mod.GetReference())
-
-        # find all local nets
-        other_modules = []
-        other_modules_ref = []
-        # firstly find all other modules
-        for mod in self.modules:
-            if mod.GetReference() not in self.pivot_modules_ref:
-                other_modules.append(mod)
-                other_modules_ref.append(mod.GetReference())
-        # then get nets other modules are connected to
-        other_nets = self.get_nets_from_modules(other_modules)
-        # then get nets only pivot modules are connected to
-        pivot_nets = self.get_nets_from_modules(self.pivot_modules)
-
-        for net in pivot_nets:
-            if net not in other_nets:
-                self.pivot_local_nets.append(net)
-
-        # find all sheets to replicate
-        # get all the sheets all the modules are binded to
-        for mod in self.modules:
-            module_id = get_module_id(mod)
-            module_ref = mod.GetReference()
-            sheet_id = get_sheet_id(mod)
-            # TODO fix if the sheets to replicate are not on the same hierarchical level
-            # TODO tole bo zahtevalo poglobljen razmislek najbrz bo treba pogoj zaostriti
-            # TODO ali pa razdeliti dva primera. ce sem na level2 in zelim replicirati level1
-            # TODO lahko pa sem na level1, pa nad menoj ni nikogar več, potem pa zelim replicirati
-            # TODO kopije, ki so na level2
-            # if the module id mathches to any of pivot modules id and we have not yet added this sheet
-            # then check if sheet id below pivot_sheet_level matches pivot_sheet_id and
-            # sheet_id at pivot_sheet_level is different to pivot_sheet_id
-            if (module_id == self.pivot_mod_id) \
-                    and not any(sheet_id[0:self.pivot_sheet_level+1] in sheet for sheet in self.sheets_to_clone)\
-                    and (sheet_id[0:self.pivot_sheet_level] == self.pivot_sheet_id[0:self.pivot_sheet_level])\
-                    and (sheet_id[self.pivot_sheet_level] != self.pivot_sheet_id[self.pivot_sheet_level]):
-                # Get the number in the reference.
-                ref = [c for c in mod.GetReference() if c.isdigit()]
-                if ref:
-                    refnum = int(''.join(ref))
-                else:
-                    refnum = -1
-
-                # Add the number and the sheet ID.
-                # if pivot and current are on the same hierarchical level
-                delta_level = len(sheet_id) - len(self.pivot_sheet_sel_id)
-                if delta_level == 0:
-                    self.pivot_module_clones.append((refnum, mod.GetReference()))
-                    self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1]))
-                # if current module is deeper within hierarchy
-                if delta_level > 0:
-                    self.pivot_module_clones.append((refnum, mod.GetReference()))
-                    self.sheets_to_clone.append((refnum, sheet_id[0:self.pivot_sheet_level+1+delta_level]))
-                # if current module is shallower within hierarchy
-                if delta_level < 0:
-                    logger.error("Trying to replicate where the pivot is deeper within the hierarchy")
-                    raise ValueError("Functionality not yet implemented")
-
-        # Sort by the number of the replicated modules, and then discard
-        # these numbers.
-        self.sheets_to_clone = [s for r, s in sorted(self.sheets_to_clone)]
-        self.pivot_module_clones = [s for r, s in sorted(self.pivot_module_clones)]
-
-        # filter the sheets if necessary
-        # TODO
-
-        # get the pivot bounding box
-        bounding_box = self.pivot_mod.GetFootprintRect()
-        top = bounding_box.GetTop()
-        bottom = bounding_box.GetBottom()
-        left = bounding_box.GetLeft()
-        right = bounding_box.GetRight()
-        for mod in self.pivot_modules:
-            mod_box = mod.GetFootprintRect()
-            top = min(top, mod_box.GetTop())
-            bottom = max(bottom, mod_box.GetBottom())
-            left = min(left, mod_box.GetLeft())
-            right = max(right, mod_box.GetRight())
-
-        position = pcbnew.wxPoint(left, top)
-        size = pcbnew.wxSize(right - left, bottom - top)
-        self.pivot_bounding_box = pcbnew.EDA_RECT(position, size)
-
-        # get corner points for the pivot bunding box - might need them for proper rotated bounding box
-        #
-        top_left = (self.pivot_bounding_box.GetLeft(), self.pivot_bounding_box.GetTop())
-        top_right = (self.pivot_bounding_box.GetRight(), self.pivot_bounding_box.GetTop())
-        bottom_right = (self.pivot_bounding_box.GetRight(), self.pivot_bounding_box.GetBottom())
-        bottom_left = (self.pivot_bounding_box.GetLeft(), self.pivot_bounding_box.GetBottom())
-        self.pivot_bounding_box_corners = (top_left, top_right, bottom_right, bottom_left)
-
-        # get radius for polar replication
-        middle = (right + left)/2
-        self.polar_center = (middle, bottom)
-
-        # get minimal radius - used by GUI to autofill in case of polar replication
-        # could be improved with proper formulae, this is just a rough estimae
-        number_of_all_sheets = 1 + len(self.sheets_to_clone)
-        width_of_sheet = (right - left) / SCALE
-        circumference = number_of_all_sheets * width_of_sheet
-        self.minimum_radius = circumference / (2 * math.pi)
-        self.minimum_angle = 360.0 / number_of_all_sheets
-
-        # get minimal width - GUI assumes horizontal replication
-        self.minimum_width = (right - left) / SCALE
-        pass
-
-    def estimate_offset(self):
-        mod = self.board.FindModuleByReference(self.pivot_module_clones[0])
-        pivot_mod = self.pivot_mod
-        offset = ((mod.GetPosition()[0] - pivot_mod.GetPosition()[0])/SCALE, (mod.GetPosition()[1] - pivot_mod.GetPosition()[1])/SCALE)
-        return offset
-
-    def prepare_for_replication(self, only_within_boundingbox):
-        logger.info("Preparing for replication")
-        self.only_within_bbox = only_within_boundingbox
-        # find all tracks within the pivot bounding box
-        all_tracks = self.board.GetTracks()
-        # keep only tracks that are within our bounding box
-
-        # get all the tracks for replication
-        for track in all_tracks:
-            track_bb = track.GetBoundingBox()
-            # if track is contained or intersecting the bounding box
-            if (only_within_boundingbox and self.pivot_bounding_box.Contains(track_bb)) or\
-               (not only_within_boundingbox and self.pivot_bounding_box.Intersects(track_bb)):
-                self.pivot_tracks.append(track)
-            # even if track is not within the bounding box
-            else:
-                # check if it on a local net
-                if track.GetNetname() in self.pivot_local_nets:
-                    # and add it to the
-                    self.pivot_tracks.append(track)
-
-        # get all zones in pivot bounding box
-        all_zones = []
-        for zoneid in range(self.board.GetAreaCount()):
-            all_zones.append(self.board.GetArea(zoneid))
-        # find all zones which are completely within the pivot bounding box
-        for zone in all_zones:
-            zone_bb = zone.GetBoundingBox()
-            if (only_within_boundingbox and self.pivot_bounding_box.Contains(zone_bb)) or\
-               (not only_within_boundingbox and self.pivot_bounding_box.Intersects(zone_bb)):
-                self.pivot_zones.append(zone)
-
-        # get all text objects in pivot bounding box
-        for drawing in self.board.GetDrawings():
-            if not isinstance(drawing, pcbnew.TEXTE_PCB):
-                continue
-            text_bb = drawing.GetBoundingBox()
-            if only_within_boundingbox:
-                if self.pivot_bounding_box.Contains(text_bb):
-                    self.pivot_text.append(drawing)
-            else:
-                if self.pivot_bounding_box.Intersects(text_bb):
-                    self.pivot_text.append(drawing)
-
-    def extract_subsheets(self, filename):
+class Replicator():
+    @staticmethod
+    def extract_subsheets(filename):
         with open(filename) as f:
             file_folder = os.path.dirname(os.path.abspath(filename))
             file_lines = f.read()
@@ -445,15 +133,130 @@ class Replicator:
                     break
 
             file_path = os.path.abspath(subsheet_path)
-            rel_subsheet_path = os.path.relpath(file_path, self.project_path)
+            yield file_path, subsheet_id, subsheet_name
 
-            yield rel_subsheet_path, subsheet_line, subsheet_id, subsheet_name
+    def find_all_sch_files(self, filename, dict_of_sheets):
+        for file_path, subsheet_id, subsheet_name in self.extract_subsheets(filename):
+            dict_of_sheets[subsheet_id] = [subsheet_name, file_path]
+            dict_of_sheets = self.find_all_sch_files(file_path, dict_of_sheets)
+        return dict_of_sheets
 
-    def find_all_sch_files(self, filename, list_of_files):
-        for sheet, line_nr, sheet_id, sheet_name in self.extract_subsheets(filename):
-            list_of_files.append((sheet, sheet_id, sheet_name))
-            list_of_files = self.find_all_sch_files(sheet, list_of_files)
-        return list_of_files
+    @staticmethod
+    def get_module_id(module):
+        """ get module id """
+        module_path = module.GetPath().split('/')
+        module_id = "/".join(module_path[-1:])
+        return module_id
+
+    def get_sheet_id(self, module):
+        """ get sheet id """
+        module_path = module.GetPath().split('/')
+        sheet_id = module_path[0:-1]
+        sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
+        sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
+        sheet_id = [sheet_names, sheet_files]
+        return sheet_id
+
+    def get_mod_by_ref(self, ref):
+        for m in self.modules:
+            if m.ref == ref:
+                return m
+        return None
+
+    def __init__(self, board):
+        self.board = board
+        self.pcb_filename = os.path.abspath(board.GetFileName())
+        self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".sch")
+        self.project_folder = os.path.dirname(self.pcb_filename)
+
+        # get relation between sheetname and it's id
+        logger.info('getting project hierarchy from schematics')
+        self.dict_of_sheets = self.find_all_sch_files(self.sch_filename, {})
+
+        # make all paths relative
+        for x in self.dict_of_sheets.keys():
+            path = self.dict_of_sheets[x][1]
+            self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
+
+        # construct a list of modules with all pertinent data 
+        logger.info('getting a list of all modules on board') 
+        bmod = board.GetModules()
+        self.modules = []
+        mod_dict = {}
+        for module in bmod:
+            mod_named_tuple = Module(mod=module,
+                                     mod_id=self.get_module_id(module),
+                                     sheet_id=self.get_sheet_id(module)[0],
+                                     filename=self.get_sheet_id(module)[1], 
+                                     ref=module.GetReference())
+            mod_dict[module.GetReference()] = mod_named_tuple
+            self.modules.append(mod_named_tuple)
+        pass
+
+    def get_list_of_modules_with_same_id(self, id):
+        list_of_modules = []
+        for m in self.modules:
+            if m.mod_id == id:
+                list_of_modules.append(m)
+        return list_of_modules
+
+    def get_sheets_to_replicate(self, mod, level):
+        sheet_id = mod.sheet_id
+        sheet_file = mod.filename
+        # poisci level_id
+        level_file = sheet_file[sheet_id.index(level)]
+        logger.info('construcing a list of sheets suitable for replication on level:'+repr(level)+", file:"+repr(level_file))
+
+        sheet_id_up_to_level = []
+        for i in range(len(sheet_id)):
+            sheet_id_up_to_level.append(sheet_id[i])
+            if sheet_id[i] == level:
+                break
+
+        # dobodi vse footprinte z istim ID-jem
+        list_of_modules = self.get_list_of_modules_with_same_id(mod.mod_id)
+        # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
+        all_sheets = []
+
+        # pojdi cez vse footprinte z istim ID-jem
+        for m in list_of_modules:
+            # in ce ta footprint je na tem nivoju, dodaj ta sheet v seznam
+            if level_file in m.filename:
+                sheet_id_list = []
+                # sestavi hierarhično pot samo do nivoja do katerega želimo
+                for i in range(len(m.filename)):
+                    sheet_id_list.append(m.sheet_id[i])
+                    if m.filename[i] == level_file:
+                        break
+                all_sheets.append(sheet_id_list)
+
+        # remove duplicates
+        all_sheets.sort()
+        all_sheets = list(k for k, _ in itertools.groupby(all_sheets))
+
+        # remove pivot_sheet
+        if sheet_id_up_to_level in all_sheets:
+            index = all_sheets.index(sheet_id_up_to_level)
+            del all_sheets[index]
+        logger.info("suitable sheets are:"+repr(all_sheets))
+        return all_sheets
+
+    def get_modules_on_sheet(self, level):
+        modules_on_sheet = []
+        level_depth = len(level)
+        for mod in self.modules:
+            if level == mod.sheet_id[0:level_depth]:
+                modules_on_sheet.append(mod)
+        return modules_on_sheet
+
+    def get_modules_not_on_sheet(self, level):
+        modules_not_on_sheet = []
+        level_depth = len(level)
+        for mod in self.modules:
+            a1 = mod.sheet_id[0:level_depth]
+            if level != mod.sheet_id[0:level_depth]:
+                modules_not_on_sheet.append(mod)
+        return modules_not_on_sheet
 
     @staticmethod
     def get_nets_from_modules(modules):
@@ -461,7 +264,7 @@ class Replicator:
         nets = []
         for mod in modules:
             # get their pads
-            pads = mod.PadsList()
+            pads = mod.mod.PadsList()
             # get net
             for pad in pads:
                 nets.append(pad.GetNetname())
@@ -473,59 +276,139 @@ class Replicator:
                 nets_clean.append(i)
         return nets_clean
 
-    def get_nets_on_sheet(self, sheet_id):
-        # find all modules, pads and nets on this sheet
-        sheet_modules = []
-        for mod in self.modules:
-            mod_sheet_id = get_sheet_id(mod)
-            if mod_sheet_id == sheet_id:
-                sheet_modules.append(mod)
-        # go through all modules and their pads and get the nets they are connected to
-        nets_clean = self.get_nets_from_modules(sheet_modules)
-        return nets_clean
+    def get_local_nets(self, pivot_modules, other_modules):
+        # then get nets other modules are connected to
+        other_nets = self.get_nets_from_modules(other_modules)
+        # then get nets only pivot modules are connected to
+        pivot_nets = self.get_nets_from_modules(pivot_modules)
 
-    def get_net_pairs(self, sheet_id):
+        pivot_local_nets = []
+        for net in pivot_nets:
+            if net not in other_nets:
+                pivot_local_nets.append(net)
+
+        return pivot_local_nets
+
+    def get_modules_bounding_box(self, modules):
+        # get the pivot bounding box
+        bounding_box = modules[0].mod.GetFootprintRect()
+        top = bounding_box.GetTop()
+        bottom = bounding_box.GetBottom()
+        left = bounding_box.GetLeft()
+        right = bounding_box.GetRight()
+        for mod in modules:
+            mod_box = mod.mod.GetFootprintRect()
+            top = min(top, mod_box.GetTop())
+            bottom = max(bottom, mod_box.GetBottom())
+            left = min(left, mod_box.GetLeft())
+            right = max(right, mod_box.GetRight())
+
+        position = pcbnew.wxPoint(left, top)
+        size = pcbnew.wxSize(right - left, bottom - top)
+        bounding_box = pcbnew.EDA_RECT(position, size)
+        return bounding_box
+
+    def get_tracks(self, bounding_box, local_nets, containing):
+        # find all tracks within the pivot bounding box
+        all_tracks = self.board.GetTracks()
+        # keep only tracks that are within our bounding box
+        tracks = []
+        # get all the tracks for replication
+        for track in all_tracks:
+            track_bb = track.GetBoundingBox()
+            # if track is contained or intersecting the bounding box
+            if (containing and bounding_box.Contains(track_bb)) or\
+               (not containing and bounding_box.Intersects(track_bb)):
+                tracks.append(track)
+            # even if track is not within the bounding box
+            else:
+                # check if it on a local net
+                if track.GetNetname() in local_nets:
+                    # and add it to the
+                    tracks.append(track)
+        return tracks
+
+    def get_zones(self, bounding_box, containing):
+        # get all zones in pivot bounding box
+        all_zones = []
+        for zoneid in range(self.board.GetAreaCount()):
+            all_zones.append(self.board.GetArea(zoneid))
+        # find all zones which are completely within the pivot bounding box
+        zones = []
+        for zone in all_zones:
+            zone_bb = zone.GetBoundingBox()
+            if (containing and bounding_box.Contains(zone_bb)) or\
+               (not containing and bounding_box.Intersects(zone_bb)):
+                zones.append(zone)
+        return zones
+
+    def get_text_items(self, bounding_box, containing):
+        # get all text objects in pivot bounding box
+        pivot_text = []
+        for drawing in self.board.GetDrawings():
+            if not isinstance(drawing, pcbnew.TEXTE_PCB):
+                continue
+            text_bb = drawing.GetBoundingBox()
+            if containing:
+                if bounding_box.Contains(text_bb):
+                    pivot_text.append(drawing)
+            else:
+                if bounding_box.Intersects(text_bb):
+                    pivot_text.append(drawing)
+        return pivot_text
+
+    def get_sheet_anchor_module(self, sheet):
+        # get all modules on this sheet
+        mod_sheet = self.get_modules_on_sheet(sheet)
+        # get anchor module
+        list_of_possible_anchor_modules = []
+        for mod in mod_sheet:
+            if mod.mod_id == self.pivot_anchor_mod.mod_id:
+                list_of_possible_anchor_modules.append(mod)
+
+        # if there is more than one possible anchor, select the correct one
+        if len(list_of_possible_anchor_modules) == 1:
+            anchor_mod = list_of_possible_anchor_modules[0]
+        else:
+            list_of_mathces = []
+            for mod in list_of_possible_anchor_modules:
+                index = list_of_possible_anchor_modules.index(mod)
+                matches = 0
+                for item in self.pivot_anchor_mod.sheet_id:
+                    if item in mod.sheet_id:
+                        matches = matches + 1
+                list_of_mathces.append((index, matches))
+            # todo select the one with most matches
+            index, _ = max(list_of_mathces, key=lambda item: item[1])
+            anchor_mod = list_of_possible_anchor_modules[index]
+        return anchor_mod
+
+    def get_net_pairs(self, sheet):
         """ find all net pairs between pivot sheet and current sheet"""
         # find all modules, pads and nets on this sheet
-        sheet_modules = []
-        sheet_modules_ref = []
-        for mod in self.modules:
-            mod_sheet_id = get_sheet_id(mod)
-            # if on the same level
-            if len(sheet_id) == len(mod_sheet_id):
-                if mod_sheet_id == sheet_id:
-                    sheet_modules.append(mod)
-                    sheet_modules_ref.append(mod.GetReference())
-            else:
-                if len(sheet_id) < len(mod_sheet_id)\
-                        and len(set(sheet_id) & set(mod_sheet_id)) == len(sheet_id):
-                    sheet_modules.append(mod)
-                    sheet_modules_ref.append(mod.GetReference())
+        sheet_modules = self.get_modules_on_sheet(sheet)
+        
         # find all net pairs via same modules pads,
         net_pairs = []
         net_dict = {}
         # construct module pairs
         mod_matches = []
         for p_mod in self.pivot_modules:
-            p_mod_id = get_module_id(p_mod)
-            p_sheet_id = get_sheet_id(p_mod)
-            mod_matches.append([p_mod, p_mod_id, p_sheet_id])
+            mod_matches.append([p_mod.mod, p_mod.mod_id, p_mod.sheet_id])
 
         for s_mod in sheet_modules:
-            s_mod_id = get_module_id(s_mod)
-            s_sheet_id = get_sheet_id(s_mod)
             for mod in mod_matches:
-                if mod[1] == s_mod_id:
+                if mod[1] == s_mod.mod_id:
                     index = mod_matches.index(mod)
-                    mod_matches[index].append(s_mod)
-                    mod_matches[index].append(s_mod_id)
-                    mod_matches[index].append(s_sheet_id)
+                    mod_matches[index].append(s_mod.mod)
+                    mod_matches[index].append(s_mod.mod_id)
+                    mod_matches[index].append(s_mod.sheet_id)
         # find closest match
         mod_pairs = []
         mod_pairs_by_reference = []
         for mod in mod_matches:
             index = mod_matches.index(mod)
-            matches = (len(mod) - 3) / 3
+            matches = (len(mod) - 3) // 3
             if matches != 1:
                 match_len = []
                 for index in range(0, matches):
@@ -593,254 +476,151 @@ class Replicator:
 
         return net_pairs_clean, net_dict
 
-    def remove_zones_tracks(self):
-        logger.info("Removing tracks and zones")
-        for sheet in self.sheets_to_clone:
-            # get modules on a sheet
-            mod_sheet = []
-            for mod in self.modules:
-                sheet_id = get_sheet_id(mod)
-                # if module is on selected sheet
-                if sheet_id == sheet:
-                    mod_sheet.append(mod)
-            # get bounding box
-            bounding_box = get_bounding_box_of_modules(mod_sheet)
+    def prepare_for_replication(self, level, containing):
+        # get a list of modules for replication
+        logger.info("Getting the list of pivot modules")
+        self.pivot_modules = self.get_modules_on_sheet(level)
+        # get the rest of the modules
+        logger.info("Getting the list of all the remaining modules")
+        self.other_modules = self.get_modules_not_on_sheet(level)
+        # get nets local to pivot modules
+        logger.info("Getting nets local to pivot modules")
+        self.pivot_local_nets = self.get_local_nets(self.pivot_modules, self.other_modules)
+        # get pivot bounding box
+        logger.info("Getting pivot bounding box")
+        self.pivot_bounding_box = self.get_modules_bounding_box(self.pivot_modules)
+        # get pivot tracks
+        logger.info("Getting pivot tracks")
+        self.pivot_tracks = self.get_tracks(self.pivot_bounding_box, self.pivot_local_nets, containing)
+        # get pivot zones
+        logger.info("Getting pivot zones")
+        self.pivot_zones = self.get_zones(self.pivot_bounding_box, containing)
+        # get pivot text items
+        logger.info("Getting pivot text items")
+        self.pivot_text = self.get_text_items(self.pivot_bounding_box, containing)
 
-            tracks_to_remove = []
-            # from all the tracks on board
-            all_tracks = self.board.GetTracks()
-            # remove the tracks that are not on nets contained in this sheet
-            nets_on_sheet = self.get_nets_on_sheet(sheet)
-            tracks_on_nets_on_sheet = []
-            for track in all_tracks:
-                if track.GetNetname() in nets_on_sheet:
-                    tracks_on_nets_on_sheet.append(track)
+        a = 2
 
-            for track in tracks_on_nets_on_sheet:
-                # minus the tracks in pivot bounding box
-                if track not in self.pivot_tracks:
-                    track_in_bounding_box = track.GetBoundingBox()
-                    # add the tracks containing/interesecting in the replicated bounding box
-                    # on the list for removal
-                    if self.only_within_bbox:
-                        if bounding_box.Contains(track_in_bounding_box):
-                            tracks_to_remove.append(track)
-                    else:
-                        if bounding_box.Intersects(track_in_bounding_box):
-                            tracks_to_remove.append(track)
-            # remove tracks
-            for track in tracks_to_remove:
-                self.board.RemoveNative(track)
-
-            zones_to_remove = []
-            # from all the zones on the board
-            all_zones = []
-            for zoneid in range(self.board.GetAreaCount()):
-                all_zones.append(self.board.GetArea(zoneid))
-            # remove the zones that are not on nets contained in this sheet
-            zones_on_nets_on_sheet = []
-            for zone in all_zones:
-                if zone.GetNetname() in nets_on_sheet:
-                    zones_on_nets_on_sheet.append(zone)
-            for zone in all_zones:
-                # minus the zones in pivot bounding box
-                if zone not in self.pivot_zones:
-                    zone_in_bounding_box = zone.GetBoundingBox()
-                    # add the zones containing/interesecting in the replicated bounding box
-                    # on the list for removal
-                    if self.only_within_bbox:
-                        if bounding_box.Contains(zone_in_bounding_box):
-                            zones_to_remove.append(zone)
-                    else:
-                        if bounding_box.Intersects(zone_in_bounding_box):
-                            zones_to_remove.append(zone)
-            # remove tracks
-            for zone in zones_to_remove:
-                self.board.RemoveNative(zone)
-
-            text_to_remove = []
-            # from all text items on the board
-            for drawing in self.board.GetDrawings():
-                if not isinstance(drawing, pcbnew.TEXTE_PCB):
-                    continue
-                # ignore text in the pivot sheet
-                if drawing in self.pivot_text:
-                    continue
-
-                # add text in/intersecting with the replicated bounding box to
-                # the list for removal.
-                text_bb = drawing.GetBoundingBox()
-                if self.only_within_bbox:
-                    if bounding_box.Contains(text_bb):
-                        text_to_remove.append(drawing)
-                else:
-                    if bounding_box.Intersects(text_bb):
-                        text_to_remove.append(drawing)
-
-            # remove text objects
-            for text in text_to_remove:
-                self.board.RemoveNative(text)
-
-    def replicate_modules(self, x_offset, y_offset, polar):
-        global SCALE
+    def replicate_modules(self):
         logger.info("Replicating modules")
-        """ method which replicates modules"""
-        for sheet in self.sheets_to_clone:
-            sheet_index = self.sheets_to_clone.index(sheet) + 1
-            # begin with modules
-            for mod in self.modules:
-                mod_ref = mod.GetReference()
-                module_id = get_module_id(mod)
-                sheet_id = get_sheet_id(mod)
-                # if module is on selected sheet or higher
-                # TODO refine this in order to copy module only from this sheet and this sheet only
-                #a = sheet_id[0:self.pivot_sheet_level+1]
-                #b = sheet[0:self.pivot_sheet_level+1]
-                a = sheet_id[0:len(sheet)]
-                b = sheet
-                if a == b:
-                    # find which is the corresponding pivot module
-                    if module_id in self.pivot_modules_id:
-                        logger.info("Replicating module: " + mod.GetReference())
-                        # get coresponding pivot module and its position
-                        # find the best match
-                        mod_locations = [index for index, pivot_module in enumerate(self.pivot_modules_id) if pivot_module == module_id]
-                        # TODO - needs comment, as I don't know anymore, what this is handling
-                        # presumably this is handling the case, where  we're replicating  a sheet which in itself
-                        # consists of two of the same subsheets thus we have more than one module with same id
-                        if len(mod_locations) > 1:
-                            max_matches = -1
-                            for loc in mod_locations:
-                                mod_ref = mod.GetReference()
-                                pivot_mod_ref = self.pivot_modules[loc].GetReference()
-                                pivot_mod_path = get_sheet_id(self.pivot_modules[loc])
-                                mod_path = sheet_id
-                                matches = len(set(mod_path) & set(pivot_mod_path))
-                                if matches > max_matches:
-                                    max_matches = matches
-                                    index = loc
-                        else:
-                            index = mod_locations[0]
+        for sheet in self.sheets_for_replication:
+            logger.info("Replicating modules on sheet " + repr(sheet))
+            # get anchor module
+            anchor_mod = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to pivot module
+            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            # get exact anchor position
+            anchor_pos = anchor_mod.mod.GetPosition()
 
-                        # index = self.pivot_modules_id.index(module_id)
-                        mod_to_clone = self.pivot_modules[index]
-                        pivot_mod_position = mod_to_clone.GetPosition()
-                        pivot_mod_orientation = mod_to_clone.GetOrientationDegrees()
-                        pivot_mod_flipped = mod_to_clone.IsFlipped()
+            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
 
-                        if polar:
-                            # get the pivot point
-                            pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                            newposition = rotate_around_pivot_point(pivot_mod_position, pivot_point, sheet_index * y_offset)
-                        else:
-                            # get new position - cartesian
-                            newposition = (pivot_mod_position[0] + sheet_index * x_offset * SCALE,
-                                           pivot_mod_position[1] + sheet_index * y_offset * SCALE)
+            # go through all modules
+            mod_sheet = self.get_modules_on_sheet(sheet)
+            for mod in mod_sheet:
+                # find proper match in pivot modules
+                mod_to_clone = None
+                list_of_possible_pivot_modules = []
+                for pmod in self.pivot_modules:
+                    if pmod.mod_id == mod.mod_id:
+                        list_of_possible_pivot_modules.append(pmod)
 
-                        # convert to tuple of integers
-                        newposition = [int(x) for x in newposition]
-                        # place current module
-                        mod.SetPosition(pcbnew.wxPoint(*newposition))
-
-                        if (mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.IsFlipped()):
-                            mod.Flip(mod.GetPosition())
-
-                        # set module orientation
-                        if polar:
-                            new_orientation = pivot_mod_orientation - sheet_index * y_offset
-                            # check for orientation wraparound
-                            if new_orientation > 360.0:
-                                new_orientation = new_orientation - 360
-                            if new_orientation < 0.0:
-                                new_orientation = new_orientation + 360
-                        else:
-                            new_orientation = pivot_mod_orientation
-                        mod.SetOrientationDegrees(new_orientation)
-
-                        # Copy local settings.
-                        mod.SetLocalClearance(mod_to_clone.GetLocalClearance())
-                        mod.SetLocalSolderMaskMargin(mod_to_clone.GetLocalSolderMaskMargin())
-                        mod.SetLocalSolderPasteMargin(mod_to_clone.GetLocalSolderPasteMargin())
-                        mod.SetLocalSolderPasteMarginRatio(mod_to_clone.GetLocalSolderPasteMarginRatio())
-                        mod.SetZoneConnection(mod_to_clone.GetZoneConnection())
-
-                        # replicate also text layout
-                        # get pivot_module_text
-                        # get module text
-                        pivot_mod_text_items = get_module_text_items(mod_to_clone)
-                        mod_text_items = get_module_text_items(mod)
-                        # replicate each text item
-                        for pivot_text in pivot_mod_text_items:
-                            index = pivot_mod_text_items.index(pivot_text)
-                            pivot_text_position = pivot_text.GetPosition()
-                            if polar:
-                                pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                                newposition = rotate_around_pivot_point(pivot_text_position, pivot_point, sheet_index * y_offset)
-                            else:
-                                newposition = (pivot_text_position[0] + sheet_index * x_offset * SCALE,
-                                               pivot_text_position[1] + sheet_index * y_offset * SCALE)
-
-                            # convert to tuple of integers
-                            newposition = [int(x) for x in newposition]
-                            mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
-
-                            # set orientation
-                            mod_text_items[index].SetTextAngle(pivot_text.GetTextAngle())
-                            # thickness
-                            mod_text_items[index].SetThickness(pivot_text.GetThickness())
-                            # width
-                            mod_text_items[index].SetTextWidth(pivot_text.GetTextWidth())
-                            # height
-                            mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
-                            # rest of the parameters
-                            # TODO check SetEffects method, might be better
-                            mod_text_items[index].SetItalic(pivot_text.IsItalic())
-                            mod_text_items[index].SetBold(pivot_text.IsBold())
-                            mod_text_items[index].SetMirrored(pivot_text.IsMirrored())
-                            mod_text_items[index].SetMultilineAllowed(pivot_text.IsMultilineAllowed())
-                            mod_text_items[index].SetHorizJustify(pivot_text.GetHorizJustify())
-                            mod_text_items[index].SetVertJustify(pivot_text.GetVertJustify())
-                            # set visibility
-                            mod_text_items[index].SetVisible(pivot_text.IsVisible())
-
-    def replicate_text(self, x_offset, y_offset, polar):
-        logger.info("Replicating text")
-        global SCALE
-        # start cloning
-        for sheet_index, sheet in enumerate(self.sheets_to_clone, 1):
-            for text in self.pivot_text:
-                pivot_position = text.GetPosition()
-                pivot_angle = text.GetTextAngle() / 10   # Returned in deci-degrees.
-                newtext = text.Duplicate()
-
-                # Calculate new position.
-                if polar:
-                    pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                    newposition = rotate_around_pivot_point(pivot_position, pivot_point, sheet_index * y_offset)
-
-                    # Calculate new angle.
-                    new_angle = pivot_angle - sheet_index * y_offset
-                    if new_angle > 360.0:
-                        new_angle = new_angle - 360
-                    if new_angle < 0.0:
-                        new_angle = new_angle + 360
-                    newtext.SetTextAngle(new_angle * 10)  # Set in deci-degrees.
+                # if there is more than one possible anchor, select the correct one
+                if len(list_of_possible_pivot_modules) == 1:
+                    mod_to_clone = list_of_possible_pivot_modules[0]
                 else:
-                    newposition = (pivot_position[0] + sheet_index * x_offset * SCALE,
-                                   pivot_position[1] + sheet_index * y_offset * SCALE)
+                    list_of_matches = []
+                    for m in list_of_possible_pivot_modules:
+                        index = list_of_possible_pivot_modules.index(m)
+                        matches = 0
+                        for item in mod.sheet_id:
+                            if item in m.sheet_id:
+                                matches = matches + 1
+                        list_of_matches.append((index, matches))
+                    # todo select the one with most matches
+                    index, _ = max(list_of_matches, key=lambda item: item[1])
+                    mod_to_clone = list_of_possible_pivot_modules[index]
 
-                # Update position and add to board.
+                # get module to clone position
+                pivot_mod_orientation = mod_to_clone.mod.GetOrientationDegrees()
+                pivot_mod_pos = mod_to_clone.mod.GetPosition()
+                # get relative position with respect to pivot anchor
+                pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+                pivot_mod_delta_pos = pivot_mod_pos - pivot_anchor_pos
+                
+                # new orientation is simple
+                new_orientation = pivot_mod_orientation - anchor_delta_angle
+                old_position = pivot_mod_delta_pos + anchor_pos
+                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
+                # convert to tuple of integers
                 newposition = [int(x) for x in newposition]
-                newtext.SetPosition(pcbnew.wxPoint(*newposition))
-                self.board.Add(newtext)
+                # place current module - only if current module is not also the anchor
+                if mod.ref != anchor_mod.ref:
+                    mod.mod.SetPosition(pcbnew.wxPoint(*newposition))
+                    mod.mod.SetOrientationDegrees(new_orientation)
 
-    def replicate_tracks(self, x_offset, y_offset, polar):
-        """ method which replicates tracks"""
+                    pivot_mod_flipped = mod_to_clone.mod.IsFlipped()
+                    if (mod.mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.mod.IsFlipped()):
+                        mod.mod.Flip(mod.mod.GetPosition())
+
+                    # Copy local settings.
+                    mod.mod.SetLocalClearance(mod_to_clone.mod.GetLocalClearance())
+                    mod.mod.SetLocalSolderMaskMargin(mod_to_clone.mod.GetLocalSolderMaskMargin())
+                    mod.mod.SetLocalSolderPasteMargin(mod_to_clone.mod.GetLocalSolderPasteMargin())
+                    mod.mod.SetLocalSolderPasteMarginRatio(mod_to_clone.mod.GetLocalSolderPasteMarginRatio())
+                    mod.mod.SetZoneConnection(mod_to_clone.mod.GetZoneConnection())
+
+                # replicate also text layout - also for anchor module. I am counting that the user is lazy and will
+                # just position the anchors and will not edit them
+                # get pivot_module_text
+                # get module text
+                pivot_mod_text_items = get_module_text_items(mod_to_clone)
+                mod_text_items = get_module_text_items(mod)
+                # replicate each text item
+                for pivot_text in pivot_mod_text_items:
+                    index = pivot_mod_text_items.index(pivot_text)
+                    pivot_text_position = pivot_text.GetPosition() + anchor_delta_pos
+
+                    newposition = rotate_around_pivot_point(pivot_text_position, anchor_pos, anchor_delta_angle)
+
+                    # convert to tuple of integers
+                    newposition = [int(x) for x in newposition]
+                    mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
+
+                    # set orientation
+                    mod_text_items[index].SetTextAngle(pivot_text.GetTextAngle())
+                    # thickness
+                    mod_text_items[index].SetThickness(pivot_text.GetThickness())
+                    # width
+                    mod_text_items[index].SetTextWidth(pivot_text.GetTextWidth())
+                    # height
+                    mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
+                    # rest of the parameters
+                    # TODO check SetEffects method, might be better
+                    mod_text_items[index].SetItalic(pivot_text.IsItalic())
+                    mod_text_items[index].SetBold(pivot_text.IsBold())
+                    mod_text_items[index].SetMirrored(pivot_text.IsMirrored())
+                    mod_text_items[index].SetMultilineAllowed(pivot_text.IsMultilineAllowed())
+                    mod_text_items[index].SetHorizJustify(pivot_text.GetHorizJustify())
+                    mod_text_items[index].SetVertJustify(pivot_text.GetVertJustify())
+                    # set visibility
+                    mod_text_items[index].SetVisible(pivot_text.IsVisible())
+
+    def replicate_tracks(self):
         logger.info("Replicating tracks")
-        global SCALE
-        # start cloning
-        for sheet in self.sheets_to_clone:
-            sheet_index = self.sheets_to_clone.index(sheet) + 1
+        for sheet in self.sheets_for_replication:
+            logger.info("Replicating tracks on sheet " + repr(sheet))
+            # get anchor module
+            anchor_mod = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to pivot module
+            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            # get exact anchor position
+            anchor_pos = anchor_mod.mod.GetPosition()
+
+            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+
             net_pairs, net_dict = self.get_net_pairs(sheet)
 
             # go through all the tracks
@@ -857,7 +637,7 @@ class Replicator:
                     to_net = net_dict[to_net_name]
 
                     # finally make a copy
-                    # this came from Miles Mccoo, I only extended it with polar support
+                    # this came partially from Miles Mccoo
                     # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
                     if track.GetClass() == "VIA":
                         newvia = pcbnew.VIA(self.board)
@@ -871,15 +651,16 @@ class Replicator:
                             toplayer = max(toplayer, l)
                             bottomlayer = min(bottomlayer, l)
                         newvia.SetLayerPair(toplayer, bottomlayer)
-                        if polar:
-                            # get the pivot point
-                            pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-
-                            newposition = rotate_around_pivot_point((track.GetPosition().x, track.GetPosition().y),
-                                                                    pivot_point, sheet_index * y_offset)
-                        else:
-                            newposition = (track.GetPosition().x + sheet_index*x_offset*SCALE,
-                                           track.GetPosition().y + sheet_index*y_offset*SCALE)
+                        
+                        # get module to clone position
+                        pivot_track_pos = track.GetPosition()
+                        # get relative position with respect to pivot anchor
+                        pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+                        pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
+                        
+                        # new orientation is simple
+                        old_position = pivot_mod_delta_pos + anchor_pos
+                        newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
 
                         # convert to tuple of integers
                         newposition = [int(x) for x in newposition]
@@ -894,37 +675,52 @@ class Replicator:
                         newtrack = pcbnew.TRACK(self.board)
                         # need to add before SetNet will work, so just doing it first
                         self.board.Add(newtrack)
-                        if polar:
-                            # get the pivot point
-                            pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                            newposition = rotate_around_pivot_point((track.GetStart().x, track.GetStart().y),
-                                                                    pivot_point, sheet_index * y_offset)
-                            # convert to tuple of integers
-                            newposition = [int(x) for x in newposition]
-                            newtrack.SetStart(pcbnew.wxPoint(*newposition))
+                        
+                        # get module to clone position
+                        pivot_track_pos = track.GetStart()
+                        # get relative position with respect to pivot anchor
+                        pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+                        pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
+                        
+                        # new orientation is simple
+                        old_position = pivot_mod_delta_pos + anchor_pos
+                        newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+                        newposition = [int(x) for x in newposition]
+                        newtrack.SetStart(pcbnew.wxPoint(*newposition))
 
-                            newposition = rotate_around_pivot_point((track.GetEnd().x, track.GetEnd().y),
-                                                                    pivot_point, sheet_index * y_offset)
-                            # convert to tuple of integers
-                            newposition = [int(x) for x in newposition]
-                            newtrack.SetEnd(pcbnew.wxPoint(*newposition))
-                        else:
-                            newtrack.SetStart(pcbnew.wxPoint(track.GetStart().x + sheet_index*x_offset*SCALE,
-                                                             track.GetStart().y + sheet_index*y_offset*SCALE))
-                            newtrack.SetEnd(pcbnew.wxPoint(track.GetEnd().x + sheet_index*x_offset*SCALE,
-                                                           track.GetEnd().y + sheet_index*y_offset*SCALE))
+                        pivot_track_pos = track.GetEnd()
+                        # get relative position with respect to pivot anchor
+                        pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+                        pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
+                        
+                        # new orientation is simple
+                        old_position = pivot_mod_delta_pos + anchor_pos
+                        newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+                        newposition = [int(x) for x in newposition]
+                        newtrack.SetEnd(pcbnew.wxPoint(*newposition))
+
                         newtrack.SetWidth(track.GetWidth())
                         newtrack.SetLayer(track.GetLayer())
 
                         newtrack.SetNet(to_net)
 
-    def replicate_zones(self, x_offset, y_offset, polar):
+    def replicate_zones(self):
         """ method which replicates zones"""
         logger.info("Replicating zones")
-        global SCALE
         # start cloning
-        for sheet in self.sheets_to_clone:
-            sheet_index = self.sheets_to_clone.index(sheet) + 1
+        for sheet in self.sheets_for_replication:
+            logger.info("Replicating zones on sheet " + repr(sheet))
+
+            # get anchor module
+            anchor_mod = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to pivot module
+            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            # get exact anchor position
+            anchor_pos = anchor_mod.mod.GetPosition()
+
+            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+
             net_pairs, net_dict = self.get_net_pairs(sheet)
             # go through all the zones
             for zone in self.pivot_zones:
@@ -943,6 +739,7 @@ class Replicator:
                         tup = [('', '')]
                     # do not clone
                     else:
+                        logger.info('Skipping replication of a zone')
                         continue
 
                 # start the clone
@@ -953,39 +750,40 @@ class Replicator:
                     to_net = net_dict[to_net_name].GetNet()
 
                 # now I can finally make a copy of a zone
-                # this came partially from Miles Mccoo. I only extended it with polar support
+                # this came partially from Miles Mccoo.
                 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
                 coords = get_coordinate_points_of_shape_poly_set(zone.Outline())
-                if polar:
-                    pivot_point = (self.polar_center[0], self.polar_center[1] + x_offset * SCALE)
-                    newposition = rotate_around_pivot_point((coords[0][0], coords[0][1]), pivot_point, sheet_index * y_offset)
+
+                # get module to clone position
+                pivot_zone_pos = (coords[0][0], coords[0][1])
+                # get relative position with respect to pivot anchor
+                pivot_anchor_pos = (self.pivot_anchor_mod.mod.GetPosition().x, self.pivot_anchor_mod.mod.GetPosition().y)
+                pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
+
+                # new orientation is simple
+                old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
+                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
+                newposition = [int(x) for x in newposition]
+                newzone = self.board.InsertArea(to_net,
+                                                0,
+                                                zone.GetLayer(),
+                                                newposition[0],
+                                                newposition[1],
+                                                pcbnew.ZONE_CONTAINER.DIAGONAL_EDGE)
+                newoutline = newzone.Outline()
+                for pt in coords[1:]:
+                    pivot_zone_pos = (pt[0], pt[1])
+                    # get relative position with respect to pivot anchor
+                    pivot_anchor_pos = (self.pivot_anchor_mod.mod.GetPosition().x, self.pivot_anchor_mod.mod.GetPosition().y)
+                    pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
+
+                    # new orientation is simple
+                    old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
+                    newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
                     newposition = [int(x) for x in newposition]
-                    newzone = self.board.InsertArea(to_net,
-                                                    0,
-                                                    zone.GetLayer(),
-                                                    newposition[0],
-                                                    newposition[1],
-                                                    pcbnew.CPolyLine.DIAGONAL_EDGE)
-                    newoutline = newzone.Outline()
-                    for pt in coords[1:]:
-                        newposition = rotate_around_pivot_point((pt[0], pt[1]), pivot_point,
-                                                                sheet_index * y_offset)
-                        newposition = [int(x) for x in newposition]
-                        newoutline.Append(newposition[0], newposition[1])
-                else:
-                    newposition = (coords[0][0] + sheet_index * x_offset * SCALE,
-                                   coords[0][1] + sheet_index * y_offset * SCALE)
-                    newposition = [int(x) for x in newposition]
-                    newzone = self.board.InsertArea(to_net,
-                                                    0,
-                                                    zone.GetLayer(),
-                                                    newposition[0],
-                                                    newposition[1],
-                                                    pcbnew.CPolyLine.DIAGONAL_EDGE)
-                    newoutline = newzone.Outline()
-                    for pt in coords[1:]:
-                        newoutline.Append(pt[0] + int(sheet_index*x_offset*SCALE),
-                                          pt[1] + int(sheet_index*y_offset*SCALE))
+                    newoutline.Append(newposition[0], newposition[1])
 
                 # copy zone settings
                 newzone.SetPriority(zone.GetPriority())
@@ -1007,215 +805,239 @@ class Replicator:
                     newzone.SetDoNotAllowVias(zone.GetDoNotAllowVias())
                 pass
 
-    def replicate_layout(self, x_offset, y_offset,
-                         replicate_containing_only,
-                         remove_existing_nets_zones,
-                         replicate_tracks,
-                         replicate_zones,
-                         replicate_text,
-                         polar):
-        logger.info("Replicating layout")
-        logger.info("Will replicate sheets:\n\t" + "\n\t".join(str(x) for x in self.sheets_to_clone))
-        logger.info("Pivot modules are:\n\t" + "\n\t".join(x.GetReference() for x in self.pivot_modules))
-        self.prepare_for_replication(replicate_containing_only)
-        if remove_existing_nets_zones:
-            self.remove_zones_tracks()
-        self.replicate_modules(x_offset, y_offset, polar)
-        if remove_existing_nets_zones:
-            self.remove_zones_tracks()
-        if replicate_tracks:
-            self.replicate_tracks(x_offset, y_offset, polar)
-        if replicate_zones:
-            self.replicate_zones(x_offset, y_offset, polar)
-        if replicate_text:
-            self.replicate_text(x_offset, y_offset, polar)
+    def replicate_text(self):
+        logger.info("Replicating text")
+        # start cloning
+        for sheet in self.sheets_for_replication:
+            logger.info("Replicating text on sheet " + repr(sheet))
+            # get anchor module
+            anchor_mod = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to pivot module
+            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            # get exact anchor position
+            anchor_pos = anchor_mod.mod.GetPosition()
 
-  
-def test_multiple_inner(x, y, within, polar):
-    logger.info("Testing multiple hierarchy - inner levels")
-    board = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
-    replicator = Replicator(board=board, pivot_module_reference='Q301')
-    # get sheet levels
-    sheet_levels = replicator.get_sheet_levels()
-    # select which level to replicate
-    replicator.calculate_spacing(sheet_levels[-1])
-    replicator.calculate_spacing(sheet_levels[0])
-    replicator.calculate_spacing(sheet_levels[-1])
+            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
 
-    replicator.replicate_layout(x, y,
-                                replicate_containing_only=within,
-                                remove_existing_nets_zones=True,
-                                replicate_tracks=True,
-                                replicate_zones=True,
-                                replicate_text=True,
-                                polar=polar)
+            for text in self.pivot_text:
+                pivot_position = text.GetPosition()
+                pivot_angle = text.GetTextAngle() / 10   # Returned in deci-degrees.
+                newtext = text.Duplicate()
 
-    # save the board
-    filename1 = 'multiple_hierarchy_top.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename1, board)
-    filename2 = 'test_'+filename1
+                # get module to clone position
+                pivot_text_pos = pivot_position
+                # get relative position with respect to pivot anchor
+                pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+                pivot_mod_delta_pos = pivot_text_pos - pivot_anchor_pos
 
-    return compare_boards.compare_boards(filename1, filename2)
+                # new orientation is simple
+                old_position = pivot_mod_delta_pos + anchor_pos
+                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+                new_orientation = pivot_angle - anchor_delta_angle
 
-def test_multiple_outer(x, y, within, polar):
-    logger.info("Testing multiple hierarchy - outer levels")
-    board = pcbnew.LoadBoard('multiple_hierarchy_top_done.kicad_pcb')
-    replicator = Replicator(board=board, pivot_module_reference='Q301') # J201 ali Q301
-    # get sheet levels
-    sheet_levels = replicator.get_sheet_levels()
-    # select which level to replicate
-    replicator.calculate_spacing(sheet_levels[0])
+                # Calculate new angle.
+                if new_orientation > 360.0:
+                    new_orientation = new_orientation - 360
+                if new_orientation < 0.0:
+                    new_orientation = new_orientation + 360
+                newtext.SetTextAngle(new_orientation * 10)  # Set in deci-degrees.
 
-    replicator.replicate_layout(x, y,
-                                replicate_containing_only=within,
-                                remove_existing_nets_zones=True,
-                                replicate_tracks=True,
-                                replicate_zones=True,
-                                replicate_text=True,
-                                polar=polar)
+                # Update position and add to board.
+                newposition = [int(x) for x in newposition]
+                newtext.SetPosition(pcbnew.wxPoint(*newposition))
+                self.board.Add(newtext)
 
-    # save the board
-    filename1 = 'multiple_hierarchy_base.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename1, board)
-    filename2 = 'test_'+filename1
-    
-    return compare_boards.compare_boards(filename1, filename2)
+    def remove_zones_tracks(self, containing):
+        for sheet in self.sheets_for_replication:
+            # get modules on a sheet
+            mod_sheet = self.get_modules_on_sheet(sheet)
+            # get bounding box
+            bounding_box = self.get_modules_bounding_box(mod_sheet)
 
-def test_replicate(x, y, within, polar):
-    logger.info("Testing basic operation")
+            # from all the tracks on board
+            all_tracks = self.board.GetTracks()
+            # remove the tracks that are not on nets contained in this sheet
+            nets_on_sheet = self.get_nets_from_modules(mod_sheet)
+            tracks_on_nets_on_sheet = []
+            for track in all_tracks:
+                if track.GetNetname() in nets_on_sheet:
+                    tracks_on_nets_on_sheet.append(track)
 
-    import difflib
+            for track in tracks_on_nets_on_sheet:
+                # minus the tracks in pivot bounding box
+                if track not in self.pivot_tracks:
+                    track_bounding_box = track.GetBoundingBox()
+                    # remove the tracks containing/interesecting in the replicated bounding box
+                    if containing:
+                        if bounding_box.Contains(track_bounding_box):
+                            self.board.RemoveNative(track)
+                    else:
+                        if bounding_box.Intersects(track_bounding_box):
+                            self.board.RemoveNative(track)
 
-    filename1 = ''
-    if within is True and polar is False:
-        filename1 = 'test_board_only_within.kicad_pcb'
-    if within is False and polar is False:
-        filename1 = 'test_board_all.kicad_pcb'
-    if within is False and polar is True:
-        filename1 = 'test_board_polar.kicad_pcb'
+            # from all the zones on the board
+            all_zones = []
+            for zoneid in range(self.board.GetAreaCount()):
+                all_zones.append(self.board.GetArea(zoneid))
+            # remove the zones that are not on nets contained in this sheet
+            zones_on_nets_on_sheet = []
+            for zone in all_zones:
+                if zone.GetNetname() in nets_on_sheet:
+                    zones_on_nets_on_sheet.append(zone)
+            for zone in all_zones:
+                # minus the zones in pivot bounding box
+                if zone not in self.pivot_zones:
+                    zone_bounding_box = zone.GetBoundingBox()
+                    # remove the zones containing/interesecting in the replicated bounding box
+                    if containing:
+                        if bounding_box.Contains(zone_bounding_box):
+                            self.board.RemoveNative(zone)
+                    else:
+                        if bounding_box.Intersects(zone_bounding_box):
+                            self.board.RemoveNative(zone)
 
-    # load test board
-    board = pcbnew.LoadBoard('test_board.kicad_pcb')
-    # run the replicator
-    replicator = Replicator(board=board, pivot_module_reference='Q2002')
-    sheet_levels = replicator.get_sheet_levels()
-    # select which level to replicate
-    replicator.calculate_spacing(sheet_levels[0])
-    x_offset, y_offset = replicator.estimate_offset()
-    replicator.replicate_layout(x, y,
-                                replicate_containing_only=within,
-                                remove_existing_nets_zones=True,
-                                replicate_tracks=True,
-                                replicate_zones=True,
-                                replicate_text=True,
-                                polar=polar)
-    # save the board
-    filename2 = 'temp_'+filename1
-    saved = pcbnew.SaveBoard('temp_'+filename1, board)
+            # from all text items on the board
+            for drawing in self.board.GetDrawings():
+                if not isinstance(drawing, pcbnew.TEXTE_PCB):
+                    continue
+                # ignore text in the pivot sheet
+                if drawing in self.pivot_text:
+                    continue
 
-    # compare files
-    return compare_boards.compare_boards(filename1, filename2)
+                # add text in/intersecting with the replicated bounding box to
+                # the list for removal.
+                text_bb = drawing.GetBoundingBox()
+                if containing:
+                    if bounding_box.Contains(text_bb):
+                        self.board.RemoveNative(drawing)
+                else:
+                    if bounding_box.Intersects(text_bb):
+                        self.board.RemoveNative(drawing)
 
-def test_eksoticna_hierarhija(x, y, within, polar):
-    logger.info("Testing eksoticna hierarhija")
-    board = pcbnew.LoadBoard('drawingcircuits.kicad_pcb')
-    try:
-        replicator = Replicator(board=board, pivot_module_reference='Q6')
-    except ValueError:
-        return
-    # get sheet levels
-    sheet_levels = replicator.get_sheet_levels()
-    # select which level to replicate
-    replicator.calculate_spacing(sheet_levels[-1])
+    def replicate_layout(self, pivot_mod, level, sheets_for_replication,
+                         containing, remove, tracks, zones, text):
+        logger.info( "Starting replication of sheets: " + repr(sheets_for_replication)
+                    +"\non level: " + repr(level)
+                    +"\nwith tracks="+repr(tracks)+", zone="+repr(zones)+", text="+repr(text)
+                    +", containing="+repr(containing)+", remov="+repr(remove))
+        self.level = level
+        self.pivot_anchor_mod = pivot_mod
+        self.sheets_for_replication = sheets_for_replication
 
-    replicator.replicate_layout(x, y,
-                                replicate_containing_only=within,
-                                remove_existing_nets_zones=True,
-                                replicate_tracks=True,
-                                replicate_zones=True,
-                                replicate_text=True,
-                                polar=polar)
+        # get pivot(anchor) module details
+        self.pivot_mod_orientation = self.pivot_anchor_mod.mod.GetOrientationDegrees()
+        self.pivot_mod_position = self.pivot_anchor_mod.mod.GetPosition()
+        self.prepare_for_replication(level, containing)
+        if remove:
+            logger.info("Removing tracks and zones, before module placement")
+            self.remove_zones_tracks(containing)
+        self.replicate_modules()
+        if remove:
+            logger.info("Removing tracks and zones, after module placement")
+            self.remove_zones_tracks(containing)
+        if tracks:
+            self.replicate_tracks()
+        if zones:
+            self.replicate_zones()
+        if text:
+            self.replicate_text()
 
-    # save the board
-    filename1 = 'drawingcircuits_base.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename1, board)
-    filename2 = 'test_'+filename1
-    
-    err = compare_boards.compare_boards(filename1, filename2)
-    return err
-
-def test_eksoticna_hierarhija_obratno(x, y, within, polar):
-    logger.info("Testing eksoticna hierarhija obratno")
-    board = pcbnew.LoadBoard('drawingcircuits.kicad_pcb')
-    try:
-        replicator = Replicator(board=board, pivot_module_reference='Q3')
-    except ValueError:
-        return -1
-    # get sheet levels
-    sheet_levels = replicator.get_sheet_levels()
-    # select which level to replicate
-    replicator.calculate_spacing(sheet_levels[-1])
-    sheets = replicator.get_list_of_sheets_to_replicate(sheet_levels[-1])
-    replicator.calculate_spacing(sheet_levels[0])
-    sheets = replicator.get_list_of_sheets_to_replicate(sheet_levels[0])
-
-    replicator.replicate_layout(x, y,
-                                replicate_containing_only=within,
-                                remove_existing_nets_zones=True,
-                                replicate_tracks=True,
-                                replicate_zones=True,
-                                replicate_text=True,
-                                polar=polar)
-
-    # save the board
-    filename1 = 'drawingcircuits_obratno_base.kicad_pcb'
-    saved = pcbnew.SaveBoard(filename1, board)
-    filename2 = 'test_'+filename1
-    
-    err = compare_boards.compare_boards(filename1, filename2)
-    return err
 
 def main():
-    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "reproducer"))
-    errnum_eksoticna_hierarhija = test_eksoticna_hierarhija(25, 0.0, within=False, polar=False)
-    errnum_eksoticna_hierarhija_obratno = test_eksoticna_hierarhija_obratno(25, 0.0, within=False, polar=False)
-    
-
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
-    errnum_multiple_inner = test_multiple_inner(25, 0.0, within=False, polar=False)
-    errnum_multiple_outer = test_multiple_outer(50, 0.0, within=False, polar=False)
+    logger.info("Testing multiple hierarchy - inner levels")
+    board1 = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
 
-    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "basic_tests"))
-    errnum_within = test_replicate(25.0, 0.0, within=True, polar=False)
-    errnum_all = test_replicate(25.0, 0.0, within=False, polar=False)
-    errnum_polar = test_replicate(20, 60, within=False, polar=True)
+    pivot_mod = 'Q301'
+
+    # get board information
+    replicator1 = Replicator(board1)
+    # get pivot module info
+    pivot_mod1 = replicator1.get_mod_by_ref('Q301')
+
+    # have the user select replication level
+    levels1 = pivot_mod1.filename
+
+    # get the level index from user
+    index1 = levels1.index(levels1[1])
+
+    # get list of sheets
+    sheet_list1 = replicator1.get_sheets_to_replicate(pivot_mod1, pivot_mod1.sheet_id[index1])
+
+    # get the list selection from user
+    sheets_for_replication1 = [sheet_list1[i] for i in (0, 2, 5,)]
+
+    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
+    tako da je za razmisliz kaj se postavi kam '''
+
+    # now we are ready for replication
+    replicator1.replicate_layout(pivot_mod1, pivot_mod1.sheet_id[0:index1+1], sheets_for_replication1,
+                                 containing=False, remove=True, tracks=True, zones=True, text=True)
+    saved1 = pcbnew.SaveBoard('multiple_hierarchy_temp.kicad_pcb', board1)
+
+    logger.info("Testing multiple hierarchy - inner levels pivot on a different level")
+    board3 = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
+
+    pivot_mod = 'Q101'
+
+    # get board information
+    replicator3 = Replicator(board3)
+    # get pivot module info
+    pivot_mod3 = replicator3.get_mod_by_ref('Q1401')
+
+    # have the user select replication level
+    levels3 = pivot_mod3.filename
+
+    # get the level index from user
+    index3 = levels3.index(levels3[0])
+
+    # get list of sheets
+    sheet_list3 = replicator3.get_sheets_to_replicate(pivot_mod3, pivot_mod3.sheet_id[index3])
+
+    # get the list selection from user
+    sheets_for_replication3 = [sheet_list3[i] for i in (0, 2, 5,)]
+
+    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
+    tako da je za razmisliz kaj se postavi kam '''
+
+    # now we are ready for replication
+    replicator3.replicate_layout(pivot_mod3, pivot_mod3.sheet_id[0:index3+1], sheets_for_replication3,
+                                 containing=False, remove=True, tracks=True, zones=True, text=True)
+    saved3 = pcbnew.SaveBoard('multiple_hierarchy_temp_alt.kicad_pcb', board3)
 
 
-    if errnum_all == 0\
-       and errnum_eksoticna_hierarhija_obratno == 0\
-       and errnum_eksoticna_hierarhija == 0\
-       and errnum_within == 0\
-       and errnum_all == 0\
-       and errnum_polar == 0\
-       and errnum_multiple_inner == 0\
-       and errnum_multiple_outer == 0:
-        print "passed all tests"
+    logger.info("Testing multiple hierarchy - outer levels")
+    board2 = pcbnew.LoadBoard('multiple_hierarchy_outer.kicad_pcb')
 
-    if errnum_within != 0:
-        print "failed replicating only containing"
-    if errnum_all != 0:
-        print "failed replicating complete (with intersections)"
-    if errnum_polar != 0:
-        print "failed replicating polar"
-    if errnum_multiple_inner != 0:
-        print "failed replicating multiple inner"
-    if errnum_multiple_outer != 0:
-        print "failed replicating multiple outer"
-    if errnum_eksoticna_hierarhija != 0:
-        print "failed replicating eksoticna hierarhija"
-    if errnum_eksoticna_hierarhija_obratno != 0:
-        print "failed replicating eksoticna hierarhija obratno"
+    pivot_mod = 'Q301'
 
+    # get board information
+    replicator2 = Replicator(board2)
+    # get pivot module info
+    pivot_mod2 = replicator2.get_mod_by_ref('Q301')
+
+    # have the user select replication level
+    levels2 = pivot_mod2.filename
+
+    # get the level index from user
+    index2 = levels2.index(levels2[0])
+
+    # get list of sheets
+    sheet_list2 = replicator2.get_sheets_to_replicate(pivot_mod2, pivot_mod2.sheet_id[index2])
+
+    # get the list selection from user
+    sheets_for_replication2 = [sheet_list2[i] for i in (1,)]
+
+    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
+    tako da je za razmisliz kaj se postavi kam '''
+
+    # now we are ready for replication
+    replicator2.replicate_layout(pivot_mod2, pivot_mod2.sheet_id[0:index2+1], sheets_for_replication2,
+                                 containing=False, remove=False, tracks=True, zones=True, text=True)
+    saved2 = pcbnew.SaveBoard('multiple_hierarchy_outer_temp.kicad_pcb', board2)
+
+    a = 2
 
 # for testing purposes only
 if __name__ == "__main__":

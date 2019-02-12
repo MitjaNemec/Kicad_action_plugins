@@ -1,3 +1,0 @@
-(fp_lib_table
-  (lib (name drawingcircuits)(type KiCad)(uri ${KIPRJMOD}/drawingcircuits.pretty)(options "")(descr ""))
-)
