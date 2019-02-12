@@ -28,6 +28,7 @@ import logging
 import itertools
 import re
 import math
+import compare_boards
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
@@ -943,107 +944,62 @@ class Replicator():
         if text:
             self.replicate_text()
 
+def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containing, remove):
+    board = pcbnew.LoadBoard(in_filename)
+    # get board information
+    replicator = Replicator(board)
+    # get pivot module info
+    pivot_mod = replicator.get_mod_by_ref(pivot_mod_ref)
+    # have the user select replication level
+    levels = pivot_mod.filename
+    # get the level index from user
+    index = levels.index(levels[level])
+    # get list of sheets
+    sheet_list = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[index])
+    # get the list selection from user
+    sheets_for_replication = [sheet_list[i] for i in sheets]
+
+    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
+    tako da je za razmisliz kaj se postavi kam '''
+
+    # now we are ready for replication
+    replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
+                                 containing=containing, remove=remove, tracks=True, zones=True, text=True)
+
+    saved1 = pcbnew.SaveBoard(out_filename, board)
+    test_file = out_filename.replace("temp", "test")
+    
+    return compare_boards.compare_boards(out_filename, test_file)
+
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
+    
     logger.info("Testing multiple hierarchy - inner levels")
-    board1 = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
-
-    pivot_mod = 'Q301'
-
-    # get board information
-    replicator1 = Replicator(board1)
-    # get pivot module info
-    pivot_mod1 = replicator1.get_mod_by_ref('Q301')
-
-    # have the user select replication level
-    levels1 = pivot_mod1.filename
-
-    # get the level index from user
-    index1 = levels1.index(levels1[1])
-
-    # get list of sheets
-    sheet_list1 = replicator1.get_sheets_to_replicate(pivot_mod1, pivot_mod1.sheet_id[index1])
-
-    # get the list selection from user
-    sheets_for_replication1 = [sheet_list1[i] for i in (0, 2, 5,)]
-
-    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
-    tako da je za razmisliz kaj se postavi kam '''
-
-    # now we are ready for replication
-    replicator1.replicate_layout(pivot_mod1, pivot_mod1.sheet_id[0:index1+1], sheets_for_replication1,
-                                 containing=False, remove=True, tracks=True, zones=True, text=True)
-    saved1 = pcbnew.SaveBoard('multiple_hierarchy_temp.kicad_pcb', board1)
-
+    input_file = 'multiple_hierarchy.kicad_pcb'
+    output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
+    err = test_file(input_file, output_file, 'Q301', level=1 ,sheets=(0, 2, 5,), containing=False, remove=True)
+    assert (err == 0), "multiple_hierarchy - inner levels failed"
+    
     logger.info("Testing multiple hierarchy - inner levels pivot on a different level")
-    board3 = pcbnew.LoadBoard('multiple_hierarchy.kicad_pcb')
-
-    pivot_mod = 'Q101'
-
-    # get board information
-    replicator3 = Replicator(board3)
-    # get pivot module info
-    pivot_mod3 = replicator3.get_mod_by_ref('Q1401')
-
-    # have the user select replication level
-    levels3 = pivot_mod3.filename
-
-    # get the level index from user
-    index3 = levels3.index(levels3[0])
-
-    # get list of sheets
-    sheet_list3 = replicator3.get_sheets_to_replicate(pivot_mod3, pivot_mod3.sheet_id[index3])
-
-    # get the list selection from user
-    sheets_for_replication3 = [sheet_list3[i] for i in (0, 2, 5,)]
-
-    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
-    tako da je za razmisliz kaj se postavi kam '''
-
-    # now we are ready for replication
-    replicator3.replicate_layout(pivot_mod3, pivot_mod3.sheet_id[0:index3+1], sheets_for_replication3,
-                                 containing=False, remove=True, tracks=True, zones=True, text=True)
-    saved3 = pcbnew.SaveBoard('multiple_hierarchy_temp_alt.kicad_pcb', board3)
-
+    input_file = 'multiple_hierarchy.kicad_pcb'
+    output_file = input_file.split('.')[0]+"_temp_alt"+".kicad_pcb"
+    err = test_file(input_file, output_file, 'Q1401', level=0 ,sheets=(0, 2, 5,), containing=False, remove=True)
+    assert (err == 0), "multiple_hierarchy - inner levels from bottom failed"
 
     logger.info("Testing multiple hierarchy - outer levels")
-    board2 = pcbnew.LoadBoard('multiple_hierarchy_outer.kicad_pcb')
+    input_file = 'multiple_hierarchy_outer.kicad_pcb'
+    output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
+    err = test_file(input_file, output_file, 'Q301', level=0 ,sheets=(1,), containing=False, remove=False)
+    assert (err == 0), "multiple_hierarchy - outer levels failed"
 
-    pivot_mod = 'Q301'
-
-    # get board information
-    replicator2 = Replicator(board2)
-    # get pivot module info
-    pivot_mod2 = replicator2.get_mod_by_ref('Q301')
-
-    # have the user select replication level
-    levels2 = pivot_mod2.filename
-
-    # get the level index from user
-    index2 = levels2.index(levels2[0])
-
-    # get list of sheets
-    sheet_list2 = replicator2.get_sheets_to_replicate(pivot_mod2, pivot_mod2.sheet_id[index2])
-
-    # get the list selection from user
-    sheets_for_replication2 = [sheet_list2[i] for i in (1,)]
-
-    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
-    tako da je za razmisliz kaj se postavi kam '''
-
-    # now we are ready for replication
-    replicator2.replicate_layout(pivot_mod2, pivot_mod2.sheet_id[0:index2+1], sheets_for_replication2,
-                                 containing=False, remove=False, tracks=True, zones=True, text=True)
-    saved2 = pcbnew.SaveBoard('multiple_hierarchy_outer_temp.kicad_pcb', board2)
-
-    a = 2
+    print ("all tests passed")
 
 # for testing purposes only
 if __name__ == "__main__":
     # if debugging outside of this folder change the folder
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    
+
     file_handler = logging.FileHandler(filename='replicate_layout.log', mode='w')
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
