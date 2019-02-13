@@ -19,7 +19,7 @@
 #  MA 02110-1301, USA.
 #
 #
-import difflib
+
 
 def getIndex(s, i): 
     from collections import deque 
@@ -85,6 +85,7 @@ def remove_kicad_pcb_header(file_contents):
     return trimmed_contents
 
 def compare_boards(filename1, filename2):
+    import difflib
     errnum = 0
     with open(filename1) as f1:
         with open(filename2) as f2:

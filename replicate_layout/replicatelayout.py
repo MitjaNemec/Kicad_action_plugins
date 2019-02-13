@@ -28,10 +28,12 @@ import logging
 import itertools
 import re
 import math
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 import compare_boards
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
+
 
 def rotate_around_center(coordinates, angle):
     """ rotate coordinates for a defined angle in degrees around coordinate center"""
