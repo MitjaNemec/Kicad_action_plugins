@@ -29,6 +29,8 @@ import itertools
 import re
 import math
 
+SCALE = 1000000.0
+
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
 
@@ -266,13 +268,103 @@ class Placer():
         width = (right-left)/1000000.0
         return height, width
 
-    def place_footprints(self):
-        logger.info( "Starting placing")
-        
+    def place_circular(self, modules_to_place, radius, delta_angle):
+        logger.info("Starting placing with circular layout")
+        # get proper module_list
+        modules = []
+        for mod_ref in modules_to_place:
+            modules.append(self.get_mod_by_ref(mod_ref))
+
+        # get first module position
+        first_module = modules[0]
+        first_module_pos = first_module.mod.GetPosition()
+        # point of rotation is below first module
+        point_of_rotation = (first_module_pos.x, first_module_pos.y + radius * SCALE)
+        for mod in modules[2:]:
+            index = modules.index(mod)-1
+            new_position = rotate_around_pivot_point(first_module_pos, point_of_rotation, index*delta_angle)
+            new_position = [int(x) for x in new_position]
+            mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
+
+            mod.mod.SetOrientationDegrees(first_module.mod.GetOrientationDegrees()-index*delta_angle)
+
+            first_mod_flipped = first_module.mod.IsFlipped()
+            if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
+                mod.mod.Flip(mod.mod.GetPosition())
+
+    def place_linear(self, modules_to_place, step_x, step_y):
+        logger.info("Starting placing with linear layout")
+        # get proper module_list
+        modules = []
+        for mod_ref in modules_to_place:
+            modules.append(self.get_mod_by_ref(mod_ref))
+
+        # get first module position
+        first_module = modules[0]
+        first_module_pos = first_module.mod.GetPosition()
+        for mod in modules[2:]:
+            index = modules.index(mod)-1
+            new_position = (first_module_pos.x + index*step_x*SCALE, first_module_pos.y + index*step_y * SCALE)
+            new_position = [int(x) for x in new_position]
+            mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
+
+            mod.mod.SetOrientationDegrees(first_module.mod.GetOrientationDegrees())
+
+            first_mod_flipped = first_module.mod.IsFlipped()
+            if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
+                mod.mod.Flip(mod.mod.GetPosition())
+
+    def place_matrix(self, modules_to_place, step_x, step_y):
+        logger.info("Starting placing with linear layout")
+        # get proper module_list
+        modules = []
+        for mod_ref in modules_to_place:
+            modules.append(self.get_mod_by_ref(mod_ref))
+
+        nr_columns = math.ceil(math.sqrt(len(modules)))
+        # get first module position
+        first_module = modules[0]
+        first_module_pos = first_module.mod.GetPosition()
+        for mod in modules[2:]:
+            index = modules.index(mod)-1
+            row = index // nr_columns
+            column = index - row * nr_columns
+            new_pos_x = first_module_pos.x + column * step_x * SCALE
+            new_pos_y = first_module_pos.y + row * step_y * SCALE
+            new_position = (new_pos_x, new_pos_y)
+            new_position = [int(x) for x in new_position]
+            mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
+
+            mod.mod.SetOrientationDegrees(first_module.mod.GetOrientationDegrees())
+
+            first_mod_flipped = first_module.mod.IsFlipped()
+            if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
+                mod.mod.Flip(mod.mod.GetPosition())
+
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
-    
+    input_file = 'multiple_hierarchy.kicad_pcb'
+    output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
+    board = pcbnew.LoadBoard(input_file)
+    pivot_module_reference = 'Q301'
+
+    placer = Placer(board)
+
+    pivot_module = placer.get_mod_by_ref(pivot_module_reference)
+    list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
+    sheets_to_place  = placer.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[1])
+
+    modules_to_place = []
+    mod_references = []
+    for mod in list_of_modules:
+        if mod.sheet_id in sheets_to_place:
+            modules_to_place.append(mod)
+            mod_references.append(mod.ref)
+
+    step_x = float(dlg.val_x_mag.GetValue())
+    step_y = float(dlg.val_y_angle.GetValue())
+    placer.place_linear(modules_to_place, step_x, step_y)            
 
     print ("all tests passed")
 

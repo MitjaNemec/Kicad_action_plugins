@@ -27,6 +27,13 @@ import os
 import logging
 import sys
 import math
+import re
+
+
+def natural_sort(l): 
+    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
+    return sorted(l, key=alphanum_key)
 
 
 class PlaceBySheet (wx.Dialog):
@@ -35,9 +42,9 @@ class PlaceBySheet (wx.Dialog):
     def level_changed(self, event):
         index = self.list_levels.GetSelection()
 
-        list_sheetsChoices = self.placer.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
+        self.list_sheetsChoices = self.placer.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
 
-        list = [('/').join(x) for x in list_sheetsChoices]
+        list = [('/').join(x) for x in self.list_sheetsChoices]
         # clear levels
         self.list_sheets.Clear()
         self.list_sheets.AppendItems(list)
@@ -51,20 +58,33 @@ class PlaceBySheet (wx.Dialog):
         for i in range(number_of_items):
             self.list_sheets.Select(i)
 
-    def arrangement_changed(self, event):
+        if self.rad_btn_linear_sheet.GetValue() or self.rad_btn_matrix_sheet.GetValue():
+            self.lbl_x_mag.SetLabelText(u"step x (mm):")
+            self.lbl_y_angle.SetLabelText(u"step y (mm):")
+            self.val_x_mag.SetValue("%.2f" % self.width)
+            self.val_y_angle.SetValue("%.2f" % self.height)
+        # circular layout
+        else:
+            number_of_all_sheets = len(self.list_sheets.GetSelections())
+            circumference = number_of_all_sheets * self.width
+            radius = circumference / (2 * math.pi)
+            angle = 360.0 / number_of_all_sheets
+            self.lbl_x_mag.SetLabelText(u"radius (mm):")
+            self.lbl_y_angle.SetLabelText(u"angle (deg):")
+            self.val_x_mag.SetValue("%.2f" % radius)
+            self.val_y_angle.SetValue("%.2f" % angle)
 
-        modules = self.placer.get_modules_on_sheet(self.pivot_mod.sheet_id)
-        height, width = self.placer.get_modules_bounding_box(modules)
+    def arrangement_changed(self, event):
 
         if self.rad_btn_linear_sheet.GetValue() or self.rad_btn_matrix_sheet.GetValue():
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
             self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % width)
-            self.val_y_angle.SetValue("%.2f" % height)
+            self.val_x_mag.SetValue("%.2f" % self.width)
+            self.val_y_angle.SetValue("%.2f" % self.height)
         # circular layout
         else:
             number_of_all_sheets = len(self.list_sheets.GetSelections())
-            circumference = number_of_all_sheets * width
+            circumference = number_of_all_sheets * self.width
             radius = circumference / (2 * math.pi)
             angle = 360.0 / number_of_all_sheets
             self.lbl_x_mag.SetLabelText(u"radius (mm):")
@@ -97,8 +117,8 @@ class PlaceBySheet (wx.Dialog):
 
         bSizer16 = wx.BoxSizer(wx.HORIZONTAL)
 
-        list_sheetsChoices = []
-        self.list_sheets = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(230, -1), list_sheetsChoices, wx.LB_MULTIPLE | wx.LB_NEEDED_SB)
+        self.list_sheetsChoices = []
+        self.list_sheets = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(230, -1), self.list_sheetsChoices, wx.LB_MULTIPLE | wx.LB_NEEDED_SB)
         bSizer16.Add(self.list_sheets, 1, wx.ALL | wx.EXPAND, 5)
 
         bSizer14.Add(bSizer16, 2, wx.EXPAND, 5)
@@ -169,6 +189,9 @@ class PlaceBySheet (wx.Dialog):
 
         self.placer = placer
         self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
+
+        modules = self.placer.get_modules_on_sheet(self.pivot_mod.sheet_id)
+        self.height, self.width = self.placer.get_modules_bounding_box(modules)
 
 
 class PlaceByReference (wx.Dialog):
@@ -279,35 +302,37 @@ class PlaceByReference (wx.Dialog):
 
         self.height, self.width = self.placer.get_modules_bounding_box([self.pivot_mod])
 
+        self.val_x_mag.SetValue("%.2f" % self.width)
+        self.val_y_angle.SetValue("%.2f" % self.height)
 
 
-class InitialDialog ( wx.Dialog ):
+class InitialDialog (wx.Dialog):
 
-    def __init__( self, parent ):
-        wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Place footprints", pos = wx.DefaultPosition, size = wx.Size( 242,107 ), style = wx.DEFAULT_DIALOG_STYLE )
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Place footprints", pos=wx.DefaultPosition, size=wx.Size(242, 107), style=wx.DEFAULT_DIALOG_STYLE)
 
-        #self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+        # self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
-        bSizer1 = wx.BoxSizer( wx.VERTICAL )
+        bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
-        self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Place by?", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText1.Wrap( -1 )
-        bSizer1.Add( self.m_staticText1, 0, wx.ALL, 5 )
+        self.m_staticText1 = wx.StaticText(self, wx.ID_ANY, u"Place by?", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.m_staticText1.Wrap(-1)
+        bSizer1.Add( self.m_staticText1, 0, wx.ALL, 5)
 
-        bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer2 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.btn_reference = wx.Button( self, wx.ID_OK, u"Reference nr.", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer2.Add( self.btn_reference, 0, wx.ALL, 5 )
+        self.btn_reference = wx.Button(self, wx.ID_OK, u"Reference nr.", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer2.Add(self.btn_reference, 0, wx.ALL, 5)
 
-        self.btn_sheet = wx.Button( self, wx.ID_CANCEL, u"Sheet nr.", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer2.Add( self.btn_sheet, 0, wx.ALL, 5 )
+        self.btn_sheet = wx.Button(self, wx.ID_CANCEL, u"Sheet nr.", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer2.Add(self.btn_sheet, 0, wx.ALL, 5)
 
-        bSizer1.Add( bSizer2, 1, wx.EXPAND, 5 )
+        bSizer1.Add(bSizer2, 1, wx.EXPAND, 5)
 
-        self.SetSizer( bSizer1 )
+        self.SetSizer(bSizer1)
         self.Layout()
 
-        self.Centre( wx.BOTH )
+        self.Centre(wx.BOTH)
 
 
 class PlaceFootprints(pcbnew.ActionPlugin):
@@ -408,32 +433,69 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     list_of_consecutive_modules.append(mod)
                 else:
                     break
-                
+
             # display dialog
             dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference)
             dlg.list_modules.AppendItems(list_of_consecutive_modules)
             res = dlg.ShowModal()
 
-            # place modules
+            # get list of modules to place
+            modules_to_place_indeces = dlg.list_modules.GetSelections()
+            modules_to_place = [list_of_consecutive_modules[i] for i in modules_to_place_indeces]
+            # get mode
+            if dlg.rad_btn_circular_ref.GetValue():
+                delta_angle = float(dlg.val_y_angle.GetValue())
+                radius = float(dlg.val_x_mag.GetValue())
+                placer.place_circular(modules_to_place, radius, delta_angle)
+
+            if dlg.rad_btn_linear_ref.GetValue():
+                step_x = float(dlg.val_x_mag.GetValue())
+                step_y = float(dlg.val_y_angle.GetValue())
+                placer.place_linear(modules_to_place, step_x, step_y)
+
+            if dlg.rad_btn_matrix_ref.GetValue():
+                step_x = float(dlg.val_x_mag.GetValue())
+                step_y = float(dlg.val_y_angle.GetValue())
+                placer.place_matrix(modules_to_place, step_x, step_y)
+
         # by sheet
         else:
-            pass
-            
             # get list of all modules with same ID
-            list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module)
+            list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
             # display dialog
             dlg = PlaceBySheet(_pcbnew_frame, placer, pivot_module_reference)
             levels = pivot_module.filename
             dlg.list_levels.Clear()
             dlg.list_levels.AppendItems(levels)
-            dlg.list_sheets.AppendItems(list_of_modules)
-
             res = dlg.ShowModal()
 
-            # if linear or matrix hint the step based upon bounding box size
-            # might want to roundup to the current grid size
+            # based on the sheet list, find all the modules with same ID
+            sheets_to_place_indeces = dlg.list_sheets.GetSelections()
+            sheets_to_place = [dlg.list_sheetsChoices[i] for i in sheets_to_place_indeces]
 
-            # place modules
+            mod_references = [pivot_module_reference]
+            for mod in list_of_modules:
+                if mod.sheet_id in sheets_to_place:
+                    mod_references.append(mod.ref)
+
+            # sort by reference number
+            sorted_modules = natural_sort(mod_references)
+
+            # get mode
+            if dlg.rad_btn_circular_sheet.GetValue():
+                delta_angle = float(dlg.val_y_angle.GetValue())
+                radius = float(dlg.val_x_mag.GetValue())
+                placer.place_circular(mod_references, radius, delta_angle)
+
+            if dlg.rad_btn_linear_sheet.GetValue():
+                step_x = float(dlg.val_x_mag.GetValue())
+                step_y = float(dlg.val_y_angle.GetValue())
+                placer.place_linear(mod_references, step_x, step_y)
+
+            if dlg.rad_btn_matrix_sheet.GetValue():
+                step_x = float(dlg.val_x_mag.GetValue())
+                step_y = float(dlg.val_y_angle.GetValue())
+                placer.place_matrix(mod_references, step_x, step_y)
 
 class StreamToLogger(object):
     """
