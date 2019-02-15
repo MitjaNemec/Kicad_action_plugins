@@ -53,10 +53,6 @@ class PlaceBySheet (wx.Dialog):
         number_of_items = self.list_sheets.GetCount()
         for i in range(number_of_items):
             self.list_sheets.Select(i)
-        # by default select all sheets
-        number_of_items = self.list_sheets.GetCount()
-        for i in range(number_of_items):
-            self.list_sheets.Select(i)
 
         if self.rad_btn_linear_sheet.GetValue() or self.rad_btn_matrix_sheet.GetValue():
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -408,40 +404,52 @@ class PlaceFootprints(pcbnew.ActionPlugin):
 
         # by reference number
         if res == wx.ID_OK:
-            # get list of all subsequent modules
+            # by ref
             module_reference_designator = ''.join(i for i in pivot_module_reference if not i.isdigit())
             module_reference_number = int(''.join(i for i in pivot_module_reference if i.isdigit()))
 
             # get list of all modules with same reference designator
-            list_of_all_modules_with_same_designaro = placer.get_modules_with_reference_designator(module_reference_designator)
-            list_of_all_modules_with_same_designaro.sort()
+            list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
+            sorted_list = natural_sort(list_of_all_modules_with_same_designator)
 
             list_of_consecutive_modules=[]
-            start_index = list_of_all_modules_with_same_designaro.index(pivot_module_reference)
+            start_index = sorted_list.index(pivot_module_reference)
             count_start = module_reference_number
-            for mod in list_of_all_modules_with_same_designaro[start_index:]:
-                if int(''.join(i for i in pivot_module_reference if i.isdigit())) == count_start:
+            for mod in sorted_list[start_index:]:
+                if int(''.join(i for i in mod if i.isdigit())) == count_start:
                     count_start = count_start + 1
                     list_of_consecutive_modules.append(mod)
                 else:
                     break
-            
+
             count_start = module_reference_number
-            for x in reversed(list_of_all_modules_with_same_designaro[:start_index]):
-                if int(''.join(i for i in pivot_module_reference if i.isdigit())) == count_start:
+            reversed_list = list(reversed(sorted_list))
+            start_index = reversed_list.index(pivot_module_reference)
+            for mod in reversed_list[start_index:]:
+                if int(''.join(i for i in mod if i.isdigit())) == count_start:
                     count_start = count_start -1
                     list_of_consecutive_modules.append(mod)
                 else:
                     break
 
+            sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
+
             # display dialog
             dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference)
-            dlg.list_modules.AppendItems(list_of_consecutive_modules)
+            dlg.list_modules.AppendItems(sorted_modules)
+
+            # by default select all sheets
+            number_of_items = dlg.list_modules.GetCount()
+            for i in range(number_of_items):
+                dlg.list_modules.Select(i)
             res = dlg.ShowModal()
+
+            if res == wx.ID_CANCEL:
+                return
 
             # get list of modules to place
             modules_to_place_indeces = dlg.list_modules.GetSelections()
-            modules_to_place = [list_of_consecutive_modules[i] for i in modules_to_place_indeces]
+            modules_to_place = natural_sort([sorted_modules[i] for i in modules_to_place_indeces])
             # get mode
             if dlg.rad_btn_circular_ref.GetValue():
                 delta_angle = float(dlg.val_y_angle.GetValue())
@@ -469,6 +477,9 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             dlg.list_levels.AppendItems(levels)
             res = dlg.ShowModal()
 
+            if res == wx.ID_CANCEL:
+                return
+
             # based on the sheet list, find all the modules with same ID
             sheets_to_place_indeces = dlg.list_sheets.GetSelections()
             sheets_to_place = [dlg.list_sheetsChoices[i] for i in sheets_to_place_indeces]
@@ -485,17 +496,17 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             if dlg.rad_btn_circular_sheet.GetValue():
                 delta_angle = float(dlg.val_y_angle.GetValue())
                 radius = float(dlg.val_x_mag.GetValue())
-                placer.place_circular(mod_references, radius, delta_angle)
+                placer.place_circular(sorted_modules, radius, delta_angle)
 
             if dlg.rad_btn_linear_sheet.GetValue():
                 step_x = float(dlg.val_x_mag.GetValue())
                 step_y = float(dlg.val_y_angle.GetValue())
-                placer.place_linear(mod_references, step_x, step_y)
+                placer.place_linear(sorted_modules, step_x, step_y)
 
             if dlg.rad_btn_matrix_sheet.GetValue():
                 step_x = float(dlg.val_x_mag.GetValue())
                 step_y = float(dlg.val_y_angle.GetValue())
-                placer.place_matrix(mod_references, step_x, step_y)
+                placer.place_matrix(sorted_modules, step_x, step_y)
 
 class StreamToLogger(object):
     """

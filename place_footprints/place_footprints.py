@@ -26,8 +26,14 @@ import os
 import sys
 import logging
 import itertools
-import re
 import math
+import re
+
+
+def natural_sort(l): 
+    convert = lambda text: int(text) if text.isdigit() else text.lower() 
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
+    return sorted(l, key=alphanum_key)
 
 SCALE = 1000000.0
 
@@ -280,8 +286,8 @@ class Placer():
         first_module_pos = first_module.mod.GetPosition()
         # point of rotation is below first module
         point_of_rotation = (first_module_pos.x, first_module_pos.y + radius * SCALE)
-        for mod in modules[2:]:
-            index = modules.index(mod)-1
+        for mod in modules[1:]:
+            index = modules.index(mod)
             new_position = rotate_around_pivot_point(first_module_pos, point_of_rotation, index*delta_angle)
             new_position = [int(x) for x in new_position]
             mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
@@ -302,8 +308,8 @@ class Placer():
         # get first module position
         first_module = modules[0]
         first_module_pos = first_module.mod.GetPosition()
-        for mod in modules[2:]:
-            index = modules.index(mod)-1
+        for mod in modules[1:]:
+            index = modules.index(mod)
             new_position = (first_module_pos.x + index*step_x*SCALE, first_module_pos.y + index*step_y * SCALE)
             new_position = [int(x) for x in new_position]
             mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
@@ -325,8 +331,8 @@ class Placer():
         # get first module position
         first_module = modules[0]
         first_module_pos = first_module.mod.GetPosition()
-        for mod in modules[2:]:
-            index = modules.index(mod)-1
+        for mod in modules[1:]:
+            index = modules.index(mod)
             row = index // nr_columns
             column = index - row * nr_columns
             new_pos_x = first_module_pos.x + column * step_x * SCALE
@@ -343,28 +349,59 @@ class Placer():
 
 
 def main():
-    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
-    input_file = 'multiple_hierarchy.kicad_pcb'
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "place_footprints"))
+    input_file = 'place_footprints.kicad_pcb'
     output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
     board = pcbnew.LoadBoard(input_file)
-    pivot_module_reference = 'Q301'
+    pivot_module_reference = 'R202'
 
     placer = Placer(board)
 
+    ''' by ref
+    module_reference_designator = ''.join(i for i in pivot_module_reference if not i.isdigit())
+    module_reference_number = int(''.join(i for i in pivot_module_reference if i.isdigit()))
+
+    # get list of all modules with same reference designator
+    list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
+    sorted_list = natural_sort(list_of_all_modules_with_same_designator)
+
+    list_of_consecutive_modules=[]
+    start_index = sorted_list.index(pivot_module_reference)
+    count_start = module_reference_number
+    for mod in sorted_list[start_index:]:
+        if int(''.join(i for i in mod if i.isdigit())) == count_start:
+            count_start = count_start + 1
+            list_of_consecutive_modules.append(mod)
+        else:
+            break
+
+    count_start = module_reference_number
+    reversed_list = list(reversed(sorted_list))
+    start_index = reversed_list.index(pivot_module_reference)
+    for mod in reversed_list[start_index:]:
+        if int(''.join(i for i in mod if i.isdigit())) == count_start:
+            count_start = count_start -1
+            list_of_consecutive_modules.append(mod)
+        else:
+            break
+
+    sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
+    '''
+    
+    ''' by sheet
     pivot_module = placer.get_mod_by_ref(pivot_module_reference)
     list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
-    sheets_to_place  = placer.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[1])
-
-    modules_to_place = []
-    mod_references = []
+    modules = []
     for mod in list_of_modules:
-        if mod.sheet_id in sheets_to_place:
-            modules_to_place.append(mod)
-            mod_references.append(mod.ref)
+        modules.append(mod.ref)
+    sorted_modules = natural_sort(modules)
+    '''
 
-    step_x = float(dlg.val_x_mag.GetValue())
-    step_y = float(dlg.val_y_angle.GetValue())
-    placer.place_linear(modules_to_place, step_x, step_y)            
+    #placer.place_linear(sorted_modules, 5.0, 0.0)
+    #placer.place_matrix(sorted_modules, 5.0, 5.0)
+    placer.place_circular(sorted_modules, 10.0, 30.0)
+
+    saved = pcbnew.SaveBoard(output_file,board)          
 
     print ("all tests passed")
 
