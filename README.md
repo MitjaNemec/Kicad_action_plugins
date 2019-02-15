@@ -5,7 +5,7 @@ This repo contains KiCad pcbnew Action Plugins()
 
 ## Replicate layout
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.0.2 and 5.1-rc1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -14,30 +14,59 @@ Within the plugin folder only the *.py files are required for operation.
 While the action plugin works within pcbnew, the `replicatelayout` module can be used also in the pcbnew scripting console or even without pcbnew running. If the `replicatelayout.py` is run standalone, it will test itself against known correct layouts (provided within the plugin folder). This is to ease testing if the pcbnew API changes in the future. The `replicatelayout` module does not work with KiCad 4.0.7 as the Python API lacks certain methods.
 
 The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets.
-The basic requirement for replication is that the section to be replicated is completely contained within a single hierarchical sheet, and replicated sections are just copies of the same sheet. Complex hierarchies are supported because each replicated sheet can contain subsheets. The plugin also replicates module text layout (References, Values and other text bound to a module).
+The basic requirement for replication is that the section to be replicated is completely contained within a single hierarchical sheet, and replicated sections are just copies of the same sheet. Complex hierarchies are supported because as replicated sheet can contain subsheets. The plugin replicates footprints, zones, tracks and text.
 
 After the section for replication (pivot section) has been laid out (modules, tracks, text objects and zones placed) you need to:
-1. Select any of the modules within the pivot section.
-2. Run the plugin.
-3. Choose which hierarchical level you wish to replicate.
-4. Choose between linear and circular replication.
-5. Enter the replication step size: x, y for linear replication and radius, angle (in degrees) for circular replication.
+1. Place the anchor modules for the sections you want to replicate. This defines the position and orientation of replicated sections. You can use [Place footprints] action plugin for this.
+2. Select the same anchor module within the pivot section.
+3. Run the plugin.
+4. Choose which hierarchical level you wish to replicate.
+5. Select which sheets you want to replicate (default is all of them)
 6. Select whether you want to replicate also tracks, zones and/or text objects.
 7. Select whether you want to replicate tracks/zones/text which intersect the pivot bounding box or just those contained within the bounding box.
 8. Select whether you want to delete already laid out tracks/zones/text (this is useful when updating an already replicated layout).
 9. Hit OK.
 
-The replication can be linear or circular. For linear replication the plugin will ask for an x and y offset (in mm) with respect to the pivot section where the replicated sections will be placed. For circular replication the plugin will ask for radius (in mm) and angle (in °) with respect to the pivot section where replicated sections will be placed.
-
-Additionally you can choose whether you want to also replicate zones, text and/or tracks. By default, only objects which are contained in the bounding box constituted by all the modules in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that in circular replication, bounding boxes are still squares aligned with the x and y axis.
-
-![Bounding box, contained, intersecting definitions](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_2.png)
-
-![Bounding box circular replication](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replicate_layout_2circular.png)
+Additionally you can choose whether you want to also replicate zones, text and/or tracks. By default, only objects which are contained in the bounding box constituted by all the modules in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that bounding boxes are squares aligned with the x and y axis, regardless of section orientation.
 
 Example replication of a complex hierarchical project
 
 ![Replication](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replication.gif)
+
+## Place footprints
+
+This plugin has been tested with KiCad 5.0.2 and 5.1-rc1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
+
+Within the plugin folder only the *.py files are required for operation.
+
+This plugin will place footprints in:
+- in line
+- circular
+- in square matrix
+
+The plugins for placement are selected either by consecutive reference numbers or by same ID on different hierarchical sheets.
+
+If you want to place the footprints by consecutive reference numbers you have to
+1. select a footprint which is first in the sequence to be placed
+2. run the plugin
+3. select which place by reference number
+4. choose which footprint in the sequence you want to place
+5. select the arrangement (linear, matrix, circular)
+6. select place dimension (step in x and y axes in linear and matrixc mode and angle step and radius in circlar mode)
+7. run the plugin
+
+If you want to place the footprints by same ID with
+1. select a footprint which is first in the sequence to be placed
+2. run the plugin
+3. select the hierarchical level by which the footprints will be placed (in complex hierarchies)
+4. choose from which sheets you want the footprint to place
+5. select the arrangement (linear, matrix, circular)
+6. select place dimension (step in x and y axes in linear and matrixc mode and angle step and radius in circlar mode)
+7. run the plugin
+
+
 
 ## Delete Selected
 
