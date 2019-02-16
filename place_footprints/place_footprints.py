@@ -348,60 +348,76 @@ class Placer():
                 mod.mod.Flip(mod.mod.GetPosition())
 
 
-def main():
-    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "place_footprints"))
-    input_file = 'place_footprints.kicad_pcb'
-    output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
-    board = pcbnew.LoadBoard(input_file)
-    pivot_module_reference = 'R202'
+def test(in_file, out_file, pivot_module_reference, mode, layout):
+    board = pcbnew.LoadBoard(in_file)
 
     placer = Placer(board)
 
-    ''' by ref
-    module_reference_designator = ''.join(i for i in pivot_module_reference if not i.isdigit())
-    module_reference_number = int(''.join(i for i in pivot_module_reference if i.isdigit()))
+    if mode == 'by ref':
+        module_reference_designator = ''.join(i for i in pivot_module_reference if not i.isdigit())
+        module_reference_number = int(''.join(i for i in pivot_module_reference if i.isdigit()))
 
-    # get list of all modules with same reference designator
-    list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
-    sorted_list = natural_sort(list_of_all_modules_with_same_designator)
+        # get list of all modules with same reference designator
+        list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
+        sorted_list = natural_sort(list_of_all_modules_with_same_designator)
 
-    list_of_consecutive_modules=[]
-    start_index = sorted_list.index(pivot_module_reference)
-    count_start = module_reference_number
-    for mod in sorted_list[start_index:]:
-        if int(''.join(i for i in mod if i.isdigit())) == count_start:
-            count_start = count_start + 1
-            list_of_consecutive_modules.append(mod)
-        else:
-            break
+        list_of_consecutive_modules=[]
+        start_index = sorted_list.index(pivot_module_reference)
+        count_start = module_reference_number
+        for mod in sorted_list[start_index:]:
+            if int(''.join(i for i in mod if i.isdigit())) == count_start:
+                count_start = count_start + 1
+                list_of_consecutive_modules.append(mod)
+            else:
+                break
 
-    count_start = module_reference_number
-    reversed_list = list(reversed(sorted_list))
-    start_index = reversed_list.index(pivot_module_reference)
-    for mod in reversed_list[start_index:]:
-        if int(''.join(i for i in mod if i.isdigit())) == count_start:
-            count_start = count_start -1
-            list_of_consecutive_modules.append(mod)
-        else:
-            break
+        count_start = module_reference_number
+        reversed_list = list(reversed(sorted_list))
+        start_index = reversed_list.index(pivot_module_reference)
+        for mod in reversed_list[start_index:]:
+            if int(''.join(i for i in mod if i.isdigit())) == count_start:
+                count_start = count_start -1
+                list_of_consecutive_modules.append(mod)
+            else:
+                break
 
-    sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
-    '''
-    
-    ''' by sheet
-    pivot_module = placer.get_mod_by_ref(pivot_module_reference)
-    list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
-    modules = []
-    for mod in list_of_modules:
-        modules.append(mod.ref)
-    sorted_modules = natural_sort(modules)
-    '''
+        sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
+    if mode == 'by sheet':
+        pivot_module = placer.get_mod_by_ref(pivot_module_reference)
+        list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
+        modules = []
+        for mod in list_of_modules:
+            modules.append(mod.ref)
+        sorted_modules = natural_sort(modules)
 
-    #placer.place_linear(sorted_modules, 5.0, 0.0)
-    #placer.place_matrix(sorted_modules, 5.0, 5.0)
-    placer.place_circular(sorted_modules, 10.0, 30.0)
+    if layout == 'circular':
+        placer.place_circular(sorted_modules, 10.0, 30.0)
+    if layout == 'linear':
+        placer.place_linear(sorted_modules, 5.0, 0.0)
+    if layout == 'matrix':
+        placer.place_matrix(sorted_modules, 5.0, 5.0)
 
-    saved = pcbnew.SaveBoard(output_file,board)          
+    saved = pcbnew.SaveBoard(out_file, board)
+
+
+def main():
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "place_footprints"))
+    input_file = 'place_footprints.kicad_pcb'
+    pivot_module_reference = 'R201'
+    output_file = input_file.split('.')[0]+"_temp_ref_circular"+".kicad_pcb"
+    test(input_file, output_file, pivot_module_reference, 'by ref', 'circular')
+    output_file = input_file.split('.')[0]+"_temp_ref_linear"+".kicad_pcb"
+    test(input_file, output_file, pivot_module_reference, 'by ref', 'linear')
+    output_file = input_file.split('.')[0]+"_temp_ref_matrix"+".kicad_pcb"
+    test(input_file, output_file, pivot_module_reference, 'by ref', 'matrix')
+
+    output_file = input_file.split('.')[0]+"_temp_sheet_circular"+".kicad_pcb"
+    test(input_file, output_file, pivot_module_reference, 'by sheet', 'circular')
+    output_file = input_file.split('.')[0]+"_temp_sheet_linear"+".kicad_pcb"
+    test(input_file, output_file, pivot_module_reference, 'by sheet', 'linear')
+    output_file = input_file.split('.')[0]+"_temp_sheet_matrix"+".kicad_pcb"
+    test(input_file, output_file, pivot_module_reference, 'by sheet', 'matrix')
+
 
     print ("all tests passed")
 

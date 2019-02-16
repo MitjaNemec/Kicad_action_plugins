@@ -1,0 +1,21 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# Passives_R1206
+#
+DEF Passives_R1206 R 0 0 N Y 1 F N
+F0 "R" -100 200 50 H V L CNN
+F1 "Passives_R1206" -100 100 50 H V L CNN
+F2 "Passives:R1206M" -100 -100 50 H I L CNN
+F3 "" 0 0 50 H I C CNN
+$FPLIST
+ PASSIVES:RC1206M
+$ENDFPLIST
+DRAW
+P 5 0 1 10 100 50 100 -50 -100 -50 -100 50 100 50 N
+X ~ 1 -200 0 100 R 50 50 1 1 P
+X ~ 2 200 0 100 L 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+#End Library
