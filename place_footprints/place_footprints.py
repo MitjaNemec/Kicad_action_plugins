@@ -28,6 +28,8 @@ import logging
 import itertools
 import math
 import re
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+import compare_boards
 
 
 def natural_sort(l): 
@@ -398,26 +400,39 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
         placer.place_matrix(sorted_modules, 5.0, 5.0)
 
     saved = pcbnew.SaveBoard(out_file, board)
+    test_file = out_file.replace("temp", "test")
+
+    return compare_boards.compare_boards(out_file, test_file)
 
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "place_footprints"))
     input_file = 'place_footprints.kicad_pcb'
     pivot_module_reference = 'R201'
+
     output_file = input_file.split('.')[0]+"_temp_ref_circular"+".kicad_pcb"
-    test(input_file, output_file, pivot_module_reference, 'by ref', 'circular')
+    err = test(input_file, output_file, pivot_module_reference, 'by ref', 'circular')
+    assert (err == 0), "by reference circular failed"
+
     output_file = input_file.split('.')[0]+"_temp_ref_linear"+".kicad_pcb"
-    test(input_file, output_file, pivot_module_reference, 'by ref', 'linear')
+    err = test(input_file, output_file, pivot_module_reference, 'by ref', 'linear')
+    assert (err == 0), "by reference linear failed"
+
     output_file = input_file.split('.')[0]+"_temp_ref_matrix"+".kicad_pcb"
-    test(input_file, output_file, pivot_module_reference, 'by ref', 'matrix')
+    err = test(input_file, output_file, pivot_module_reference, 'by ref', 'matrix')
+    assert (err == 0), "by reference matrix failed"
 
     output_file = input_file.split('.')[0]+"_temp_sheet_circular"+".kicad_pcb"
-    test(input_file, output_file, pivot_module_reference, 'by sheet', 'circular')
-    output_file = input_file.split('.')[0]+"_temp_sheet_linear"+".kicad_pcb"
-    test(input_file, output_file, pivot_module_reference, 'by sheet', 'linear')
-    output_file = input_file.split('.')[0]+"_temp_sheet_matrix"+".kicad_pcb"
-    test(input_file, output_file, pivot_module_reference, 'by sheet', 'matrix')
+    err = test(input_file, output_file, pivot_module_reference, 'by sheet', 'circular')
+    assert (err == 0), "by sheet circular failed"
 
+    output_file = input_file.split('.')[0]+"_temp_sheet_linear"+".kicad_pcb"
+    err = test(input_file, output_file, pivot_module_reference, 'by sheet', 'linear')
+    assert (err == 0), "by sheet linear failed"
+
+    output_file = input_file.split('.')[0]+"_temp_sheet_matrix"+".kicad_pcb"
+    err = test(input_file, output_file, pivot_module_reference, 'by sheet', 'matrix')
+    assert (err == 0), "by sheet matrix failed"
 
     print ("all tests passed")
 
