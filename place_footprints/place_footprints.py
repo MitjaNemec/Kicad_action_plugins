@@ -276,7 +276,28 @@ class Placer():
         width = (right-left)/1000000.0
         return height, width
 
-    def place_circular(self, modules_to_place, radius, delta_angle):
+    def get_modules_bounding_box_center(self, modules):
+        # get the pivot bounding box
+        bounding_box = modules[0].mod.GetFootprintRect()
+        top = bounding_box.GetTop()
+        bottom = bounding_box.GetBottom()
+        left = bounding_box.GetLeft()
+        right = bounding_box.GetRight()
+        for mod in modules:
+            mod_box = mod.mod.GetFootprintRect()
+            top = min(top, mod_box.GetTop())
+            bottom = max(bottom, mod_box.GetBottom())
+            left = min(left, mod_box.GetLeft())
+            right = max(right, mod_box.GetRight())
+
+        position = pcbnew.wxPoint(left, top)
+        size = pcbnew.wxSize(right - left, bottom - top)
+        bounding_box = pcbnew.EDA_RECT(position, size)
+        pos_y = (bottom+top)/2
+        pos_x = (right+left)/2
+        return (pos_x, pos_y)
+
+    def place_circular(self, modules_to_place, radius, delta_angle, by_sheet):
         logger.info("Starting placing with circular layout")
         # get proper module_list
         modules = []
@@ -286,8 +307,18 @@ class Placer():
         # get first module position
         first_module = modules[0]
         first_module_pos = first_module.mod.GetPosition()
-        # point of rotation is below first module
-        point_of_rotation = (first_module_pos.x, first_module_pos.y + radius * SCALE)
+        # get bounding_box_center
+        if by_sheet:
+            modules_on_sheet = self.get_modules_on_sheet(first_module.sheet_id)
+            bbox_center = self.get_modules_bounding_box_center(modules_on_sheet)
+            first_offset = (bbox_center[0]-first_module_pos.x, bbox_center[1]-first_module_pos.y)
+            pass
+        else:
+            bbox_center = self.get_modules_bounding_box_center([first_module])
+            first_offset = (bbox_center[0]-first_module_pos.x, bbox_center[1]-first_module_pos.y)
+
+        # point of rotation is below bounding box
+        point_of_rotation = (bbox_center[0], bbox_center[1] + radius * SCALE)
         for mod in modules[1:]:
             index = modules.index(mod)
             new_position = rotate_around_pivot_point(first_module_pos, point_of_rotation, index*delta_angle)
@@ -393,7 +424,10 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
         sorted_modules = natural_sort(modules)
 
     if layout == 'circular':
-        placer.place_circular(sorted_modules, 10.0, 30.0)
+        if mode == 'by_sheet':
+            placer.place_circular(sorted_modules, 10.0, 30.0, by_sheet=True)
+        else:
+            placer.place_circular(sorted_modules, 10.0, 30.0, by_sheet=False)
     if layout == 'linear':
         placer.place_linear(sorted_modules, 5.0, 0.0)
     if layout == 'matrix':

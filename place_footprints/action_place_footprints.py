@@ -454,7 +454,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             if dlg.rad_btn_circular_ref.GetValue():
                 delta_angle = float(dlg.val_y_angle.GetValue())
                 radius = float(dlg.val_x_mag.GetValue())
-                placer.place_circular(modules_to_place, radius, delta_angle)
+                placer.place_circular(modules_to_place, radius, delta_angle, False)
 
             if dlg.rad_btn_linear_ref.GetValue():
                 step_x = float(dlg.val_x_mag.GetValue())
@@ -496,7 +496,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             if dlg.rad_btn_circular_sheet.GetValue():
                 delta_angle = float(dlg.val_y_angle.GetValue())
                 radius = float(dlg.val_x_mag.GetValue())
-                placer.place_circular(sorted_modules, radius, delta_angle)
+                placer.place_circular(sorted_modules, radius, delta_angle, True)
 
             if dlg.rad_btn_linear_sheet.GetValue():
                 step_x = float(dlg.val_x_mag.GetValue())
