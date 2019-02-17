@@ -311,14 +311,13 @@ class Placer():
         if by_sheet:
             modules_on_sheet = self.get_modules_on_sheet(first_module.sheet_id)
             bbox_center = self.get_modules_bounding_box_center(modules_on_sheet)
-            first_offset = (bbox_center[0]-first_module_pos.x, bbox_center[1]-first_module_pos.y)
-            pass
+            height, _ = self.get_modules_bounding_box(modules_on_sheet)
         else:
             bbox_center = self.get_modules_bounding_box_center([first_module])
-            first_offset = (bbox_center[0]-first_module_pos.x, bbox_center[1]-first_module_pos.y)
+            height, _ = self.get_modules_bounding_box([first_module])
 
         # point of rotation is below bounding box
-        point_of_rotation = (bbox_center[0], bbox_center[1] + radius * SCALE)
+        point_of_rotation = (bbox_center[0], bbox_center[1] + (height/2 + radius) * SCALE)
         for mod in modules[1:]:
             index = modules.index(mod)
             new_position = rotate_around_pivot_point(first_module_pos, point_of_rotation, index*delta_angle)
@@ -424,7 +423,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
         sorted_modules = natural_sort(modules)
 
     if layout == 'circular':
-        if mode == 'by_sheet':
+        if mode == 'by sheet':
             placer.place_circular(sorted_modules, 10.0, 30.0, by_sheet=True)
         else:
             placer.place_circular(sorted_modules, 10.0, 30.0, by_sheet=False)
