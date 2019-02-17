@@ -29,9 +29,9 @@ After the section for replication (pivot section) has been laid out (modules, tr
 
 Additionally you can choose whether you want to also replicate zones, text and/or tracks. By default, only objects which are contained in the bounding box constituted by all the modules in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that bounding boxes are squares aligned with the x and y axis, regardless of section orientation.
 
-Example replication of a complex hierarchical project
+Example replication of a complex hierarchical project. Replicating inner sheet first, then outer.
 
-![Replication](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Replication.gif)
+![Replication](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/replicate.gif)
 
 ## Place footprints
 
@@ -66,6 +66,11 @@ If you want to place the footprints by same ID with
 6. select place dimension (step in x and y axes in linear and matrixc mode and angle step and radius in circlar mode)
 7. run the plugin
 
+Example of place by reference number
+![Place by referenc number](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_ref.gif)
+
+Example of place by sheet ID
+![Place by sheet ID ](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_sheet.gif)
 
 
 ## Delete Selected
