@@ -352,14 +352,13 @@ class Placer():
             if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
                 mod.mod.Flip(mod.mod.GetPosition())
 
-    def place_matrix(self, modules_to_place, step_x, step_y):
+    def place_matrix(self, modules_to_place, step_x, step_y, nr_columns):
         logger.info("Starting placing with linear layout")
         # get proper module_list
         modules = []
         for mod_ref in modules_to_place:
             modules.append(self.get_mod_by_ref(mod_ref))
 
-        nr_columns = math.ceil(math.sqrt(len(modules)))
         # get first module position
         first_module = modules[0]
         first_module_pos = first_module.mod.GetPosition()
