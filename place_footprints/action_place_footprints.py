@@ -505,7 +505,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             if dlg.com_arr.GetStringSelection() == u'Matrix':
                 step_x = float(dlg.val_x_mag.GetValue())
                 step_y = float(dlg.val_y_angle.GetValue())
-                nr_columns = int(dlg.val_columns)
+                nr_columns = int(dlg.val_columns.GetValue())
                 placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
 
         # by sheet
@@ -548,7 +548,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             if dlg.com_arr.GetStringSelection() == u'Matrix':
                 step_x = float(dlg.val_x_mag.GetValue())
                 step_y = float(dlg.val_y_angle.GetValue())
-                nr_columns = int(dlg.val_columns)
+                nr_columns = int(dlg.val_columns.GetValue())
                 placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
 
 class StreamToLogger(object):
