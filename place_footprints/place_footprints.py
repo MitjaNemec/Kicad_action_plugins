@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-#  replicate_layout_V2.py
+#  place_footprints.py
 #
-# Copyright (C) 2019 Mitja Nemec, Stephen Walker-Weinshenker
+# Copyright (C) 2019 Mitja Nemec
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
