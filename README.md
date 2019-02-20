@@ -112,6 +112,16 @@ To run the plugin:
 
 ![Measure pad to pad distance](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/pad2pad_animation.gif)
 
+## net2net min distance
+
+This plugin has been tested with KiCad 5.0.2 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
+
+Within the plugin folder only the *.py files are required for operation.
+
+This plugin calculates the shortest distance between two tracks on different nets. To use, select one pad on first net and one pad on second net and run the plugin.
+
 ## Archive project
 
 This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled. The plugin does not work with post 5.0.0 nightlies (most likely since around 20.7.2018). The testing has not been thorough. The plugin works correctly only when KiCad language is English. For other languages, the lines 225-243 have to be adapted.
