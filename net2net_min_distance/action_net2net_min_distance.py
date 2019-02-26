@@ -47,6 +47,12 @@ class Net2NedDistance(pcbnew.ActionPlugin):
         # load board
         board = pcbnew.GetBoard()
 
+        # get user units
+        if pcbnew.GetUserUnits() == 1:
+            user_units = 'mm'
+        else:
+            user_units = 'in'
+
         # go to the project folder - so that log will be in proper place
         os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
 
@@ -121,7 +127,10 @@ class Net2NedDistance(pcbnew.ActionPlugin):
             raise
 
         caption = 'Net2Net Track Distance'
-        message = "Distance between pads is " + str(dis/SCALE) + " mm"
+        if user_units == 'mm':
+            message = "Distance between pads is " + "%.3f" % (dis/SCALE) + " mm"
+        else:
+            message = "Distance between pads is " + "%.4f" % (dis/(SCALE*25.4)) + " in"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()

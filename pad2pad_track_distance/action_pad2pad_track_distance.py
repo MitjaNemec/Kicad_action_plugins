@@ -48,10 +48,16 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
 
         # load board
         board = pcbnew.GetBoard()
-                    
+
+        # get user units
+        if pcbnew.GetUserUnits() == 1:
+            user_units = 'mm'
+        else:
+            user_units = 'in'
+
         # get all pads
         modules = board.GetModules()
-        
+
         pads = []
         for mod in modules:
             # get their pads
@@ -59,7 +65,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             # get net
             for pad in module_pads:
                 pads.append(pad)
-                
+
         # get list of all selected pads
         selected_pads = []
         for pad in pads:
@@ -71,68 +77,69 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         for pad in selected_pads:
                 nets.append(pad.GetNetname())
 
-        # if two pads are selected
-        if len(selected_pads) == 2:
-            # and if they are on the same net
-            if nets[0] == nets[1]:
-                measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
-                distance = measure_distance.get_length()
-
-                # deselect pads
-                selected_pads[0].ClearSelected()
-                selected_pads[1].ClearSelected()
-
-                # deselect all tracks except used ones
-                all_tracks = board.GetTracks()
-                
-                for track in all_tracks:
-                    if track not in measure_distance.track_list:
-                        track.ClearSelected()
-                    else:
-                        track.SetSelected()
-                        track.SetBrightened()
-                        track.SetHighlighted()
-                
-                pad1_pos = selected_pads[0].GetPosition()
-                pad2_pos = selected_pads[1].GetPosition()
-                if pad1_pos[0] > pad2_pos[0]:
-                    x = pad2_pos[0]
-                    width = pad1_pos[0] - pad2_pos[0]
-                else:
-                    x = pad1_pos[0]
-                    width = pad2_pos[0] - pad1_pos[0]
-
-                if pad1_pos[1] > pad2_pos[1]:
-                    y = pad2_pos[1]
-                    height = pad1_pos[1] - pad2_pos[1]
-                else:
-                    y = pad1_pos[1]
-                    height = pad2_pos[1] - pad1_pos[1]
-                    
-                pcbnew.WindowZoom(x, y, width, height)
-
-                # pcbnew.Refresh()
-
-                caption = 'Pad2Pad Track Distance'
-                message = "Distance between pads is " + str(distance) + " mm"
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-                dlg.ShowModal()
-                dlg.Destroy()
-            else:
-                caption = 'Pad2Pad Track Distance'
-                message = "The selected pads are not on the same net"
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-                dlg.ShowModal()
-                dlg.Destroy()        
-            
-        # if more or less than one show only a messagebox
-        else:
+        # if more or less than two pads are selected
+        if len(selected_pads) != 2:
             caption = 'Pad2Pad Track Distance'
             message = "You have to select two and only two pads"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
-        pass
+            return
 
+        # and if they are on different nest
+        if nets[0] != nets[1]:
+            caption = 'Pad2Pad Track Distance'
+            message = "The selected pads are not on the same net"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
 
+        measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
+        distance = measure_distance.get_length()
 
+        # trying to show in layout which tracks are taken into account - so far it does not work
+        # as the selection is automatically cleared when exiting action plugin
+        # I'll leave this code in just for reference
+        selected_pads[0].ClearSelected()
+        selected_pads[1].ClearSelected()
+
+        # deselect all tracks except used ones
+        all_tracks = board.GetTracks()
+
+        for track in all_tracks:
+            if track not in measure_distance.track_list:
+                track.ClearSelected()
+            else:
+                track.SetSelected()
+                track.SetBrightened()
+                track.SetHighlighted()
+
+        # zoom the layout window to show the tracks taken into account
+        pad1_pos = selected_pads[0].GetPosition()
+        pad2_pos = selected_pads[1].GetPosition()
+        if pad1_pos[0] > pad2_pos[0]:
+            x = pad2_pos[0]
+            width = pad1_pos[0] - pad2_pos[0]
+        else:
+            x = pad1_pos[0]
+            width = pad2_pos[0] - pad1_pos[0]
+
+        if pad1_pos[1] > pad2_pos[1]:
+            y = pad2_pos[1]
+            height = pad1_pos[1] - pad2_pos[1]
+        else:
+            y = pad1_pos[1]
+            height = pad2_pos[1] - pad1_pos[1]
+
+        pcbnew.WindowZoom(x, y, width, height)
+        # pcbnew.Refresh()
+
+        caption = 'Pad2Pad Track Distance'
+        if user_units == 'mm':
+            message = "Distance between pads is " + "%.3f" % (distance) + " mm"
+        else:
+            message = "Distance between pads is " + "%.4f" % (distance/25.4) + " in"
+        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+        dlg.ShowModal()
+        dlg.Destroy()
