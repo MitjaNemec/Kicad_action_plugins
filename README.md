@@ -93,7 +93,7 @@ To run the plugin:
 
 ## pad2pad track distance
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1 nightly from commit b426b9e7 onward on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -114,7 +114,7 @@ To run the plugin:
 
 ## net2net min distance
 
-This plugin has been tested with KiCad 5.0.2 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1 nightly from commit b426b9e7 onward on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
