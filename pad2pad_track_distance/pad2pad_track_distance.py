@@ -19,10 +19,15 @@
 #
 #
 
-import wx
+
 import pcbnew
+import os
+import sys
+import logging
 
 SCALE = 1000000.0
+
+logger = logging.getLogger(__name__)
 
 
 class Distance:
@@ -40,7 +45,7 @@ class Distance:
 
         # poisci vse track-e
         tracks = board.GetTracks()
-                
+
         # poisci samo track-e ki so na pravem net-u
         self.tracks_on_net = []
         for track in tracks:
@@ -50,16 +55,24 @@ class Distance:
 
         # starting point and layer
         self.start_point = selected_pads[0].GetPosition()
-        if selected_pads[0].GetParent().IsFlipped():
-            self.start_layer = pcbnew.B_Cu
+        # if THT
+        if selected_pads[0].GetAttribute() == 0:
+            self.start_layer = 'Any'
         else:
-            self.start_layer = pcbnew.F_Cu
+            if selected_pads[0].GetParent().IsFlipped():
+                self.start_layer = pcbnew.B_Cu
+            else:
+                self.start_layer = pcbnew.F_Cu
 
         self.end_point = selected_pads[1].GetPosition()
-        if selected_pads[1].GetParent().IsFlipped():
-            self.end_layer = pcbnew.B_Cu
+        # if THT
+        if selected_pads[1].GetAttribute() == 0:
+            self.end_layer = 'Any'
         else:
-            self.end_layer = pcbnew.F_Cu
+            if selected_pads[1].GetParent().IsFlipped():
+                self.end_layer = pcbnew.B_Cu
+            else:
+                self.end_layer = pcbnew.F_Cu
 
     def get_length(self):
         # current point and layer
@@ -131,7 +144,7 @@ class Distance:
                     new_track_length = track_length + track.GetLength()/SCALE
 
                     # check if we arrived to pad2
-                    if new_point == self.end_point and new_layer == self.end_layer:
+                    if new_point == self.end_point and (new_layer == self.end_layer or self.end_layer == 'Any'):
                         new_point = None
                         new_layer = None
                         tr_list.append("pad2")
@@ -157,50 +170,91 @@ class Distance:
         return ret_len
 
 
-def main():
-    board = pcbnew.LoadBoard('En_mostic_test.kicad_pcb')
-
-    # get all pads
-    modules = board.GetModules()
-    test_board = "trivial"
-    if test_board == 'trivial':
-        module_1 = board.FindModuleByReference("R2")
-        pad1 = module_1.FindPadByName("2")
-        module_2 = board.FindModuleByReference("R3")
-        pad2 = module_2.FindPadByName("1")
-    elif test_board == "easy1":
-        module_1 = board.FindModuleByReference("U3")
-        pad1 = module_1.FindPadByName("8")
-        module_2 = board.FindModuleByReference("U1")
-        pad2 = module_2.FindPadByName("15")
-    elif test_board == "easy2":
-        module_1 = board.FindModuleByReference("U6")
-        pad1 = module_1.FindPadByName("8")
-        module_2 = board.FindModuleByReference("U1")
-        pad2 = module_2.FindPadByName("7")
-    elif test_board == "medium1":
-        module_1 = board.FindModuleByReference("U1")
-        pad1 = module_1.FindPadByName("48")
-        module_2 = board.FindModuleByReference("J2")
-        pad2 = module_2.FindPadByName("2")
-    elif test_board == "medium2":
-        module_1 = board.FindModuleByReference("U4")
-        pad1 = module_1.FindPadByName("7")
-        module_2 = board.FindModuleByReference("U4")
-        pad2 = module_2.FindPadByName("9")
-    elif test_board == 'hard':
-        module_1 = board.FindModuleByReference("U2")
-        pad1 = module_1.FindPadByName("2")
-        module_2 = board.FindModuleByReference("U3")
-        pad2 = module_2.FindPadByName("7")
-
+def test(board, pad1, pad2):
     measure_distance = Distance(board, pad1, pad2)
     distance = measure_distance.get_length()
-    print str(distance)
-    # trivial = 4.767; easy = 19.833;  easy2 = 16.124;
-    # medium1 = 18.58; medium2 = 5.074 ;hard = 29.341
 
+    return distance
+
+
+def main():
+    """
+    # test_board = "trivial"
+    board = pcbnew.LoadBoard('En_mostic_test.kicad_pcb')
+    module_1 = board.FindModuleByReference("R2")
+    pad1 = module_1.FindPadByName("2")
+    module_2 = board.FindModuleByReference("R3")
+    pad2 = module_2.FindPadByName("1")
+    dist = test(board, pad1, pad2)
+    assert(-0.1 < (dist-4.767) < +0.1)
+
+    # test_board == "easy1"
+    module_1 = board.FindModuleByReference("U3")
+    pad1 = module_1.FindPadByName("8")
+    module_2 = board.FindModuleByReference("U1")
+    pad2 = module_2.FindPadByName("15")
+    dist = test(board, pad1, pad2)
+    assert(-0.1 < (dist-19.833) < +0.1)
+
+    # test_board == "easy2"
+    module_1 = board.FindModuleByReference("U6")
+    pad1 = module_1.FindPadByName("8")
+    module_2 = board.FindModuleByReference("U1")
+    pad2 = module_2.FindPadByName("7")
+    dist = test(board, pad1, pad2)
+    assert(-0.1 < (dist-16.124) < +0.1)
+
+
+    # test_board == "medium1":
+    module_1 = board.FindModuleByReference("U1")
+    pad1 = module_1.FindPadByName("48")
+    module_2 = board.FindModuleByReference("J2")
+    pad2 = module_2.FindPadByName("2")
+    dist = test(board, pad1, pad2)
+    assert(-0.1 < (dist-18.58) < +0.1)
+
+    # test_board == "medium2":
+    module_1 = board.FindModuleByReference("U4")
+    pad1 = module_1.FindPadByName("7")
+    module_2 = board.FindModuleByReference("U4")
+    pad2 = module_2.FindPadByName("9")
+    dist = test(board, pad1, pad2)
+    # assert(-0.1 < (dist-5.074) < +0.1) # 14.21
+
+    # test_board == 'hard':
+    module_1 = board.FindModuleByReference("U2")
+    pad1 = module_1.FindPadByName("2")
+    module_2 = board.FindModuleByReference("U3")
+    pad2 = module_2.FindPadByName("7")
+    dist = test(board, pad1, pad2)
+    # assert(-0.1 < (dist-29.341) < +0.1) # 37.65
+    """
+    # THT
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files"))
+    board = pcbnew.LoadBoard('g3ruh-modem.kicad_pcb')
+    module_1 = board.FindModuleByReference("U1")
+    pad1 = module_1.FindPadByName("14")
+    module_2 = board.FindModuleByReference("U2")
+    pad2 = module_2.FindPadByName("4")
+    dist = test(board, pad1, pad2)
+    assert(-0.1 < (dist-12.264) < +0.1)
 
 # for testing purposes only
 if __name__ == "__main__":
+    # if debugging outside of this folder change the folder
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+    file_handler = logging.FileHandler(filename='pad2pad_distance.log', mode='w')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    handlers = [file_handler, stdout_handler]
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                        datefmt='%m-%d %H:%M:%S',
+                        handlers=handlers
+                        )
+
+    logger = logging.getLogger(__name__)
+    logger.info("pad2pad distance plugin started in standalone mode")
+
     main()
