@@ -256,7 +256,6 @@ class Replicator():
         modules_not_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
-            a1 = mod.sheet_id[0:level_depth]
             if level != mod.sheet_id[0:level_depth]:
                 modules_not_on_sheet.append(mod)
         return modules_not_on_sheet
@@ -958,11 +957,21 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     index = levels.index(levels[level])
     # get list of sheets
     sheet_list = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[index])
+    
+    # get acnhor modules
+    anchor_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
+    # find matching anchors to maching sheets
+    ref_list = []
+    for sheet in sheet_list:
+        for mod in anchor_modules:
+            if mod.sheet_id == sheet:
+                ref_list.append(mod.ref)
+                break
+
+    alt_list = [('/').join(x[0]) + " ("+ x[1] + ")" for x in zip(sheet_list, ref_list)]
+    
     # get the list selection from user
     sheets_for_replication = [sheet_list[i] for i in sheets]
-
-    ''' od tukaj naprej se plugin pozene dokler ne dokonca svojega dela
-    tako da je za razmisliz kaj se postavi kam '''
 
     # now we are ready for replication
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
