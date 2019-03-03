@@ -80,22 +80,26 @@ class Distance:
         lenght = self.get_new_endpoints(self.start_point, self.start_layer, 0, self.tracks_on_net, 0, ["pad1"])
 
         length_alt = []
+        resistance = []
         # caluclate again
         size = len(self.track_list)
         for i in range(size):
             length_alt.append(0)
+            resistance.append(0)
             for track in self.track_list[i][1:-1]:
                 length_alt[i] = length_alt[i] + pcbnew.ToMM(track.GetLength())
+                track_res = track.GetLength()/SCALE * (0.0000000168*1000) / (0.035 * track.GetWidth()/SCALE)
+                resistance[i] = resistance[i] + track_res
 
         # find minimum and get only that track list
         min_length = min(length_alt)
+        min_res = min(resistance)
         index = length_alt.index(min_length)
-        tracks = self.track_list[index][1:-1]
 
         # go through the list and find minimum
         min_length = min(lenght)
 
-        return min_length
+        return min_length, min_res
 
     def get_new_endpoints(self, point, layer, track_length, track_list, level, tl):
         ret_len = []
@@ -172,20 +176,20 @@ class Distance:
 
 def test(board, pad1, pad2):
     measure_distance = Distance(board, pad1, pad2)
-    distance = measure_distance.get_length()
+    distance, resistance = measure_distance.get_length()
 
-    return distance
+    return distance, resistance
 
 
 def main():
-    """
+    
     # test_board = "trivial"
     board = pcbnew.LoadBoard('En_mostic_test.kicad_pcb')
     module_1 = board.FindModuleByReference("R2")
     pad1 = module_1.FindPadByName("2")
     module_2 = board.FindModuleByReference("R3")
     pad2 = module_2.FindPadByName("1")
-    dist = test(board, pad1, pad2)
+    dist, res = test(board, pad1, pad2)
     assert(-0.1 < (dist-4.767) < +0.1)
 
     # test_board == "easy1"
@@ -193,7 +197,7 @@ def main():
     pad1 = module_1.FindPadByName("8")
     module_2 = board.FindModuleByReference("U1")
     pad2 = module_2.FindPadByName("15")
-    dist = test(board, pad1, pad2)
+    dist, res = test(board, pad1, pad2)
     assert(-0.1 < (dist-19.833) < +0.1)
 
     # test_board == "easy2"
@@ -201,7 +205,7 @@ def main():
     pad1 = module_1.FindPadByName("8")
     module_2 = board.FindModuleByReference("U1")
     pad2 = module_2.FindPadByName("7")
-    dist = test(board, pad1, pad2)
+    dist, res = test(board, pad1, pad2)
     assert(-0.1 < (dist-16.124) < +0.1)
 
 
@@ -210,7 +214,7 @@ def main():
     pad1 = module_1.FindPadByName("48")
     module_2 = board.FindModuleByReference("J2")
     pad2 = module_2.FindPadByName("2")
-    dist = test(board, pad1, pad2)
+    dist, res = test(board, pad1, pad2)
     assert(-0.1 < (dist-18.58) < +0.1)
 
     # test_board == "medium2":
@@ -218,7 +222,7 @@ def main():
     pad1 = module_1.FindPadByName("7")
     module_2 = board.FindModuleByReference("U4")
     pad2 = module_2.FindPadByName("9")
-    dist = test(board, pad1, pad2)
+    dist, res = test(board, pad1, pad2)
     # assert(-0.1 < (dist-5.074) < +0.1) # 14.21
 
     # test_board == 'hard':
@@ -226,18 +230,20 @@ def main():
     pad1 = module_1.FindPadByName("2")
     module_2 = board.FindModuleByReference("U3")
     pad2 = module_2.FindPadByName("7")
-    dist = test(board, pad1, pad2)
+    dist, res = test(board, pad1, pad2)
     # assert(-0.1 < (dist-29.341) < +0.1) # 37.65
     """
     # THT
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files"))
     board = pcbnew.LoadBoard('g3ruh-modem.kicad_pcb')
     module_1 = board.FindModuleByReference("U1")
-    pad1 = module_1.FindPadByName("14")
+    pad1 = module_1.FindPadByName("1")
     module_2 = board.FindModuleByReference("U2")
-    pad2 = module_2.FindPadByName("4")
-    dist = test(board, pad1, pad2)
+    pad2 = module_2.FindPadByName("2")
+    dist, res = test(board, pad1, pad2)
     assert(-0.1 < (dist-12.264) < +0.1)
+    """
+
 
 # for testing purposes only
 if __name__ == "__main__":

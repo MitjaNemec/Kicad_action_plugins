@@ -96,7 +96,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             return
 
         measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
-        distance = measure_distance.get_length()
+        distance, resistance = measure_distance.get_length()
 
         # trying to show in layout which tracks are taken into account - so far it does not work
         # as the selection is automatically cleared when exiting action plugin
@@ -137,9 +137,11 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
 
         caption = 'Pad2Pad Track Distance'
         if user_units == 'mm':
-            message = "Distance between pads is " + "%.3f" % (distance) + " mm"
+            message = "Distance between pads is " + "%.3f" % (distance) + " mm" \
+                    + "\nResistance between pads is " + "%.4f" % resistance + " Ohm"
         else:
-            message = "Distance between pads is " + "%.4f" % (distance/25.4) + " in"
+            message = "Distance between pads is " + "%.4f" % (distance/25.4) + " in" \
+                    + "\nResistance between pads is " + "%.4f" % resistance + " Ohm"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
