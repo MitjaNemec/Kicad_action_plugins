@@ -193,68 +193,68 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            return
         # if exactly one module is selected
+        # this is a pivot module
+        pivot_module_reference = selected_names[0]
+
+        # prepare the replicator
+        logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
+
+        replicator = replicatelayout.Replicator(board)
+        pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
+
+        list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
+        if not list_of_modules:
+            caption = 'Replicate Layout'
+            message = "Selected module is uniqe in the pcb (only one module with this ID)"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        # show dialog
+        logger.info("Showing dialog")
+        dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference)
+        res = dlg.ShowModal()
+
+        if res == wx.ID_OK:
+
+            selected_items = dlg.list_sheets.GetSelections()
+            slected_names = []
+            for sel in selected_items:
+                slected_names.append(dlg.list_sheets.GetString(sel))
+
+            replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
+            remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
+            rep_tracks = dlg.chkbox_tracks.GetValue()
+            rep_zones = dlg.chkbox_zones.GetValue()
+            rep_text = dlg.chkbox_text.GetValue()
         else:
-            # this is a pivot module
-            pivot_module_reference = selected_names[0]
+            logger.info("User canceled the dialog")
+            return
 
-            # prepare the replicator
-            logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
-            
-            replicator = replicatelayout.Replicator(board)
-            pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
-            
-            list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
-            if not list_of_modules:
-                caption = 'Replicate Layout'
-                message = "Selected module is uniqe in the pcb (only one module with this ID)"
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
-                dlg.ShowModal()
-                dlg.Destroy()
-                return
+        # failsafe somtimes on my machine wx does not generate a listbox event
+        level = dlg.list_levels.GetSelection()
+        selection_indeces = dlg.list_sheets.GetSelections()
+        sheets_on_a_level = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[level])
+        sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
 
-            # show dialog
-            logger.info("Showing dialog")
-            dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference)
-            res = dlg.ShowModal()
+        # replicate now
+        logger.info("Replicating layout")
 
-            if res == wx.ID_OK:
-
-                selected_items = dlg.list_sheets.GetSelections()
-                slected_names = []
-                for sel in selected_items:
-                    slected_names.append(dlg.list_sheets.GetString(sel))
-
-                replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
-                remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
-                rep_tracks = dlg.chkbox_tracks.GetValue()
-                rep_zones = dlg.chkbox_zones.GetValue()
-                rep_text = dlg.chkbox_text.GetValue()
-            else:
-                logger.info("User canceled the dialog")
-                return
-
-            # failsafe somtimes on my machine wx does not generate a listbox event
-            level = dlg.list_levels.GetSelection()
-            selection_indeces = dlg.list_sheets.GetSelections()
-            sheets_on_a_level = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[level])
-            sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
-
-            # replicate now
-            logger.info("Replicating layout")
-
-            try:
-                replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:level+1], sheets_for_replication,
-                                            containing=replicate_containing_only,
-                                            remove=remove_existing_nets_zones,
-                                            tracks=rep_tracks,
-                                            zones=rep_zones,
-                                            text=rep_text)
-                logger.info("Replication complete")
-                pcbnew.Refresh()
-            except Exception:
-                logger.exception("Fatal error when replicating")
-                raise
+        try:
+            replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:level+1], sheets_for_replication,
+                                        containing=replicate_containing_only,
+                                        remove=remove_existing_nets_zones,
+                                        tracks=rep_tracks,
+                                        zones=rep_zones,
+                                        text=rep_text)
+            logger.info("Replication complete")
+            pcbnew.Refresh()
+        except Exception:
+            logger.exception("Fatal error when replicating")
+            raise
 
 
 class StreamToLogger(object):
