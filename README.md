@@ -171,3 +171,25 @@ This plugin swaps two units (in layout) and r units (in schematics). Eeschema ha
 Example of unit swapping
 
 ![swapping units in different hierarchical pages](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_units_animation.gif)
+
+## Length stats
+
+This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
+
+Within the plugin folder only the *.py files are required for operation.
+
+This plugin displays lenght of all tracks on selected nets. This can be used for lenght matching.
+
+Workflow:
+1. Select tracks or pads on nets you want the lenght displayed
+2. Run the plugin
+3. Lay the tracks
+4. Close the track lenght window
+
+Example:
+![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/length_stats_ff.gif)
+
+
+
