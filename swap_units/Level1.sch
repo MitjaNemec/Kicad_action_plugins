@@ -1,5 +1,6 @@
 EESchema Schematic File Version 4
-EELAYER 26 0
+LIBS:swap_units_test-cache
+EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -20,17 +21,6 @@ F0 "Level2" 50
 F1 "Level2.sch" 50
 F2 "out_level_2" O R 4150 5100 50 
 $EndSheet
-$Comp
-L Amplifier_Operational:LM324 U1
-U 3 1 5B2A178A
-P 3300 3550
-F 0 "U1" H 3300 3750 50  0000 L CNN
-F 1 "LM324" H 3300 3350 50  0000 L CNN
-F 2 "Package_DIP:DIP-14_W7.62mm" H 3250 3650 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 3350 3750 50  0001 C CNN
-	3    3300 3550
-	1    0    0    -1  
-$EndComp
 $Comp
 L Device:R R4
 U 1 1 5B2A4B5E
@@ -102,4 +92,15 @@ Wire Wire Line
 	4150 5100 4450 5100
 Text HLabel 4450 5100 2    50   Output ~ 0
 out_level_2
+$Comp
+L Amplifier_Operational:LM324 U1
+U 3 1 5C8869E5
+P 3300 3550
+F 0 "U1" H 3300 3750 50  0000 L CNN
+F 1 "LM324" H 3300 3350 50  0000 L CNN
+F 2 "" H 3250 3650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 3350 3750 50  0001 C CNN
+	3    3300 3550
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
