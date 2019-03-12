@@ -35,7 +35,7 @@ Example replication of a complex hierarchical project. Replicating inner sheet f
 
 ## Place footprints
 
-This plugin has been tested with KiCad 5.0.2 and 5.1-rc1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1 nightly from commit b426b9e7 onward on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 

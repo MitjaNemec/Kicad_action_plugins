@@ -55,17 +55,29 @@ class PlaceBySheet (wx.Dialog):
             self.list_sheets.Select(i)
 
         if self.com_arr.GetStringSelection() == u"Linear":
-            self.lbl_x_mag.SetLabelText(u"step x (mm):")
-            self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % self.width)
-            self.val_y_angle.SetValue("%.2f" % self.height)
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Hide()
             self.val_columns.Hide()
         if self.com_arr.GetStringSelection() == u"Matrix":
-            self.lbl_x_mag.SetLabelText(u"step x (mm):")
-            self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % self.width)
-            self.val_y_angle.SetValue("%.2f" % self.height)
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
         # circular layout
@@ -74,26 +86,42 @@ class PlaceBySheet (wx.Dialog):
             circumference = number_of_all_sheets * self.width
             radius = circumference / (2 * math.pi)
             angle = 360.0 / number_of_all_sheets
-            self.lbl_x_mag.SetLabelText(u"radius (mm):")
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"radius (mm):")
+                self.val_x_mag.SetValue("%.3f" % radius)
+            else:
+                self.lbl_x_mag.SetLabelText(u"radius (in):")
+                self.val_x_mag.SetValue("%.3f" % (radius/25.4))
             self.lbl_y_angle.SetLabelText(u"angle (deg):")
-            self.val_x_mag.SetValue("%.2f" % radius)
-            self.val_y_angle.SetValue("%.2f" % angle)
+            self.val_y_angle.SetValue("%.3f" % angle)
             self.lbl_columns.Hide()
             self.val_columns.Hide()
 
     def arr_changed(self, event):
         if self.com_arr.GetStringSelection() == u"Linear":
-            self.lbl_x_mag.SetLabelText(u"step x (mm):")
-            self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % self.width)
-            self.val_y_angle.SetValue("%.2f" % self.height)
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Hide()
             self.val_columns.Hide()
         if self.com_arr.GetStringSelection() == u"Matrix":
-            self.lbl_x_mag.SetLabelText(u"step x (mm):")
-            self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % self.width)
-            self.val_y_angle.SetValue("%.2f" % self.height)
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
         # circular layout
@@ -102,15 +130,19 @@ class PlaceBySheet (wx.Dialog):
             circumference = number_of_all_sheets * self.width
             radius = circumference / (2 * math.pi)
             angle = 360.0 / number_of_all_sheets
-            self.lbl_x_mag.SetLabelText(u"radius (mm):")
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"radius (mm):")
+                self.val_x_mag.SetValue("%.3f" % radius)
+            else:
+                self.lbl_x_mag.SetLabelText(u"radius (in):")
+                self.val_x_mag.SetValue("%.3f" % (radius/25.4))
             self.lbl_y_angle.SetLabelText(u"angle (deg):")
-            self.val_x_mag.SetValue("%.2f" % radius)
-            self.val_y_angle.SetValue("%.2f" % angle)
+            self.val_y_angle.SetValue("%.3f" % angle)
             self.lbl_columns.Hide()
             self.val_columns.Hide()
         event.Skip()
 
-    def __init__(self, parent, placer, pivot_mod):
+    def __init__(self, parent, placer, pivot_mod, user_units):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Place footprints", pos=wx.DefaultPosition, size=wx.Size(258,553), style=wx.DEFAULT_DIALOG_STYLE)
 
         # self.SetSizeHintsSz( wx.Size( 258,409 ), wx.DefaultSize )
@@ -164,14 +196,21 @@ class PlaceBySheet (wx.Dialog):
 
         gSizer1 = wx.GridSizer(4, 2, 0, 0)
 
-        self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"step x (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        if user_units == 'mm':
+            self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"step x (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        else:
+            self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"step x (in):", wx.DefaultPosition, wx.DefaultSize, 0)
         self.lbl_x_mag.Wrap(-1)
         gSizer1.Add(self.lbl_x_mag, 0, wx.ALL, 5)
 
         self.val_x_mag = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
         gSizer1.Add(self.val_x_mag, 0, wx.ALL, 5)
 
-        self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"step y (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        if user_units == 'mm':
+            self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"step y (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        else:
+            self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"step y (in):", wx.DefaultPosition, wx.DefaultSize, 0)
+
         self.lbl_y_angle.Wrap(-1)
         gSizer1.Add(self.lbl_y_angle, 0, wx.ALL, 5)
 
@@ -209,6 +248,7 @@ class PlaceBySheet (wx.Dialog):
         self.com_arr.Bind(wx.EVT_COMBOBOX, self.arr_changed)
 
         self.placer = placer
+        self.user_units = user_units
         self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
 
         modules = self.placer.get_modules_on_sheet(self.pivot_mod.sheet_id)
@@ -221,18 +261,30 @@ class PlaceByReference (wx.Dialog):
     def arr_changed(self, event):
         # linear layout
         if self.com_arr.GetStringSelection() == u"Linear":
-            self.lbl_x_mag.SetLabelText(u"step x (mm):")
-            self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % self.width)
-            self.val_y_angle.SetValue("%.2f" % self.height)
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Hide()
             self.val_columns.Hide()
         #Matrix
         if self.com_arr.GetStringSelection() == u"Matrix":
-            self.lbl_x_mag.SetLabelText(u"step x (mm):")
-            self.lbl_y_angle.SetLabelText(u"step y (mm):")
-            self.val_x_mag.SetValue("%.2f" % self.width)
-            self.val_y_angle.SetValue("%.2f" % self.height)
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
         # circular layout
@@ -241,15 +293,19 @@ class PlaceByReference (wx.Dialog):
             circumference = number_of_all_modules * self.width
             radius = circumference / (2 * math.pi)
             angle = 360.0 / number_of_all_modules
-            self.lbl_x_mag.SetLabelText(u"radius (mm):")
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"radius (mm):")
+                self.val_x_mag.SetValue("%.3f" % radius)
+            else:
+                self.lbl_x_mag.SetLabelText(u"radius (in):")
+                self.val_x_mag.SetValue("%.3f" % (radius/25.4))
             self.lbl_y_angle.SetLabelText(u"angle (deg):")
-            self.val_x_mag.SetValue("%.2f" % radius)
-            self.val_y_angle.SetValue("%.2f" % angle)
+            self.val_y_angle.SetValue("%.3f" % angle)
             self.lbl_columns.Hide()
             self.val_columns.Hide()
         event.Skip()
 
-    def __init__(self, parent, placer, pivot_mod):
+    def __init__(self, parent, placer, pivot_mod, user_units):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Place footprints", pos=wx.DefaultPosition, size=wx.Size(257,496), style=wx.DEFAULT_DIALOG_STYLE)
 
         self.SetSizeHintsSz(wx.Size(257, -1), wx.DefaultSize)
@@ -277,7 +333,7 @@ class PlaceByReference (wx.Dialog):
         self.m_staticText3.Wrap(-1)
         gSizer2.Add(self.m_staticText3, 0, wx.ALL, 5)
 
-        com_arrChoices = [ u"Linear", u"Matrix", u"Circular" ]
+        com_arrChoices = [u"Linear", u"Matrix", u"Circular"]
         self.com_arr = wx.ComboBox(self, wx.ID_ANY, u"Combo!", wx.DefaultPosition, wx.Size(110, -1), com_arrChoices, wx.CB_READONLY)
         self.com_arr.SetSelection(0)
         gSizer2.Add(self.com_arr, 0, wx.ALL, 5)
@@ -291,14 +347,20 @@ class PlaceByReference (wx.Dialog):
 
         gSizer1 = wx.GridSizer(4, 2, 0, 0)
 
-        self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"step x (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        if user_units == 'mm':
+            self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"step x (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        else:
+            self.lbl_x_mag = wx.StaticText(self, wx.ID_ANY, u"step x (in):", wx.DefaultPosition, wx.DefaultSize, 0)
         self.lbl_x_mag.Wrap(-1)
         gSizer1.Add(self.lbl_x_mag, 0, wx.ALL, 5)
 
         self.val_x_mag = wx.TextCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
         gSizer1.Add(self.val_x_mag, 0, wx.ALL, 5)
 
-        self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"step y (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        if user_units == 'mm':
+            self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"step y (mm):", wx.DefaultPosition, wx.DefaultSize, 0)
+        else:
+            self.lbl_y_angle = wx.StaticText(self, wx.ID_ANY, u"step y (in):", wx.DefaultPosition, wx.DefaultSize, 0)
         self.lbl_y_angle.Wrap(-1)
         gSizer1.Add(self.lbl_y_angle, 0, wx.ALL, 5)
 
@@ -335,12 +397,17 @@ class PlaceByReference (wx.Dialog):
         self.com_arr.Bind(wx.EVT_COMBOBOX, self.arr_changed)
 
         self.placer = placer
+        self.user_units = user_units
         self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
 
         self.height, self.width = self.placer.get_modules_bounding_box([self.pivot_mod])
 
-        self.val_x_mag.SetValue("%.2f" % self.width)
-        self.val_y_angle.SetValue("%.2f" % self.height)
+        if user_units == 'mm':
+            self.val_x_mag.SetValue("%.3f" % self.width)
+            self.val_y_angle.SetValue("%.3f" % self.height)
+        else:
+            self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
+            self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
 
 
 class InitialDialog (wx.Dialog):
@@ -390,6 +457,12 @@ class PlaceFootprints(pcbnew.ActionPlugin):
     def Run(self):
         # load board
         board = pcbnew.GetBoard()
+
+        # get user units
+        if pcbnew.GetUserUnits() == 1:
+            user_units = 'mm'
+        else:
+            user_units = 'in'
 
         # go to the project folder - so that log will be in proper place
         os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
@@ -476,7 +549,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
 
             # display dialog
-            dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference)
+            dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference, user_units)
             dlg.list_modules.AppendItems(sorted_modules)
 
             # by default select all sheets
@@ -494,17 +567,28 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             # get mode
             if dlg.com_arr.GetStringSelection() == u'Circular':
                 delta_angle = float(dlg.val_y_angle.GetValue())
-                radius = float(dlg.val_x_mag.GetValue())
+                if user_units == 'mm':
+                    radius = float(dlg.val_x_mag.GetValue())
+                else:
+                    radius = float(dlg.val_x_mag.GetValue())/25.4
                 placer.place_circular(modules_to_place, radius, delta_angle, False)
 
             if dlg.com_arr.GetStringSelection() == u'Linear':
-                step_x = float(dlg.val_x_mag.GetValue())
-                step_y = float(dlg.val_y_angle.GetValue())
+                if user_units == 'mm':
+                    step_x = float(dlg.val_x_mag.GetValue())
+                    step_y = float(dlg.val_y_angle.GetValue())
+                else:
+                    step_x = float(dlg.val_x_mag.GetValue())/25.4
+                    step_y = float(dlg.val_y_angle.GetValue())/25.4
                 placer.place_linear(modules_to_place, step_x, step_y)
 
             if dlg.com_arr.GetStringSelection() == u'Matrix':
-                step_x = float(dlg.val_x_mag.GetValue())
-                step_y = float(dlg.val_y_angle.GetValue())
+                if user_units == 'mm':
+                    step_x = float(dlg.val_x_mag.GetValue())
+                    step_y = float(dlg.val_y_angle.GetValue())
+                else:
+                    step_x = float(dlg.val_x_mag.GetValue())/25.4
+                    step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
                 placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
 
@@ -513,7 +597,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             # get list of all modules with same ID
             list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
             # display dialog
-            dlg = PlaceBySheet(_pcbnew_frame, placer, pivot_module_reference)
+            dlg = PlaceBySheet(_pcbnew_frame, placer, pivot_module_reference, user_units)
             levels = pivot_module.filename
             dlg.list_levels.Clear()
             dlg.list_levels.AppendItems(levels)
@@ -537,17 +621,28 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             # get mode
             if dlg.com_arr.GetStringSelection() == u'Circular':
                 delta_angle = float(dlg.val_y_angle.GetValue())
-                radius = float(dlg.val_x_mag.GetValue())
+                if user_units == 'mm':
+                    radius = float(dlg.val_x_mag.GetValue())
+                else:
+                    radius = float(dlg.val_x_mag.GetValue())/25.4
                 placer.place_circular(sorted_modules, radius, delta_angle, True)
 
             if dlg.com_arr.GetStringSelection() == u'Linear':
-                step_x = float(dlg.val_x_mag.GetValue())
-                step_y = float(dlg.val_y_angle.GetValue())
+                if user_units == 'mm':
+                    step_x = float(dlg.val_x_mag.GetValue())
+                    step_y = float(dlg.val_y_angle.GetValue())
+                else:
+                    step_x = float(dlg.val_x_mag.GetValue())/25.4
+                    step_y = float(dlg.val_y_angle.GetValue())/25.4
                 placer.place_linear(sorted_modules, step_x, step_y)
 
             if dlg.com_arr.GetStringSelection() == u'Matrix':
-                step_x = float(dlg.val_x_mag.GetValue())
-                step_y = float(dlg.val_y_angle.GetValue())
+                if user_units == 'mm':
+                    step_x = float(dlg.val_x_mag.GetValue())
+                    step_y = float(dlg.val_y_angle.GetValue())
+                else:
+                    step_x = float(dlg.val_x_mag.GetValue())/25.4
+                    step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
                 placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
 
