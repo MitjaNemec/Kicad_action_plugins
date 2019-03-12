@@ -118,7 +118,7 @@ class ReplicateLayoutDialog(wx.Dialog):
         ref_list = []
         for sheet in list_sheetsChoices:
             for mod in anchor_modules:
-                if mod.sheet_id == sheet:
+                if "/".join(sheet) in "/".join(mod.sheet_id):
                     ref_list.append(mod.ref)
                     break
 
