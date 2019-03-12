@@ -413,6 +413,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
                 break
 
         sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
+
     if mode == 'by sheet':
         pivot_module = placer.get_mod_by_ref(pivot_module_reference)
         list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
@@ -429,7 +430,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
     if layout == 'linear':
         placer.place_linear(sorted_modules, 5.0, 0.0)
     if layout == 'matrix':
-        placer.place_matrix(sorted_modules, 5.0, 5.0)
+        placer.place_matrix(sorted_modules, 5.0, 5.0, 3)
 
     saved = pcbnew.SaveBoard(out_file, board)
     test_file = out_file.replace("temp", "test")
