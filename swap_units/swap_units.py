@@ -102,7 +102,6 @@ def swap(board, pad_1, pad_2):
         logger.error("Did not find: " + symbol_name + " in -cache.lib")
         raise LookupError("Symbol is missing from -cache.lib")
 
-
     # cleanup everything before DEF
     symbol = sym.split('DEF')[1]
 
@@ -309,35 +308,36 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
+    test_list = ['same_sheet', 'different_sheets']
     # same_sheet, different_sheets
-    test = 'same_sheet'
-    if test == 'same_sheet':
-        board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
-        mod = board.FindModuleByReference('U1')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'1':
-                pad1 = pad
-            if pad.GetPadName() == u'7':
-                pad2 = pad
-        swap(board, pad1, pad2)
-    if test == 'different_sheets':
-        board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
-        mod = board.FindModuleByReference('U1')
-        pads = mod.Pads()
-        for pad in pads:
-            if pad.GetPadName() == u'8':
-                pad1 = pad
-            if pad.GetPadName() == u'14':
-                pad2 = pad
-        swap(board, pad1, pad2)
+    for test in test_list:
+        if test == 'same_sheet':
+            board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
+            mod = board.FindModuleByReference('U1')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'1':
+                    pad1 = pad
+                if pad.GetPadName() == u'7':
+                    pad2 = pad
+            swap(board, pad1, pad2)
+        if test == 'different_sheets':
+            board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
+            mod = board.FindModuleByReference('U1')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'8':
+                    pad1 = pad
+                if pad.GetPadName() == u'14':
+                    pad2 = pad
+            swap(board, pad1, pad2)
 
 
 # for testing purposes only
 if __name__ == "__main__":
     # if debugging outside of this folder change the folder
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    
+
     file_handler = logging.FileHandler(filename='swap_units.log', mode='w')
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
@@ -353,4 +353,3 @@ if __name__ == "__main__":
     logger.info("Swap units plugin started in standalone mode")
 
     main()
-
