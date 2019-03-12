@@ -1,11 +1,11 @@
 EESchema-LIBRARY Version 2.4
 #encoding utf-8
 #
-# Passives:C1206
+# Passives_C1206
 #
-DEF Passives:C1206 C 0 10 N Y 1 F N
+DEF Passives_C1206 C 0 10 N Y 1 F N
 F0 "C" 100 50 50 H V L CNN
-F1 "Passives:C1206" 100 -50 50 H V L CNN
+F1 "Passives_C1206" 100 -50 50 H V L CNN
 F2 "Passives:C1206M" 50 -100 50 H I L CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -16,11 +16,11 @@ X ~ 2 0 -100 60 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# archive:Amplifier_Operational_LM318J
+# archive_Amplifier_Operational_LM318J
 #
-DEF archive:Amplifier_Operational_LM318J U 0 10 Y Y 1 F N
+DEF archive_Amplifier_Operational_LM318J U 0 10 Y Y 1 F N
 F0 "U" 150 150 50 H V L CNN
-F1 "archive:Amplifier_Operational_LM318J" 150 -150 50 H V L CNN
+F1 "archive_Amplifier_Operational_LM318J" 150 -150 50 H V L CNN
 F2 "Package_DIP:DIP-14_W7.62mm" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -45,11 +45,11 @@ X ~ 9 100 -300 250 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# archive:Connector_Generic_Conn_01x02
+# archive_Connector_Generic_Conn_01x02
 #
-DEF archive:Connector_Generic_Conn_01x02 J 0 40 Y N 1 F N
+DEF archive_Connector_Generic_Conn_01x02 J 0 40 Y N 1 F N
 F0 "J" 0 100 50 H V C CNN
-F1 "archive:Connector_Generic_Conn_01x02" 0 -200 50 H V C CNN
+F1 "archive_Connector_Generic_Conn_01x02" 0 -200 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -64,11 +64,11 @@ X Pin_2 2 -200 -100 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# archive:Connector_Screw_Terminal_01x02
+# archive_Connector_Screw_Terminal_01x02
 #
-DEF archive:Connector_Screw_Terminal_01x02 J 0 40 Y N 1 F N
+DEF archive_Connector_Screw_Terminal_01x02 J 0 40 Y N 1 F N
 F0 "J" 0 100 50 H V C CNN
-F1 "archive:Connector_Screw_Terminal_01x02" 0 -200 50 H V C CNN
+F1 "archive_Connector_Screw_Terminal_01x02" 0 -200 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -87,11 +87,11 @@ X Pin_2 2 -200 -100 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# archive:Device_C
+# archive_Device_C
 #
-DEF archive:Device_C C 0 10 N Y 1 F N
+DEF archive_Device_C C 0 10 N Y 1 F N
 F0 "C" 25 100 50 H V L CNN
-F1 "archive:Device_C" 25 -100 50 H V L CNN
+F1 "archive_Device_C" 25 -100 50 H V L CNN
 F2 "" 38 -150 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -105,11 +105,11 @@ X ~ 2 0 -150 110 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# archive:Device_R
+# archive_Device_R
 #
-DEF archive:Device_R R 0 0 N Y 1 F N
+DEF archive_Device_R R 0 0 N Y 1 F N
 F0 "R" 80 0 50 V V C CNN
-F1 "archive:Device_R" 0 0 50 V V C CNN
+F1 "archive_Device_R" 0 0 50 V V C CNN
 F2 "" -70 0 50 V I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -122,11 +122,11 @@ X ~ 2 0 -150 50 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# archive:power_+15V
+# archive_power_+15V
 #
-DEF archive:power_+15V #PWR 0 0 Y Y 1 F P
+DEF archive_power_+15V #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "archive:power_+15V" 0 140 50 H V C CNN
+F1 "archive_power_+15V" 0 140 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -137,11 +137,11 @@ X +15V 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# archive:power_GND
+# archive_power_GND
 #
-DEF archive:power_GND #PWR 0 0 Y Y 1 F P
+DEF archive_power_GND #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -250 50 H I C CNN
-F1 "archive:power_GND" 0 -150 50 H V C CNN
+F1 "archive_power_GND" 0 -150 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -150,11 +150,11 @@ X GND 1 0 0 0 D 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# archive:power_PWR_FLAG
+# archive_power_PWR_FLAG
 #
-DEF archive:power_PWR_FLAG #FLG 0 0 N N 1 F P
+DEF archive_power_PWR_FLAG #FLG 0 0 N N 1 F P
 F0 "#FLG" 0 75 50 H I C CNN
-F1 "archive:power_PWR_FLAG" 0 150 50 H V C CNN
+F1 "archive_power_PWR_FLAG" 0 150 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -163,11 +163,11 @@ X pwr 1 0 0 0 U 50 50 0 0 w
 ENDDRAW
 ENDDEF
 #
-# power:+15V
+# power_+15V
 #
-DEF power:+15V #PWR 0 0 Y Y 1 F P
+DEF power_+15V #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "power:+15V" 0 140 50 H V C CNN
+F1 "power_+15V" 0 140 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -178,11 +178,11 @@ X +15V 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# power:GND
+# power_GND
 #
-DEF power:GND #PWR 0 0 Y Y 1 F P
+DEF power_GND #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -250 50 H I C CNN
-F1 "power:GND" 0 -150 50 H V C CNN
+F1 "power_GND" 0 -150 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
