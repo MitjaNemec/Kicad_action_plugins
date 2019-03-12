@@ -170,11 +170,11 @@ def swap(board, pad_1, pad_2):
 
     unit_1 = relevant_pins[0][9]
     unit_2 = relevant_pins[1][9]
-    
+
     if unit_1 == "0" or unit_2 == "0":
         logger.info("Swapping common pins is not currently supported!")
         raise ValueError("Swapping common pins is not currently supported!")
-    
+
     logger.info("Relevant pins are on units: " + unit_1 + ", " + unit_2)
 
     # get the pages of correcsponding unit
@@ -359,10 +359,10 @@ def swap(board, pad_1, pad_2):
 
         # save schematics
         if __name__ == "__main__":
-            sch_file_to_write_1 = os.path.join(os.path.dirname(page_1),
-                                               'temp_' + os.path.basename(page_1))
-            sch_file_to_write_2 = os.path.join(os.path.dirname(page_2),
-                                               'temp_' + os.path.basename(page_2))
+            filename1 = os.path.basename(page_1).replace(".sch", "_temp.sch")
+            sch_file_to_write_1 = os.path.join(os.path.dirname(page_1), filename1)
+            filename2 = os.path.basename(page_2).replace(".sch", "_temp.sch")
+            sch_file_to_write_2 = os.path.join(os.path.dirname(page_2), filename2)
         else:
             sch_file_to_write_1 = page_1
             sch_file_to_write_2 = page_2
@@ -382,7 +382,7 @@ def swap(board, pad_1, pad_2):
 
     # save board
     if __name__ == "__main__":
-        pcb_file_to_write = 'temp_' + board.GetFileName()
+        pcb_file_to_write = board.GetFileName().replace(".kicad_pcb", "_temp.kicad_pcb")
         pcbnew.SaveBoard(pcb_file_to_write, board)
     logger.info("Saved the layout.")
 
