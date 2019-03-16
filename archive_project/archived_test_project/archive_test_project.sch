@@ -1,5 +1,4 @@
 EESchema Schematic File Version 4
-LIBS:archive_test_project-cache
 EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
@@ -22,17 +21,6 @@ F1 "subsheet.sch" 50
 F2 "IN" I L 3550 2850 50 
 F3 "OUT" O R 4450 2850 50 
 $EndSheet
-$Comp
-L archive:Amplifier_Operational_LM318J U1
-U 1 1 5ABA5C92
-P 2750 2850
-F 0 "U1" H 2850 3100 50  0000 L CNN
-F 1 "LM318J" H 2850 3000 50  0000 L CNN
-F 2 "Package_DIP:DIP-14_W7.62mm" H 2750 2850 50  0001 C CNN
-F 3 "http://www.ti.com/lit/ds/symlink/lm318-n.pdf" H 2750 2850 50  0001 C CNN
-	1    2750 2850
-	1    0    0    -1  
-$EndComp
 $Comp
 L archive:power_GND #PWR05
 U 1 1 5ABA5CE0
@@ -243,4 +231,15 @@ U 5ACC74AB
 F0 "Sheet5ACC74AA" 50
 F1 "hiearchical_sub/file5ACC74AA.sch" 50
 $EndSheet
+$Comp
+L archive:Amplifier_Operational_LM318J U101
+U 1 1 5C8821F3
+P 2750 2850
+F 0 "U101" H 2900 3000 50  0000 L CNN
+F 1 "LM318J" H 2900 2700 50  0000 L CNN
+F 2 "Package_DIP:DIP-14_W7.62mm" H 2750 2850 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm318-n.pdf" H 2750 2850 50  0001 C CNN
+	1    2750 2850
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

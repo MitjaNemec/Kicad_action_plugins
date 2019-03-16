@@ -1,5 +1,4 @@
 EESchema Schematic File Version 4
-LIBS:archive_test_project-cache
 EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
