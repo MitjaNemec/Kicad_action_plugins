@@ -233,10 +233,10 @@ F0 "Sheet5ACC74AA" 50
 F1 "hiearchical_sub/file5ACC74AA.sch" 50
 $EndSheet
 $Comp
-L Amplifier_Operational:LM318J U?
+L Amplifier_Operational:LM318J U101
 U 1 1 5C8821F3
 P 2750 2850
-F 0 "U?" H 2900 3000 50  0000 L CNN
+F 0 "U101" H 2900 3000 50  0000 L CNN
 F 1 "LM318J" H 2900 2700 50  0000 L CNN
 F 2 "Package_DIP:DIP-14_W7.62mm" H 2750 2850 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/lm318-n.pdf" H 2750 2850 50  0001 C CNN
