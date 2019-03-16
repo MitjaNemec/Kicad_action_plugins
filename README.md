@@ -5,7 +5,7 @@ This repo contains KiCad pcbnew Action Plugins()
 
 ## Replicate layout
 
-This plugin has been tested with KiCad 5.0.2 and 5.1-rc1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -35,7 +35,7 @@ Example replication of a complex hierarchical project. Replicating inner sheet f
 
 ## Place footprints
 
-This plugin has been tested with KiCad 5.1 nightly from commit b426b9e7 onward on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -75,7 +75,7 @@ Example of place by sheet ID
 
 ## Delete Selected
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -114,7 +114,7 @@ To run the plugin:
 
 ## net2net min distance
 
-This plugin has been tested with KiCad 5.1 nightly from commit b426b9e7 onward on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -124,7 +124,7 @@ This plugin calculates the shortest distance between two tracks on different net
 
 ## Archive project
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled. The plugin does not work with post 5.0.0 nightlies (most likely since around 20.7.2018). The testing has not been thorough. The plugin works correctly only when KiCad language is English. For other languages, the lines 225-243 have to be adapted.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. It does not work with older versions. You need to have KICAD_SCRIPTING_WXPYTHON enabled. 
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -145,7 +145,7 @@ If the project is modified later it should be archived again in order to stay po
 
 ## Swap pins
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -160,7 +160,7 @@ Example of pin swapping
 
 ## Swap units
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -174,7 +174,7 @@ Example of unit swapping
 
 ## Length stats
 
-This plugin has been tested with KiCad 5.0 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
 This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
