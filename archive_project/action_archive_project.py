@@ -126,9 +126,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
             logger.info("Exiting as eeschema is opened")
             return
 
-        # only testing if keypress simulation works
-        key_simulator = wx.UIActionSimulator()
-
         # show dialog
         main_dialog = ArchiveProjectDialog(_pcbnew_frame)
         main_res = main_dialog.ShowModal()
@@ -148,103 +145,62 @@ class ArchiveProject(pcbnew.ActionPlugin):
             logger.info("Action plugin canceled on first dialog")
             return
 
-        # if user clicked OK
-        if main_res == wx.ID_OK:
-            if main_dialog.chkbox_sch.GetValue():
-                # archive schematics
-                try:
-                    logger.info("Starting schematics archiving")
-                    archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
-                except (ValueError, IOError, LookupError), error:
-                    caption = 'Archive project'
-                    message = str(error)
-                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-                    logger.debug("Action plugin exiting due to error in schematics archiving part")
-                except NameError as error:
-                    caption = 'Archive project'
-                    message = str(error)+ "\nContinue?"
-                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-                    res = dlg.ShowModal()
-                    dlg.Destroy()
-                    logger.info(message)
-                    if res == wx.ID_YES:
-                        logger.info("Retrying schematics archiving")
-                        archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
-                    else:
-                        return
-
-            if main_dialog.chkbox_3D.GetValue():
-
-                filename = board.GetFileName()
-
+        if main_dialog.chkbox_sch.GetValue():
+            # archive schematics
+            try:
+                logger.info("Starting schematics archiving")
+                archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
+            except (ValueError, IOError, LookupError), error:
                 caption = 'Archive project'
-                message = "Current layout will be saved and when the plugin finishes, pcbnew will be closed." \
-                          "This is normal behaviour.\n" \
-                          "\nProceed?"
+                message = str(error)
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                logger.debug("Action plugin exiting due to error in schematics archiving part")
+            except NameError as error:
+                caption = 'Archive project'
+                message = str(error) + "\nContinue?"
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
                 res = dlg.ShowModal()
                 dlg.Destroy()
+                logger.info(message)
+                if res == wx.ID_YES:
+                    logger.info("Retrying schematics archiving")
+                    archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
+                else:
+                    return
+            except Exception:
+                logger.exception("Fatal error when archiveing schematics")
+                raise
 
-                if res == wx.ID_NO:
+            caption = 'Archive project'
+            message = "Schematics archived sucessfuly!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+        if main_dialog.chkbox_3D.GetValue():
+            try:
+                logger.info("Starting 3D model archiving")
+                archive_project.archive_3D_models(board, allow_missing_models=False, alt_files=False)
+            except IOError as error:
+                caption = 'Archive project'
+                message = str(error) + "\nContinue?"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption,  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+                res = dlg.ShowModal()
+                dlg.Destroy()
+                logger.info(message)
+                if res == wx.ID_YES:
+                    logger.info("Retrying 3D model archiving")
+                    archive_project.archive_3D_models(board, allow_missing_models=True, alt_files=False)
+                else:
                     return
 
-                # simulate Ctrl+S (save layout)
-                key_simulator.KeyDown(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
-                key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
-
-                try:
-                    logger.info("Starting 3D model archiving")
-                    archive_project.archive_3D_models(board, allow_missing_models=False, alt_files=False)
-                except IOError as error:
-                    caption = 'Archive project'
-                    message = str(error) + "\nContinue?"
-                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption,  wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-                    res = dlg.ShowModal()
-                    dlg.Destroy()
-                    logger.info(message)
-                    if res == wx.ID_YES:
-                        logger.info("Retrying 3D model archiving")
-                        # simulate Ctrl+S (save layout)
-                        key_simulator.KeyDown(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
-                        key_simulator.KeyUp(wx.WXK_CONTROL_S, wx.MOD_CONTROL)
-
-                        archive_project.archive_3D_models(board, allow_missing_models=True, alt_files=False)
-                    else:
-                        return
-
-                caption = 'Archive project'
-                message = "The project finished succesfully. Exiting pcbnew"
-                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_QUESTION)
-                dlg.ShowModal()
-                dlg.Destroy()
-
-                logger.info("3D model linking successful, exiting pcbnew")
-
-                # exit pcbnew to avoid issues with concurent editing of .kicad_pcb file
-                # simulate Alt+F (File) and e twice (Exit) and Enter
-
-                key_simulator.KeyDown(ord('f'), wx.MOD_ALT)
-                key_simulator.KeyUp(ord('f'), wx.MOD_ALT)
-
-                key_simulator.KeyDown(ord('e'))
-                key_simulator.KeyUp(ord('e'))
-
-                key_simulator.KeyDown(ord('e'))
-                key_simulator.KeyUp(ord('e'))
-
-                key_simulator.KeyDown(wx.WXK_RETURN)
-                key_simulator.KeyUp(wx.WXK_RETURN)
-
-                # tab
-                key_simulator.KeyDown(wx.WXK_TAB)
-                key_simulator.KeyUp(wx.WXK_TAB)
-
-                # enter
-                key_simulator.KeyDown(wx.WXK_RETURN)
-                key_simulator.KeyUp(wx.WXK_RETURN)
-
+            caption = 'Archive project'
+            message = "3D models archived sucessfuly. Do not forget to save the layout!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
             main_dialog.Destroy()
 
 
