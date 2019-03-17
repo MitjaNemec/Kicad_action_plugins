@@ -80,6 +80,8 @@ class ArchiveProject(pcbnew.ActionPlugin):
         self.name = "Archive project"
         self.category = "Archive project"
         self.description = "Archive schematics symbols and 3D models"
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'library_archive-archive_project.svg.png')
 
     def Run(self):
         # load board

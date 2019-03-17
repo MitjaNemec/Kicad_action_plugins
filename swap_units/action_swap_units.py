@@ -40,6 +40,8 @@ class SwapUnits(pcbnew.ActionPlugin):
         self.name = "Swap units"
         self.category = "Modify Drawing PCB and schematics"
         self.description = "Swap selected units"
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'add_component-swap_units.svg.png')
 
     def Run(self):
         _pcbnew_frame = \

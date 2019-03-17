@@ -453,6 +453,8 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         self.name = "Place footprints"
         self.category = "Modify Drawing PCB"
         self.description = "Place footprints along a predefined pattern (line, matrix, circle)"
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'array-place_footprints.svg.png')
 
     def Run(self):
         # load board

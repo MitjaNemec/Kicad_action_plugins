@@ -149,6 +149,8 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         self.name = "Replicate layout"
         self.category = "Modify Drawing PCB"
         self.description = "Replicate layout of a hierchical sheet"
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'duplicate-replicate_layout.svg.png')
 
     def Run(self):
         # load board

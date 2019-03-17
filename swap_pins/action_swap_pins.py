@@ -40,6 +40,8 @@ class SwapPins(pcbnew.ActionPlugin):
         self.name = "Swap pins"
         self.category = "Modify Drawing PCB and schematics"
         self.description = "Swap selected pins"
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'pin_number_to-swap_pins.svg.png')
 
     def Run(self):
         _pcbnew_frame = \
