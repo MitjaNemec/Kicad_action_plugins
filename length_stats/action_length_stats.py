@@ -25,28 +25,25 @@ import pcbnew
 import os
 import logging
 import sys
+import timeit
+
+import lenght_stats_GUI
 
 SCALE = 1000000.0
 
+class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
+    # hack for new wxFormBuilder generating code incompatible with old wxPython
+    # noinspection PyMethodOverriding
+    def SetSizeHints(self, sz1, sz2):
+        try:
+            # wxPython 3
+            self.SetSizeHintsSz(sz1, sz2)
+        except TypeError:
+            # wxPython 4
+            super(SettingsDialog, self).SetSizeHints(sz1, sz2)
 
-class LenghtStatsDialog(wx.Dialog):
-    def __init__(self, parent, board, netname):
-        wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Lenght stats", pos=wx.DefaultPosition, size=wx.Size(237, 384), style=wx.DEFAULT_DIALOG_STYLE )
-
-        self.SetSizeHintsSz(wx.DefaultSize, wx.DefaultSize)
-
-        bSizer1 = wx.BoxSizer(wx.VERTICAL)
-
-        self.net_list = wx.ListCtrl(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT)
-        bSizer1.Add(self.net_list, 1, wx.ALL | wx.EXPAND, 5)
-
-        self.btn_ok = wx.Button(self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer1.Add(self.btn_ok, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
-
-        self.SetSizer(bSizer1)
-        self.Layout()
-
-        self.Centre(wx.BOTH)
+    def __init__(self,  parent, board, netname):
+        lenght_stats_GUI.LenghtStatsGUI.__init__(self, parent)
 
         self.net_list.InsertColumn(0, 'Net', width=100) 
         self.net_list.InsertColumn(1, 'Length')
@@ -60,11 +57,30 @@ class LenghtStatsDialog(wx.Dialog):
         self.netname = netname
 
         self.timer = wx.Timer(self, 1)
+        self.refresh_time = 0.1
 
         self.Bind(wx.EVT_TIMER, self.on_update, self.timer)
-        self.timer.Start(500)
+
+    def cont_refresh_toggle(self, event):
+        if self.chk_cont.IsChecked():
+            self.timer.Start(self.refresh_time * 10 * 1000)
+        else:
+            self.timer.Stop()
+        event.Skip()
+
+    def on_btn_refresh(self, event):
+        self.refresh()
+        event.Skip()
+
+    def on_btn_ok(self, event):
+        event.Skip()
 
     def on_update(self, event):
+        self.refresh()
+        event.Skip()
+
+    def refresh(self):
+        start_time = timeit.default_timer()
         # get all tracks
         tracks = self.board.GetTracks()
 
@@ -83,8 +99,13 @@ class LenghtStatsDialog(wx.Dialog):
             index_net = self.netname.index(net)
             self.net_list.SetStringItem(index_net, 1, "%.2f" % length)
 
-        event.Skip()
-
+        stop_time = timeit.default_timer()
+        delta_time = stop_time - start_time
+        if delta_time > 0.05:
+            self.refresh_time = delta_time
+        else:
+            self.refresh_time = 0.05
+        self.lbl_refresh_time.SetLabelText(u"Refresh time: %.2f s" % delta_time)
 
 class LengthStats(pcbnew.ActionPlugin):
     """
