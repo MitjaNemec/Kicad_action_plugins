@@ -29,9 +29,9 @@ import sys
 import math
 import re
 
-import initial_dialog
-import place_by_reference
-import place_by_sheet
+import initial_dialog_GUI
+import place_by_reference_GUI
+import place_by_sheet_GUI
 
 def natural_sort(l): 
     convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -39,7 +39,7 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-class PlaceBySheet(place_by_sheet.PlaceBySheetGUI):
+class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -155,7 +155,7 @@ class PlaceBySheet(place_by_sheet.PlaceBySheetGUI):
         event.Skip()
 
     def __init__(self, parent, placer, pivot_mod, user_units):
-        place_by_sheet.PlaceBySheetGUI.__init__(self, parent)
+        place_by_sheet_GUI.PlaceBySheetGUI.__init__(self, parent)
 
         if user_units == 'mm':
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -179,7 +179,7 @@ class PlaceBySheet(place_by_sheet.PlaceBySheetGUI):
         self.height, self.width = self.placer.get_modules_bounding_box(modules)
 
 
-class PlaceByReference(place_by_reference.PlaceByReferenceGUI):
+class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -239,7 +239,7 @@ class PlaceByReference(place_by_reference.PlaceByReferenceGUI):
         event.Skip()
 
     def __init__(self, parent, placer, pivot_mod, user_units):
-        place_by_reference.PlaceByReferenceGUI.__init__(self, parent)
+        place_by_reference_GUI.PlaceByReferenceGUI.__init__(self, parent)
 
         if user_units == 'mm':
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -268,7 +268,7 @@ class PlaceByReference(place_by_reference.PlaceByReferenceGUI):
             self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
 
 
-class InitialDialog(initial_dialog.InitialDialogGUI):
+class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -280,7 +280,7 @@ class InitialDialog(initial_dialog.InitialDialogGUI):
             super(InitialDialog, self).SetSizeHints(sz1, sz2)
 
     def __init__(self, parent):
-        initial_dialog.InitialDialogGUI.__init__(self, parent)
+        initial_dialog_GUI.InitialDialogGUI.__init__(self, parent)
 
 
 class PlaceFootprints(pcbnew.ActionPlugin):
