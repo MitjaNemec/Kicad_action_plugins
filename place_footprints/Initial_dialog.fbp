@@ -42,7 +42,7 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">InitialDialog</property>
+            <property name="name">InitialDialogGUI</property>
             <property name="pos"></property>
             <property name="size">242,107</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
