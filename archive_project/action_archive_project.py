@@ -25,46 +25,23 @@ import archive_project
 import logging
 import os
 import sys
-
+import archive_project_GUI
 
 SCALE = 1000000.0
 
 
-class ArchiveProjectDialog (wx.Dialog):
-
+class ArchiveProjectDialog (archive_project_GUI.ArchiveProjectGUI):
+    # hack for new wxFormBuilder generating code incompatible with old wxPython
+    # noinspection PyMethodOverriding
+    def SetSizeHints(self, sz1, sz2):
+        try:
+            # wxPython 3
+            self.SetSizeHintsSz(sz1, sz2)
+        except TypeError:
+            # wxPython 4
+            super(ArchiveProjectDialog, self).SetSizeHints(sz1, sz2)
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, id=wx.ID_ANY, title=u"Archive project", pos=wx.DefaultPosition,
-                           style=wx.DEFAULT_DIALOG_STYLE)
-
-        bSizer4 = wx.BoxSizer(wx.VERTICAL)
-
-        self.m_staticText2 = wx.StaticText(self, wx.ID_ANY, u"Archive project:", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.m_staticText2.Wrap(-1)
-        bSizer4.Add(self.m_staticText2, 0, wx.ALL, 5)
-
-        self.chkbox_sch = wx.CheckBox(self, wx.ID_ANY, u"Archive Schematics", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.chkbox_sch.SetValue(True)
-        bSizer4.Add(self.chkbox_sch, 0, wx.ALL, 5)
-
-        self.chkbox_3D = wx.CheckBox(self, wx.ID_ANY, u"Archive 3D models", wx.DefaultPosition, wx.DefaultSize, 0)
-        self.chkbox_3D.SetValue(True)
-        bSizer4.Add(self.chkbox_3D, 0, wx.ALL, 5)
-
-        bSizer5 = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.m_button3 = wx.Button(self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer5.Add(self.m_button3, 0, wx.ALL, 5)
-
-        self.m_button4 = wx.Button(self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer5.Add(self.m_button4, 0, wx.ALL, 5)
-
-        bSizer4.Add(bSizer5, 1, wx.EXPAND, 5)
-
-        self.SetSizer(bSizer4)
-        self.Layout()
-
-        self.Centre(wx.BOTH)
-
+        archive_project_GUI.ArchiveProjectGUI.__init__(self, parent)
         self.Fit()
 
 

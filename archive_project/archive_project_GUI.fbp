@@ -3,7 +3,7 @@
     <FileVersion major="1" minor="13" />
     <object class="Project" expanded="1">
         <property name="class_decoration"></property>
-        <property name="code_generation">C++</property>
+        <property name="code_generation">Python</property>
         <property name="disconnect_events">1</property>
         <property name="disconnect_mode">source_name</property>
         <property name="disconnect_php_events">0</property>
@@ -11,7 +11,7 @@
         <property name="embedded_files_path">res</property>
         <property name="encoding">UTF-8</property>
         <property name="event_generation">connect</property>
-        <property name="file"></property>
+        <property name="file">archive_project_GUI</property>
         <property name="first_id">1000</property>
         <property name="help_provider">none</property>
         <property name="internationalize">0</property>
@@ -42,7 +42,7 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">ArchiveProjectDialog</property>
+            <property name="name">ArchiveProjectGUI</property>
             <property name="pos"></property>
             <property name="size">224,159</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
