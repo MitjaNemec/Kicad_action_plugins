@@ -31,6 +31,7 @@ import lenght_stats_GUI
 
 SCALE = 1000000.0
 
+
 class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
@@ -40,7 +41,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             self.SetSizeHintsSz(sz1, sz2)
         except TypeError:
             # wxPython 4
-            super(SettingsDialog, self).SetSizeHints(sz1, sz2)
+            super(LenghtStatsDialog, self).SetSizeHints(sz1, sz2)
 
     def __init__(self,  parent, board, netname):
         lenght_stats_GUI.LenghtStatsGUI.__init__(self, parent)
