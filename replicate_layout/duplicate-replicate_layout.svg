@@ -11,8 +11,11 @@
    width="26"
    version="1.1"
    id="svg18970"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="duplicate_module.svg">
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="duplicate-replicate_layout.svg"
+   inkscape:export-filename="D:\Mitja\Plate\Kicad_libs\action_plugins\replicate_layout\duplicate-replicate_layout.svg.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
   <metadata
      id="metadata18987">
     <rdf:RDF>
@@ -21,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -35,14 +38,14 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
-     inkscape:window-height="1054"
+     inkscape:window-height="1001"
      id="namedview18985"
      showgrid="true"
-     inkscape:zoom="11.313708"
-     inkscape:cx="-27.130712"
-     inkscape:cy="4.9817665"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:zoom="22.627416"
+     inkscape:cx="7.8498134"
+     inkscape:cy="14.79002"
+     inkscape:window-x="-5"
+     inkscape:window-y="-5"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg18970"
      inkscape:object-paths="true"

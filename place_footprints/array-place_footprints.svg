@@ -15,8 +15,11 @@
    height="26"
    viewBox="0 0 26 26"
    id="svg2"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="array.svg">
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="array-place_footprints.svg"
+   inkscape:export-filename="D:\Mitja\Plate\Kicad_libs\action_plugins\place_footprints\array-place_footprints.svg.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -31,7 +34,7 @@
      id="namedview93"
      showgrid="true"
      inkscape:zoom="14.4141"
-     inkscape:cx="12.812836"
+     inkscape:cx="0.63725792"
      inkscape:cy="14.314085"
      inkscape:window-x="0"
      inkscape:window-y="16"
@@ -56,7 +59,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

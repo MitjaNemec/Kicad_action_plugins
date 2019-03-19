@@ -14,8 +14,11 @@
    width="26"
    height="26"
    id="svg2"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="library_archive.svg">
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="library_archive-archive_project.svg"
+   inkscape:export-filename="D:\Mitja\Plate\Kicad_libs\action_plugins\archive_project\library_archive-archive_project.svg.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
   <metadata
      id="metadata166">
     <rdf:RDF>
@@ -37,16 +40,16 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="928"
-     inkscape:window-height="1028"
+     inkscape:window-width="1920"
+     inkscape:window-height="1001"
      id="namedview164"
      showgrid="true"
      inkscape:zoom="24.774"
-     inkscape:cx="11.236872"
+     inkscape:cx="4.1528323"
      inkscape:cy="8.163937"
-     inkscape:window-x="992"
-     inkscape:window-y="24"
-     inkscape:window-maximized="0"
+     inkscape:window-x="-5"
+     inkscape:window-y="-5"
+     inkscape:window-maximized="1"
      inkscape:current-layer="svg2"
      borderlayer="true">
     <inkscape:grid
