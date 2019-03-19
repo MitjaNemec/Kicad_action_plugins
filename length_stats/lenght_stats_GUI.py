@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*- 
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Jun 17 2015)
+## Python code generated with wxFormBuilder (version Nov  6 2017)
 ## http://www.wxformbuilder.org/
 ##
-## PLEASE DO "NOT" EDIT THIS FILE!
+## PLEASE DO *NOT* EDIT THIS FILE!
 ###########################################################################
 
 import wx
@@ -19,7 +19,7 @@ class LenghtStatsGUI ( wx.Dialog ):
 	def __init__( self, parent ):
 		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Lenght stats", pos = wx.DefaultPosition, size = wx.Size( 353,478 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
-		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 		
@@ -47,7 +47,7 @@ class LenghtStatsGUI ( wx.Dialog ):
 		bSizer3.Add( self.btn_refresh, 0, wx.ALL, 5 )
 		
 		
-		bSizer3.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		bSizer3.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 		
 		self.btn_ok = wx.Button( self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer3.Add( self.btn_ok, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
