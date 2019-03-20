@@ -56,10 +56,20 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
 
         self.list_sheetsChoices = self.placer.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
 
-        list = [('/').join(x) for x in self.list_sheetsChoices]
+        # get anchor modules
+        anchor_modules = self.placer.get_list_of_modules_with_same_id(self.pivot_mod.mod_id)
+        # find matching anchors to maching sheets
+        ref_list = []
+        for sheet in self.list_sheetsChoices:
+            for mod in anchor_modules:
+                if "/".join(sheet) in "/".join(mod.sheet_id):
+                    ref_list.append(mod.ref)
+                    break
+
+        sheets_for_list = [('/').join(x[0]) + " (" + x[1] + ")" for x in zip(self.list_sheetsChoices, ref_list)]
         # clear levels
         self.list_sheets.Clear()
-        self.list_sheets.AppendItems(list)
+        self.list_sheets.AppendItems(sheets_for_list)
 
         # by default select all sheets
         number_of_items = self.list_sheets.GetCount()
