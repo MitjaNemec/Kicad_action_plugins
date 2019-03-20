@@ -79,58 +79,38 @@ class Net2NedDistance(pcbnew.ActionPlugin):
                    wx.GetTopLevelWindows()
                    )[0]
 
-        # get all pads
+        # get all selected nets either as tracks or as pads
+        nets = set()
+        selected_tracks = filter(lambda x: x.IsSelected(), board.GetTracks())
+
+        nets.update([track.GetNetname() for track in selected_tracks])
+
         modules = board.GetModules()
-
-        pads = []
         for mod in modules:
-            # get their pads
-            module_pads = mod.PadsList()
-            # get net
-            for pad in module_pads:
-                pads.append(pad)
-
-        # get list of all selected pads
-        selected_pads = []
-        for pad in pads:
-            if pad.IsSelected():
-                selected_pads.append(pad)
-
-        # check the nets on all the pads
-        nets = []
-        for pad in selected_pads:
-            nets.append(pad.GetNetname())
+            pads = mod.Pads()
+            nets.update([pad.GetNetname() for pad in pads if pad.IsSelected()])
 
         # if two pads are selected
-        if len(selected_pads) != 2:
+        if len(nets) != 2:
             # if more or less than one show only a messagebox
             caption = 'Net2Net Distance'
-            message = "You have to select two and only two pads"
+            message = "You have to select two and only two nets"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # and if they are on the same net
-        if nets[0] == nets[1]:
-            caption = 'Net2Net Distance'
-            message = "The selected pads are on the same net"
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy() 
-            return
-
         try:
-            dis, loc = net2net_distance.get_min_distance(board, selected_pads[0], selected_pads[1])
+            dis, loc = net2net_distance.get_min_distance(board, list(nets))
         except Exception:
             logger.exception("Fatal error when replicating")
             raise
 
         caption = 'Net2Net Track Distance'
         if user_units == 'mm':
-            message = "Distance between pads is " + "%.3f" % (dis/SCALE) + " mm"
+            message = "Minimum distance between net segments is " + "%.3f" % (dis/SCALE) + " mm"
         else:
-            message = "Distance between pads is " + "%.4f" % (dis/(SCALE*25.4)) + " in"
+            message = "Minimum distance between net segments is " + "%.4f" % (dis/(SCALE*25.4)) + " in"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()

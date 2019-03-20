@@ -92,10 +92,10 @@ def point_segment_distance(px, py, x1, y1, x2, y2):
     return math.hypot(dx, dy), location
 
 
-def get_min_distance(board, pad1, pad2):
+def get_min_distance(board, nets):
     # get nets
-    net1 = pad1.GetNet().GetNetname()
-    net2 = pad2.GetNet().GetNetname()
+    net1 = nets[0]
+    net2 = nets[1]
     logger.info("Net2net getting min distance between " + str(net1) + " and " + str(net2))
 
     # get tracks on net
