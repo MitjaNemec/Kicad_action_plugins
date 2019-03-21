@@ -44,10 +44,7 @@ class SwapPins(pcbnew.ActionPlugin):
                 os.path.dirname(__file__), 'pin_number_to-swap_pins.svg.png')
 
     def Run(self):
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
         # check if eeschema is running
         top_level_windows = wx.wx.GetTopLevelWindows()
         names = []

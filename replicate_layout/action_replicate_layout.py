@@ -59,7 +59,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
 
         list_sheetsChoices = self.replicator.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
 
-        # get acnhor modules
+        # get anchor modules
         anchor_modules = self.replicator.get_list_of_modules_with_same_id(self.pivot_mod.mod_id)
         # find matching anchors to maching sheets
         ref_list = []
@@ -124,10 +124,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         sl_err = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl_err
 
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
-                   wx.GetTopLevelWindows()
-                  )[0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
         # check if there is exactly one module selected
         selected_modules = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetModules())

@@ -85,10 +85,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
         sys.stderr = sl
 
         # find pcbnew frame
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
         # check if eeschema is running
         top_level_windows = wx.wx.GetTopLevelWindows()
         names = []

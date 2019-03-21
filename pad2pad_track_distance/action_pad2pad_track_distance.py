@@ -41,10 +41,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         self.description = "Measure distance between two selected pads"
 
     def Run(self):
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
         # load board
         board = pcbnew.GetBoard()

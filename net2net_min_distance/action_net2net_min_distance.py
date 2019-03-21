@@ -74,10 +74,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
         sl_err = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl_err
 
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
         # get all selected nets either as tracks or as pads
         nets = set()
