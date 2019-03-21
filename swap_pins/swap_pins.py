@@ -170,10 +170,13 @@ def swap(board, pad_1, pad_2):
 
     unit_1 = relevant_pins[0][9]
     unit_2 = relevant_pins[1][9]
-
+    
+    # check wheather any of the pins to swap are marked as common pins in multi unit symbol
     if unit_1 == "0" or unit_2 == "0":
-        logger.info("Swapping common pins is not currently supported!")
-        raise ValueError("Swapping common pins is not currently supported!")
+        logger.info("Swapping common pins of multi unit symbol is not supported!\n" +
+                     "If the symbol has single unit, there is an error in symbol pin definitions!")
+        raise ValueError("Swapping common pins of multi unit symbol is not supported!\n" +
+                         "If the symbol has single unit, there is an error in symbol pin definitions!")
 
     logger.info("Relevant pins are on units: " + unit_1 + ", " + unit_2)
 
