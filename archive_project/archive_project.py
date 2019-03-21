@@ -417,6 +417,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             model = models.pop()
             # copy 3D model
             model_path = model.m_Filename
+            logger.debug("Trying to copy: " + model_path)
 
             # check if path is encoded with variables
             if "${" in model_path or "$(" in model_path:
@@ -495,9 +496,11 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 pass
 
             if not copied_at_least_one:
-                not_copied.append(model)
+                logger.debug("Did not copy: " + model.m_Filename)
+                not_copied.append(model.m_Filename)
 
             if copied_at_least_one or allow_missing_models:
+                logger.debug("Remapping: " + model.m_Filename)
                 filename = os.path.basename(model_without_extension + ".wrl")
                 new_path = "${KIPRJMOD}/shapes3D/" + filename
                 model.m_Filename = new_path
