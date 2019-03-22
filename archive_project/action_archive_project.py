@@ -87,7 +87,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
         # find pcbnew frame
         _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
         # check if eeschema is running
-        top_level_windows = wx.wx.GetTopLevelWindows()
+        top_level_windows = wx.GetTopLevelWindows()
         names = []
         for x in top_level_windows:
             names.append(x.GetTitle())
