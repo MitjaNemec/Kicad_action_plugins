@@ -78,7 +78,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
 
         # get all selected nets either as tracks or as pads
         nets = set()
-        selected_tracks = filter(lambda x: x.IsSelected(), board.GetTracks())
+        selected_tracks = [x for x in board.GetTracks() if x.IsSelected()]
 
         nets.update([track.GetNetname() for track in selected_tracks])
 

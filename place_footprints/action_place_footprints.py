@@ -344,7 +344,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
         # check if there is exactly one module selected
-        selected_modules = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetModules())
+        selected_modules = [x for x in pcbnew.GetBoard().GetModules() if x.IsSelected()]
         selected_names = []
         for mod in selected_modules:
             selected_names.append("{}".format(mod.GetReference()))

@@ -151,7 +151,7 @@ class LengthStats(pcbnew.ActionPlugin):
 
         # find all selected tracks and pads
         nets = set()
-        selected_tracks = filter(lambda x: x.IsSelected(), board.GetTracks())
+        selected_tracks = [x for x in board.GetTracks() if x.IsSelected()]
 
         nets.update([track.GetNetname() for track in selected_tracks])
 

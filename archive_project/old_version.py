@@ -33,10 +33,7 @@ class OldVersion(pcbnew.ActionPlugin):
         self.description = "Archive schematics symbols and 3D models"
 
     def Run(self):
-        _pcbnew_frame = \
-            filter(lambda w: w.GetTitle().lower().startswith('pcbnew'),
-                   wx.GetTopLevelWindows()
-                   )[0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
         caption = 'Archive project'
         message = "This plugin works with KiCad 5.1 and higher"
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)

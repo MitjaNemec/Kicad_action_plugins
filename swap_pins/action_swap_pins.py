@@ -86,7 +86,7 @@ class SwapPins(pcbnew.ActionPlugin):
             return
 
         # check if there are precisely two pads selected
-        selected_pads = filter(lambda x: x.IsSelected(), pcbnew.GetBoard().GetPads())
+        selected_pads = [x for x in pcbnew.GetBoard().GetPads() if x.IsSelected()]
         if len(selected_pads) != 2:
             caption = 'Swap pins'
             message = "More or less than 2 pads selected. Please select exactly two pads and run the script again"

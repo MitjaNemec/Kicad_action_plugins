@@ -181,10 +181,10 @@ def swap(board, pad_1, pad_2):
     logger.info("Relevant pins are on units: " + unit_1 + ", " + unit_2)
 
     # get the pages of correcsponding unit
-    page_1 = filter(lambda x: x[1] == unit_1, relevant_sch_files)[0][0]
-    page_1_loc = filter(lambda x: x[1] == unit_1, relevant_sch_files)[0][2]
-    page_2 = filter(lambda x: x[1] == unit_2, relevant_sch_files)[0][0]
-    page_2_loc = filter(lambda x: x[1] == unit_2, relevant_sch_files)[0][2]
+    page_1 = [x for x in relevant_sch_files if x[1] == unit_1][0][0]
+    page_1_loc = [x for x in relevant_sch_files if x[1] == unit_1][0][2]
+    page_2 = [x for x in relevant_sch_files if x[1] == unit_2][0][0]
+    page_2_loc = [x for x in relevant_sch_files if x[1] == unit_2][0][2]
 
     logger.info("Unit 1 on page: " + page_1 +
                 " at: " + str(page_1_loc[0]) + ", " + str(page_1_loc[1]))
