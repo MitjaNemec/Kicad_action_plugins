@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*- 
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Nov  6 2017)
+## Python code generated with wxFormBuilder (version Jun 17 2015)
 ## http://www.wxformbuilder.org/
 ##
-## PLEASE DO *NOT* EDIT THIS FILE!
+## PLEASE DO "NOT" EDIT THIS FILE!
 ###########################################################################
 
 import wx
@@ -19,7 +19,7 @@ class PlaceByReferenceGUI ( wx.Dialog ):
 	def __init__( self, parent ):
 		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Place footprints", pos = wx.DefaultPosition, size = wx.Size( 257,496 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
-		self.SetSizeHints( wx.Size( 257,-1 ), wx.DefaultSize )
+		self.SetSizeHintsSz( wx.Size( 257,-1 ), wx.DefaultSize )
 		
 		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 		
@@ -28,7 +28,7 @@ class PlaceByReferenceGUI ( wx.Dialog ):
 		bSizer3.Add( self.m_staticText2, 0, wx.ALL, 5 )
 		
 		list_modulesChoices = []
-		self.list_modules = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_modulesChoices, 0 )
+		self.list_modules = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_modulesChoices, wx.LB_MULTIPLE|wx.LB_NEEDED_SB )
 		bSizer3.Add( self.list_modules, 1, wx.ALL|wx.EXPAND, 5 )
 		
 		self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )

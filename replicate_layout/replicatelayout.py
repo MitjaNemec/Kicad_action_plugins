@@ -28,8 +28,8 @@ import logging
 import itertools
 import re
 import math
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-import compare_boards
+
+from .compare_boards import compare_boards
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
@@ -980,7 +980,7 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     saved1 = pcbnew.SaveBoard(out_filename, board)
     test_file = out_filename.replace("temp", "test")
     
-    return compare_boards.compare_boards(out_filename, test_file)
+    return compare_boards(out_filename, test_file)
 
 
 def main():

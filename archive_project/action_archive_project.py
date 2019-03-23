@@ -21,16 +21,17 @@
 
 import wx
 import pcbnew
-import archive_project
 import logging
 import os
 import sys
-import archive_project_GUI
-
+# import archive_project
+from .archive_project import archive_symbols, archive_3D_models
+# import archive_project_GUI
+from .archive_project_GUI import ArchiveProjectGUI
 SCALE = 1000000.0
 
 
-class ArchiveProjectDialog (archive_project_GUI.ArchiveProjectGUI):
+class ArchiveProjectDialog (ArchiveProjectGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -41,7 +42,7 @@ class ArchiveProjectDialog (archive_project_GUI.ArchiveProjectGUI):
             # wxPython 4
             super(ArchiveProjectDialog, self).SetSizeHints(sz1, sz2)
     def __init__(self, parent):
-        archive_project_GUI.ArchiveProjectGUI.__init__(self, parent)
+        ArchiveProjectGUI.__init__(self, parent)
         self.Fit()
 
 
@@ -125,7 +126,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
             # archive schematics
             try:
                 logger.info("Starting schematics archiving")
-                archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
+                archive_symbols(board, allow_missing_libraries=False, alt_files=False)
             except (ValueError, IOError, LookupError), error:
                 caption = 'Archive project'
                 message = str(error)
@@ -142,7 +143,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 logger.info(message)
                 if res == wx.ID_YES:
                     logger.info("Retrying schematics archiving")
-                    archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
+                    archive_symbols(board, allow_missing_libraries=True, alt_files=False)
                 else:
                     return
             except Exception:
@@ -158,7 +159,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
         if main_dialog.chkbox_3D.GetValue():
             try:
                 logger.info("Starting 3D model archiving")
-                archive_project.archive_3D_models(board, allow_missing_models=False, alt_files=False)
+                archive_3D_models(board, allow_missing_models=False, alt_files=False)
             except IOError as error:
                 caption = 'Archive project'
                 message = str(error) + "\nContinue?"
@@ -168,7 +169,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 logger.info(message)
                 if res == wx.ID_YES:
                     logger.info("Retrying 3D model archiving")
-                    archive_project.archive_3D_models(board, allow_missing_models=True, alt_files=False)
+                    archive_3D_models(board, allow_missing_models=True, alt_files=False)
                 else:
                     return
 

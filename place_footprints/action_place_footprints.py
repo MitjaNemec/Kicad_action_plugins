@@ -22,24 +22,28 @@
 
 import wx
 import pcbnew
-import place_footprints
 import os
 import logging
 import sys
 import math
 import re
+# import place_footprints
+from .place_footprints import Placer
+# import initial_dialog_GUI
+from .initial_dialog_GUI import InitialDialogGUI
+# import place_by_reference_GUI
+from .place_by_reference_GUI import PlaceByReferenceGUI
+# import place_by_sheet_GUI
+from .place_by_sheet_GUI import PlaceBySheetGUI
 
-import initial_dialog_GUI
-import place_by_reference_GUI
-import place_by_sheet_GUI
 
-def natural_sort(l): 
+def natural_sort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower() 
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
     return sorted(l, key=alphanum_key)
 
 
-class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
+class PlaceBySheet(PlaceBySheetGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -165,7 +169,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
         event.Skip()
 
     def __init__(self, parent, placer, pivot_mod, user_units):
-        place_by_sheet_GUI.PlaceBySheetGUI.__init__(self, parent)
+        PlaceBySheetGUI.__init__(self, parent)
 
         if user_units == 'mm':
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -189,7 +193,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
         self.height, self.width = self.placer.get_modules_bounding_box(modules)
 
 
-class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
+class PlaceByReference(PlaceByReferenceGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -249,7 +253,7 @@ class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
         event.Skip()
 
     def __init__(self, parent, placer, pivot_mod, user_units):
-        place_by_reference_GUI.PlaceByReferenceGUI.__init__(self, parent)
+        PlaceByReferenceGUI.__init__(self, parent)
 
         if user_units == 'mm':
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -278,7 +282,7 @@ class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
             self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
 
 
-class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
+class InitialDialog(InitialDialogGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -290,7 +294,7 @@ class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
             super(InitialDialog, self).SetSizeHints(sz1, sz2)
 
     def __init__(self, parent):
-        initial_dialog_GUI.InitialDialogGUI.__init__(self, parent)
+        InitialDialogGUI.__init__(self, parent)
 
 
 class PlaceFootprints(pcbnew.ActionPlugin):
@@ -365,7 +369,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         dlg = InitialDialog(_pcbnew_frame)
         res = dlg.ShowModal()
 
-        placer = place_footprints.Placer(board)
+        placer = Placer(board)
 
         pivot_module = placer.get_mod_by_ref(pivot_module_reference)
 

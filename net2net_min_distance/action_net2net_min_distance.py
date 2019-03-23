@@ -21,11 +21,12 @@
 
 import wx
 import pcbnew
-import net2net_distance
 import logging
 import os
 import sys
 
+# import net2net_distance
+from .net2net_distance import get_min_distance
 SCALE = 1000000.0
 
 
@@ -98,7 +99,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
             return
 
         try:
-            dis, loc = net2net_distance.get_min_distance(board, list(nets))
+            dis, loc = get_min_distance(board, list(nets))
         except Exception:
             logger.exception("Fatal error when replicating")
             raise

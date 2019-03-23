@@ -22,15 +22,17 @@
 
 import wx
 import pcbnew
-import replicatelayout
 import os
 import logging
 import sys
-import replicate_layout_GUI
+#import replicatelayout
+from .replicatelayout import Replicator
+#import replicate_layout_GUI
+from .replicate_layout_GUI import ReplicateLayoutGUI
 
 
 
-class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
+class ReplicateLayoutDialog(ReplicateLayoutGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -41,7 +43,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
             # wxPython 4
             super(ReplicateLayoutDialog, self).SetSizeHints(sz1, sz2)
     def __init__(self, parent, replicator, mod_ref):
-        replicate_layout_GUI.ReplicateLayoutGUI.__init__(self, parent)
+        ReplicateLayoutGUI.__init__(self, parent)
 
         # Connect Events
         self.Bind(wx.EVT_LISTBOX, self.level_changed, id=26)
@@ -147,7 +149,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         # prepare the replicator
         logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
 
-        replicator = replicatelayout.Replicator(board)
+        replicator = Replicator(board)
         pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
         list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)

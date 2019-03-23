@@ -28,8 +28,7 @@ import logging
 import itertools
 import math
 import re
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-import compare_boards
+from .compare_boards import compare_boards
 
 
 def natural_sort(l): 
@@ -435,7 +434,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
     saved = pcbnew.SaveBoard(out_file, board)
     test_file = out_file.replace("temp", "test")
 
-    return compare_boards.compare_boards(out_file, test_file)
+    return compare_boards(out_file, test_file)
 
 
 def main():

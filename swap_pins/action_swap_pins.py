@@ -22,9 +22,10 @@
 import wx
 import pcbnew
 import os
-import swap_pins
 import logging
 import sys
+#import swap_pins
+from .swap_pins import swap
 
 
 class SwapPins(pcbnew.ActionPlugin):
@@ -110,7 +111,7 @@ class SwapPins(pcbnew.ActionPlugin):
 
         # swap pins
         try:
-            swap_pins.swap(board, pad1, pad2)
+            swap(board, pad1, pad2)
         except Exception:
             logger.exception("Fatal error when swapping units")
             raise
