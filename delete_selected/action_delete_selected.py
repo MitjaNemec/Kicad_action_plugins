@@ -31,16 +31,16 @@ class DeleteLayoutDialog(wx.Dialog):
 
         self.parent = parent
         wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Delete selected", pos = wx.DefaultPosition, size = wx.Size( 223,200 ), style = wx.DEFAULT_DIALOG_STYLE )
-        
+
         bSizer1 = wx.BoxSizer( wx.VERTICAL )
-        
+
         self.m_panel1 = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
         bSizer3 = wx.BoxSizer( wx.VERTICAL )
-        
+
         self.m_staticText1 = wx.StaticText( self.m_panel1, wx.ID_ANY, u"Delete selected", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.m_staticText1.Wrap( -1 )
         bSizer3.Add( self.m_staticText1, 0, wx.ALL, 5 )
-        
+
         self.chkbox_tracks = wx.CheckBox( self.m_panel1, wx.ID_ANY, u"Tracks", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.chkbox_tracks.SetValue(True) 
         bSizer3.Add( self.chkbox_tracks, 0, wx.ALL, 5 )
@@ -73,19 +73,6 @@ class DeleteLayoutDialog(wx.Dialog):
         
         self.Centre( wx.BOTH )
 
-        # bind any numeric key event to function
-        randomId = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.onKeyPressed, id=randomId)
-        accel_tbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, ord('1'), randomId)])
-        self.SetAcceleratorTable(accel_tbl)
-
-        #self.Bind(wx.EVT_KEY_DOWN, self.onKeyPressed)
-
-    def onKeyPressed(self, event):
-        pcbnew.LSET.RemoveLayer(pcbnew.F_Cu)
-        # pcbnew.GetBoard().SetVisibleLayers(layer_mask)
-
-        event.Skip()
 
 class DeleteSelected(pcbnew.ActionPlugin):
     """
@@ -107,16 +94,16 @@ class DeleteSelected(pcbnew.ActionPlugin):
 
         # load board
         board = pcbnew.GetBoard()
-                    
+
         # check if there is anything selected
         all_tracks = board.GetTracks()
         selected_tracks = [x in all_tracks if x.IsSelected()]
-        
+
         all_zones = []
         for zoneid in range(board.GetAreaCount()):
             all_zones.append(board.GetArea(zoneid))
         selected_zones = [x in all_zones if x.IsSelected()]
-        
+
         all_modules = board.GetModules()
         selected_modules = [x in all_modules if x.IsSelected()]
 
@@ -125,17 +112,17 @@ class DeleteSelected(pcbnew.ActionPlugin):
             # show dialog
             dlg = DeleteLayoutDialog(_pcbnew_frame)
             res = dlg.ShowModal()
-            
+
             # if user clicked OK
             if res == wx.ID_OK:
                 if dlg.chkbox_tracks.GetValue():
                     for track in selected_tracks:
                         board.RemoveNative(track)
-                        
+
                 if dlg.chkbox_zones.GetValue():
                     for zone in selected_zones:
                         board.RemoveNative(zone)
-                
+
                 if dlg.chkbox_modules.GetValue():
                     for mod in selected_modules:
                         board.RemoveNative(mod)
@@ -149,5 +136,3 @@ class DeleteSelected(pcbnew.ActionPlugin):
             dlg.Destroy()
 
         pass
-
-
