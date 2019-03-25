@@ -24,8 +24,12 @@ import pcbnew
 import os
 import logging
 import sys
-# import swap_units
-from .swap_units import swap
+
+if __name__ == '__main__':
+    import swap_units
+else:
+    from . import swap_units
+
 
 
 class SwapUnits(pcbnew.ActionPlugin):
@@ -114,7 +118,7 @@ class SwapUnits(pcbnew.ActionPlugin):
 
         # swap pins
         try:
-            swap(board, pad1, pad2)
+            swap_units.swap(board, pad1, pad2)
         except Exception:
             logger.exception("Fatal error when swapping units")
             raise

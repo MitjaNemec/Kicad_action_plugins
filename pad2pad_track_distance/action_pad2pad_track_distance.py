@@ -22,7 +22,10 @@
 import wx
 import pcbnew
 # import pad2pad_track_distance
-from .pad2pad_track_distance import Distance
+if __name__ == '__main__':
+    import pad2pad_track_distance
+else:
+    from . import pad2pad_track_distance
 
 SCALE = 1000000.0
 
@@ -93,7 +96,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             dlg.Destroy()
             return
 
-        measure_distance = Distance(board, selected_pads[0], selected_pads[1])
+        measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
         distance, resistance = measure_distance.get_length()
 
         # trying to show in layout which tracks are taken into account - so far it does not work

@@ -28,13 +28,16 @@ import sys
 import math
 import re
 # import place_footprints
-from .place_footprints import Placer
-# import initial_dialog_GUI
-from .initial_dialog_GUI import InitialDialogGUI
-# import place_by_reference_GUI
-from .place_by_reference_GUI import PlaceByReferenceGUI
-# import place_by_sheet_GUI
-from .place_by_sheet_GUI import PlaceBySheetGUI
+if __name__ == '__main__':
+    import place_footprints
+    import initial_dialog_GUI
+    import place_by_reference_GUI
+    import place_by_sheet_GUI
+else:
+    from . import place_footprints
+    from . import initial_dialog_GUI
+    from . import place_by_reference_GUI
+    from . import place_by_sheet_GUI
 
 
 def natural_sort(l):
@@ -43,16 +46,12 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-class PlaceBySheet(PlaceBySheetGUI):
+class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
-        try:
-            # wxPython 3
-            self.SetSizeHintsSz(sz1, sz2)
-        except TypeError:
-            # wxPython 4
-            super(InitialDialog, self).SetSizeHints(sz1, sz2)
+        # DO nothing
+        pass
 
     # Virtual event handlers, overide them in your derived class
     def level_changed(self, event):
@@ -169,7 +168,7 @@ class PlaceBySheet(PlaceBySheetGUI):
         event.Skip()
 
     def __init__(self, parent, placer, pivot_mod, user_units):
-        PlaceBySheetGUI.__init__(self, parent)
+        place_by_sheet_GUI.PlaceBySheetGUI.__init__(self, parent)
 
         if user_units == 'mm':
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -193,16 +192,12 @@ class PlaceBySheet(PlaceBySheetGUI):
         self.height, self.width = self.placer.get_modules_bounding_box(modules)
 
 
-class PlaceByReference(PlaceByReferenceGUI):
+class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
-        try:
-            # wxPython 3
-            self.SetSizeHintsSz(sz1, sz2)
-        except TypeError:
-            # wxPython 4
-            super(InitialDialog, self).SetSizeHints(sz1, sz2)
+        # DO NOTHING
+        pass
 
     # Virtual event handlers, overide them in your derived class
     def arr_changed(self, event):
@@ -253,7 +248,7 @@ class PlaceByReference(PlaceByReferenceGUI):
         event.Skip()
 
     def __init__(self, parent, placer, pivot_mod, user_units):
-        PlaceByReferenceGUI.__init__(self, parent)
+        place_by_reference_GUI.PlaceByReferenceGUI.__init__(self, parent)
 
         if user_units == 'mm':
             self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -282,19 +277,15 @@ class PlaceByReference(PlaceByReferenceGUI):
             self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
 
 
-class InitialDialog(InitialDialogGUI):
+class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
-        try:
-            # wxPython 3
-            self.SetSizeHintsSz(sz1, sz2)
-        except TypeError:
-            # wxPython 4
-            super(InitialDialog, self).SetSizeHints(sz1, sz2)
+        # DO NOTHING
+        pass
 
     def __init__(self, parent):
-        InitialDialogGUI.__init__(self, parent)
+        initial_dialog_GUI.InitialDialogGUI.__init__(self, parent)
 
 
 class PlaceFootprints(pcbnew.ActionPlugin):
@@ -369,7 +360,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         dlg = InitialDialog(_pcbnew_frame)
         res = dlg.ShowModal()
 
-        placer = Placer(board)
+        placer = place_footprints.Placer(board)
 
         pivot_module = placer.get_mod_by_ref(pivot_module_reference)
 

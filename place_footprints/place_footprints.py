@@ -28,7 +28,12 @@ import logging
 import itertools
 import math
 import re
-from .compare_boards import compare_boards
+
+parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
+if __name__ == '__main__' or parent_module.__name__ == '__main__':
+    import compare_boards
+else:
+    from . import compare_boards
 
 
 def natural_sort(l): 
@@ -434,7 +439,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
     saved = pcbnew.SaveBoard(out_file, board)
     test_file = out_file.replace("temp", "test")
 
-    return compare_boards(out_file, test_file)
+    return compare_boards.compare_boards(out_file, test_file)
 
 
 def main():

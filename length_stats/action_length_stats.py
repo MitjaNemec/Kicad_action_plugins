@@ -27,13 +27,15 @@ import logging
 import sys
 import timeit
 
-# import lenght_stats_GUI
-from .lenght_stats_GUI import LenghtStatsGUI
+if __name__ == '__main__':
+    import lenght_stats_GUI
+else:
+    from . import lenght_stats_GUI
 
 SCALE = 1000000.0
 
 
-class LenghtStatsDialog(LenghtStatsGUI):
+class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -45,7 +47,7 @@ class LenghtStatsDialog(LenghtStatsGUI):
             super(LenghtStatsDialog, self).SetSizeHints(sz1, sz2)
 
     def __init__(self,  parent, board, netname):
-        LenghtStatsGUI.__init__(self, parent)
+        lenght_stats_GUI.LenghtStatsGUI.__init__(self, parent)
 
         self.net_list.InsertColumn(0, 'Net', width=100) 
         self.net_list.InsertColumn(1, 'Length')

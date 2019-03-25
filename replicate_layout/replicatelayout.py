@@ -29,7 +29,11 @@ import itertools
 import re
 import math
 
-from .compare_boards import compare_boards
+parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
+if __name__ == '__main__' or parent_module.__name__ == '__main__':
+    import compare_boards
+else:
+    from . import compare_boards
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
@@ -980,7 +984,7 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     saved1 = pcbnew.SaveBoard(out_filename, board)
     test_file = out_filename.replace("temp", "test")
     
-    return compare_boards(out_filename, test_file)
+    return compare_boards.compare_boards(out_filename, test_file)
 
 
 def main():
