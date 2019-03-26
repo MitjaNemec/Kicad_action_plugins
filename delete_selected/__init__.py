@@ -1,6 +1,8 @@
 try:
-    from .action_delete_selected import DeleteSelected # Note the relative import!
-    DeleteSelected().register() # Instantiate and register to Pcbnew
+    # Note the relative import!
+    from .action_delete_selected import DeleteSelected
+    # Instantiate and register to Pcbnew
+    DeleteSelected().register()
 except Exception as e:
     import os
     plugin_dir = os.path.dirname(os.path.realpath(__file__))
