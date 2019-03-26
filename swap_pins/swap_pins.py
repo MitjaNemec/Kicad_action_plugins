@@ -109,7 +109,7 @@ def swap(board, pad_1, pad_2):
         raise ValueError("No coresponding symbols found in the schematics")
 
     # load the symbol from cache library
-    logger.info("Loooking for: " + relevant_sch_files[0][3] + " in cache.lib")
+    logger.info("Looking for: %s in cache.lib" % relevant_sch_files[0][3])
     with open(cache_file) as f:
         contents = f.read()
         def_indices = [m.start() for m in re.finditer('DEF ', contents)]

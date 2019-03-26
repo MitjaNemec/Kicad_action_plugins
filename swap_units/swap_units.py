@@ -161,6 +161,7 @@ def swap(board, pad_1, pad_2):
     # swap units in schematics
     if page_1 is not None:
         with open(page_1) as f:
+            unit_1_loc = None
             current_sch_file = f.read()
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
@@ -177,11 +178,17 @@ def swap(board, pad_1, pad_2):
                                    + len(data[2].split()[0])\
                                    + 2 + 1
                         break
+
+            # if unit was not found in the file, something is very wrong
+            if unit_1_loc is None:
+                raise LookupError("Did not find unit: %s in file %s" % (unit_1, page_1))
+
             # swap the unit
             unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
 
     if page_2 is not None:
         with open(page_2) as f:
+            unit_2_loc = None
             current_sch_file = f.read()
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
@@ -198,6 +205,11 @@ def swap(board, pad_1, pad_2):
                                    + len(data[2].split()[0])\
                                    + 2 + 1
                         break
+            
+            # if unit was not found in the file, something is very wrong
+            if unit_2_loc is None:
+                raise LookupError("Did not find unit: %s in file %s" % (unit_2, page_2))
+
             # swap the unit
             unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
 
