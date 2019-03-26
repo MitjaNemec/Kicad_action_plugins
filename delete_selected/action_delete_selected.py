@@ -97,15 +97,15 @@ class DeleteSelected(pcbnew.ActionPlugin):
 
         # check if there is anything selected
         all_tracks = board.GetTracks()
-        selected_tracks = [x in all_tracks if x.IsSelected()]
+        selected_tracks = [x for x in all_tracks if x.IsSelected()]
 
         all_zones = []
         for zoneid in range(board.GetAreaCount()):
             all_zones.append(board.GetArea(zoneid))
-        selected_zones = [x in all_zones if x.IsSelected()]
+        selected_zones = [x for x in all_zones if x.IsSelected()]
 
         all_modules = board.GetModules()
-        selected_modules = [x in all_modules if x.IsSelected()]
+        selected_modules = [x for x in all_modules if x.IsSelected()]
 
         # if anything is selected
         if len(selected_tracks) > 0 or len(selected_zones) > 0 or len(selected_modules) > 0:
