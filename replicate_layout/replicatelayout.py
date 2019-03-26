@@ -179,6 +179,7 @@ class Replicator():
         # get relation between sheetname and it's id
         logger.info('getting project hierarchy from schematics')
         self.dict_of_sheets = self.find_all_sch_files(self.sch_filename, {})
+        logger.info("Project hierarchy looks like:\n%s" % repr(self.dict_of_sheets))
 
         # make all paths relative
         for x in self.dict_of_sheets.keys():

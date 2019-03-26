@@ -151,6 +151,8 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         replicator = replicatelayout.Replicator(board)
         pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
+        logger.info("Pivot module is %s\nLocated on:%s\nWith filenames:%s" %(repr(pivot_mod.ref), repr(pivot_mod.sheet_id), repr(pivot_mod.filename)))
+
         list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
         if not list_of_modules:
             caption = 'Replicate Layout'
