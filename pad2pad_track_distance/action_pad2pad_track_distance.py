@@ -21,7 +21,10 @@
 
 import wx
 import pcbnew
-# import pad2pad_track_distance
+import os
+import logging
+import sys
+
 if __name__ == '__main__':
     import pad2pad_track_distance
 else:
@@ -45,10 +48,31 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         self.description = "Measure distance between two selected pads"
 
     def Run(self):
-        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
-
         # load board
         board = pcbnew.GetBoard()
+
+        # go to the project folder - so that log will be in proper place
+        os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
+
+        # set up logger
+        logging.basicConfig(level=logging.DEBUG,
+                            filename="pad2pad_track_distance.log",
+                            filemode='w',
+                            format='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                            datefmt='%m-%d %H:%M:%S',
+                            disable_existing_loggers=False)
+        logger = logging.getLogger(__name__)
+        logger.info("Action plugin Length stats started")
+
+        stdout_logger = logging.getLogger('STDOUT')
+        sl_out = StreamToLogger(stdout_logger, logging.INFO)
+        sys.stdout = sl_out
+
+        stderr_logger = logging.getLogger('STDERR')
+        sl_err = StreamToLogger(stderr_logger, logging.ERROR)
+        sys.stderr = sl_err
+
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
         # get user units
         if pcbnew.GetUserUnits() == 1:
@@ -96,8 +120,20 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             dlg.Destroy()
             return
 
-        measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
-        distance, resistance = measure_distance.get_length()
+        try:
+            measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
+            distance, resistance = measure_distance.get_length()
+        except LookupError as error:
+            caption = 'Pad2Pad Track Distance'
+            message = str(error) 
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logger.info(message)
+            return
+        except Exception:
+            logger.exception("Fatal error when measuring")
+            raise
 
         # trying to show in layout which tracks are taken into account - so far it does not work
         # as the selection is automatically cleared when exiting action plugin
@@ -146,3 +182,21 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
+
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
+
+    def flush(self, *args, **kwargs):
+        """No-op for wrapper"""
+        pass
+

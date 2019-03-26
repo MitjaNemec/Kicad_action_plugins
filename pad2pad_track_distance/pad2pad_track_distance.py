@@ -91,6 +91,10 @@ class Distance:
                 track_res = track.GetLength()/SCALE * (0.0000000168*1000) / (0.035 * track.GetWidth()/SCALE)
                 resistance[i] = resistance[i] + track_res
 
+        # if connection vas not found, raise an exception
+        if not length_alt:
+            raise LookupError("Did not find a connection between pads\nThe connection might be partial or through the zone.")
+
         # find minimum and get only that track list
         min_length = min(length_alt)
         min_res = min(resistance)
