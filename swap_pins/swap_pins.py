@@ -70,6 +70,8 @@ def swap(board, pad_1, pad_2):
     all_sch_files = find_all_sch_files(sch_file, all_sch_files)
     all_sch_files = list(set(all_sch_files))
 
+    logger.info("All schematics files are:\n" + "\n".join(all_sch_files))
+
     # find symbol location (in which file and where in canvas)
     relevant_sch_files = []
     for page in all_sch_files:
