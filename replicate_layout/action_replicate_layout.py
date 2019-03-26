@@ -25,7 +25,7 @@ import pcbnew
 import os
 import logging
 import sys
-#import replicatelayout
+
 if __name__ == '__main__':
     import replicatelayout
     import replicate_layout_GUI
@@ -38,12 +38,9 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
-        try:
-            # wxPython 3
-            self.SetSizeHintsSz(sz1, sz2)
-        except TypeError:
-            # wxPython 4
-            super(ReplicateLayoutDialog, self).SetSizeHints(sz1, sz2)
+        # DO NOTHING
+        pass
+
     def __init__(self, parent, replicator, mod_ref):
         replicate_layout_GUI.ReplicateLayoutGUI.__init__(self, parent)
 
@@ -219,3 +216,7 @@ class StreamToLogger(object):
     def write(self, buf):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
+
+    def flush(self, *args, **kwargs):
+        """No-op for wrapper"""
+        pass
