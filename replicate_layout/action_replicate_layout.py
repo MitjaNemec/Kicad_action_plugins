@@ -151,7 +151,12 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         replicator = replicatelayout.Replicator(board)
         pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
-        logger.info("Pivot module is %s\nLocated on:%s\nWith filenames:%s" %(repr(pivot_mod.ref), repr(pivot_mod.sheet_id), repr(pivot_mod.filename)))
+        logger.info("Pivot module is %s\nLocated on:%s\nWith filenames:%s\nWith sheet_id:%s" \
+                    % (repr(pivot_mod.ref), repr(pivot_mod.sheet_id), repr(pivot_mod.filename), repr(pivot_mod.sheet_id)))
+
+        list_of_modules_with_same_id = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
+        nice_list = [(x.ref, x.sheet_id) for x in list_of_modules_with_same_id]
+        logger.info("Corresponding modules are \n%s" % repr(nice_list))
 
         list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
         if not list_of_modules:

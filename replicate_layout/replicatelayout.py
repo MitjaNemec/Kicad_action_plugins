@@ -394,7 +394,7 @@ class Replicator():
         """ find all net pairs between pivot sheet and current sheet"""
         # find all modules, pads and nets on this sheet
         sheet_modules = self.get_modules_on_sheet(sheet)
-        
+
         # find all net pairs via same modules pads,
         net_pairs = []
         net_dict = {}
@@ -554,7 +554,7 @@ class Replicator():
                 # get relative position with respect to pivot anchor
                 pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
                 pivot_mod_delta_pos = pivot_mod_pos - pivot_anchor_pos
-                
+
                 # new orientation is simple
                 new_orientation = pivot_mod_orientation - anchor_delta_angle
                 old_position = pivot_mod_delta_pos + anchor_pos
@@ -658,13 +658,13 @@ class Replicator():
                             toplayer = max(toplayer, l)
                             bottomlayer = min(bottomlayer, l)
                         newvia.SetLayerPair(toplayer, bottomlayer)
-                        
+
                         # get module to clone position
                         pivot_track_pos = track.GetPosition()
                         # get relative position with respect to pivot anchor
                         pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
                         pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
-                        
+
                         # new orientation is simple
                         old_position = pivot_mod_delta_pos + anchor_pos
                         newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
@@ -682,13 +682,13 @@ class Replicator():
                         newtrack = pcbnew.TRACK(self.board)
                         # need to add before SetNet will work, so just doing it first
                         self.board.Add(newtrack)
-                        
+
                         # get module to clone position
                         pivot_track_pos = track.GetStart()
                         # get relative position with respect to pivot anchor
                         pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
                         pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
-                        
+
                         # new orientation is simple
                         old_position = pivot_mod_delta_pos + anchor_pos
                         newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
@@ -699,7 +699,7 @@ class Replicator():
                         # get relative position with respect to pivot anchor
                         pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
                         pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
-                        
+
                         # new orientation is simple
                         old_position = pivot_mod_delta_pos + anchor_pos
                         newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
