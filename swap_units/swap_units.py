@@ -205,7 +205,7 @@ def swap(board, pad_1, pad_2):
                                    + len(data[2].split()[0])\
                                    + 2 + 1
                         break
-            
+
             # if unit was not found in the file, something is very wrong
             if unit_2_loc is None:
                 raise LookupError("Did not find unit: %s in file %s" % (unit_2, page_2))
@@ -213,6 +213,44 @@ def swap(board, pad_1, pad_2):
             # swap the unit
             unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
 
+    # before saving the schematics, swap the pins in layout
+    # swap pins in layout
+    logger.info("Swapping pins in layout")
+    module = pad_1.GetParent()
+    module_pads = module.PadsList()
+    pins_of_unit_1 = pins_by_unit[int(unit_1) - 1]
+    pins_of_unit_2 = pins_by_unit[int(unit_2) - 1]
+    # generate pretier list of pins, where all the pin data is joined together and serves as a hash for comparison
+    pins_of_unit_1_nice = sorted([x[:3] + ("".join(x[3:9]) + "".join(x[10:]), ) for x in pins_of_unit_1], key=lambda x: x[3])
+    pins_of_unit_2_nice = sorted([x[:3] + ("".join(x[3:9]) + "".join(x[10:]), ) for x in pins_of_unit_2], key=lambda x: x[3])
+    # check if both units have the same number of pins
+    if len(pins_of_unit_1_nice) != len(pins_of_unit_2_nice):
+        raise LookupError("Units to swap have a different pin count")
+    # test if both units have the same pins (all pin data should match)
+    for index in range(len(pins_of_unit_1_nice)):
+        if pins_of_unit_1_nice[index][3] != pins_of_unit_2_nice[index][3]:
+            raise LookupError("Pins in units to swap don't match")
+
+    all_pins_pairs_to_swap_zip = zip(pins_of_unit_1_nice, pins_of_unit_2_nice)
+    for pair_to_swap in all_pins_pairs_to_swap_zip:
+        for pad in module_pads:
+            if pad.GetName() == pair_to_swap[0][2]:
+                pad_x = pad
+            if pad.GetName() == pair_to_swap[1][2]:
+                pad_y = pad
+        net_x = pad_x.GetNet()
+        net_y = pad_y.GetNet()
+        pad_x.SetNet(net_y)
+        pad_y.SetNet(net_x)
+
+    # save board
+    if __name__ == "__main__":
+        pcb_file_to_write = 'temp_' + board.GetFileName()
+        pcbnew.SaveBoard(pcb_file_to_write, board)
+    logger.info("Saved the layout.")
+
+    # save the schematics
+    logger.info("Save the schematics")
     # if files are the same, then merge two strings
     if page_1 == page_2:
         # reswap in cascade swap the unit
@@ -241,28 +279,6 @@ def swap(board, pad_1, pad_2):
                 with open(page_2, 'w') as f:
                     f.write(unit_2_sch_file)
     logger.info("Saved the schematics.")
-
-    # swap pins in layout
-    module = pad_1.GetParent()
-    module_pads = module.PadsList()
-    pins_of_unit_1 = pins_by_unit[int(unit_1) - 1]
-    pins_of_unit_2 = pins_by_unit[int(unit_2) - 1]
-    for pins_to_swap in zip(pins_of_unit_1, pins_of_unit_2):
-        for pad in module_pads:
-            if pad.GetName() == pins_to_swap[0][2]:
-                pad_x = pad
-            if pad.GetName() == pins_to_swap[1][2]:
-                pad_y = pad
-        net_x = pad_x.GetNet()
-        net_y = pad_y.GetNet()
-        pad_x.SetNet(net_y)
-        pad_y.SetNet(net_x)
-
-    # save board
-    if __name__ == "__main__":
-        pcb_file_to_write = 'temp_' + board.GetFileName()
-        pcbnew.SaveBoard(pcb_file_to_write, board)
-    logger.info("Saved the layout.")
 
 
 def extract_subsheets(filename):
