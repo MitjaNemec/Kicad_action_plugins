@@ -162,7 +162,7 @@ class LengthStats(pcbnew.ActionPlugin):
         for mod in modules:
             pads = mod.Pads()
             nets.update([pad.GetNetname() for pad in pads if pad.IsSelected()])
-
+    
         dlg = LenghtStatsDialog(_pcbnew_frame, board, list(nets))
 
         dlg.Show()
@@ -180,7 +180,7 @@ class StreamToLogger(object):
     def write(self, buf):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
-    
+
     def flush(self, *args, **kwargs):
         """No-op for wrapper"""
         pass
