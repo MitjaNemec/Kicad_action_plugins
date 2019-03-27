@@ -134,7 +134,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
             try:
                 logger.info("Starting schematics archiving")
                 archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
-            except (ValueError, IOError, LookupError), error:
+            except (ValueError, IOError, LookupError) as error:
                 caption = 'Archive project'
                 message = str(error)
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
