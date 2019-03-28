@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 2 3
+Sheet 2 4
 Title ""
 Date ""
 Rev ""
@@ -294,4 +294,10 @@ F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 4650 5050 50  0001 C CNN
 	2    4600 4850
 	1    0    0    -1  
 $EndComp
+$Sheet
+S 6900 4650 950  700 
+U 5C9CB8DC
+F0 "Level2b" 50
+F1 "Level_2.sch" 50
+$EndSheet
 $EndSCHEMATC
