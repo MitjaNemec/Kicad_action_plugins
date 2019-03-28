@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import pcbnew
 import os
 import os.path
@@ -268,7 +269,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
             tested_components_hash.add(hash_value)
             project_archive_file_output.extend(project_archive_file[loc[0]:loc[1]])
         else:
-            print "found one duplicate"
+            print("found one duplicate")
     # add remaining lines
     project_archive_file_output.extend(project_archive_file[stop_indeces[-1]:])
 
