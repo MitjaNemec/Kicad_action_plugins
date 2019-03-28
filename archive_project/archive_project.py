@@ -525,14 +525,14 @@ def main():
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=True)
     except (ValueError, IOError, LookupError), error:
-        print str(error)
+        print(str(error))
     except NameError as error:
-        print str(error)
+        print(str(error))
     try:
         archive_3D_models(board, allow_missing_models=False, alt_files=True)
     except IOError as error:
         archive_3D_models(board, allow_missing_models=True, alt_files=True)
-        print str(error)
+        print(str(error))
     saved = pcbnew.SaveBoard(board.GetFileName().replace(".kicad_pcb", "_temp.kicad_pcb"), board)
 
 # for testing purposes only
