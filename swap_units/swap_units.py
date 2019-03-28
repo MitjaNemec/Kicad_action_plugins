@@ -62,7 +62,7 @@ def swap(board, pad_1, pad_2):
         if footprint_reference in current_sch_file:
             relevant_sch_files.append(page)
 
-    logger.info("Sch files to modify are: " + relevant_sch_files[0])
+    logger.info("Sch files to modify are: " + repr(relevant_sch_files))
 
     # link refernce to symbol
     with open(relevant_sch_files[0]) as f:
@@ -147,13 +147,24 @@ def swap(board, pad_1, pad_2):
             if footprint_reference in current_sch_file:
                 components = current_sch_file.split('$Comp')
                 for component in components:
-                    if footprint_reference in component:
-                        for fields in filter(None, component.split('\n')):
-                            if fields[0] == 'U':
-                                if fields.split()[1] == unit_1:
-                                    page_1 = page
-                                if fields.split()[1] == unit_2:
-                                    page_2 = page
+                    component_lines = component.split('\n')
+                    L_line = [x for x in component_lines if x.startswith("L ")]
+                    U_line = [x for x in component_lines if x.startswith("U ")]
+                    AR_lines = [x for x in component_lines if x.startswith("AR ")]
+                    if not AR_lines and L_line:
+                        if L_line[0].split()[2] == footprint_reference:
+                            if U_line[0].split()[1] == unit_1:
+                                page_1 = page
+                            if U_line[0].split()[1] == unit_2:
+                                page_2 = page
+                    if AR_lines:
+                        check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
+                        if check:
+                            if U_line[0].split()[1] == unit_1:
+                                page_1 = page
+                            if U_line[0].split()[1] == unit_2:
+                                page_2 = page
+
     logger.info("Files where the unites are:\n\t"
                 + page_1 or "None" + "\n\t"
                 + page_2 or "None")
@@ -168,16 +179,35 @@ def swap(board, pad_1, pad_2):
             comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
             for comp in zip(comp_starts, comp_ends):
                 data = current_sch_file[comp[0]:comp[1]].split('\n')
-                if footprint_reference in data[1]:
-                    if unit_1 in data[2].split()[1]:
-                        # +2 +1 account for splits
-                        unit_1_loc = data[2].split()[1].find(unit_1)\
-                                   + comp[0]\
-                                   + len(data[0])\
-                                   + len(data[1])\
-                                   + len(data[2].split()[0])\
-                                   + 2 + 1
-                        break
+                # filter lines so that
+                L_line = [x for x in data if x.startswith("L ")][0]
+                AR_lines = [x for x in data if x.startswith("AR ")]
+                # if there is no multiple hierarchy, get the unit location
+                # it is easy to check for reference
+                if not AR_lines:
+                    if L_line.split()[2] == footprint_reference:
+                        if unit_1 in data[2].split()[1]:
+                            # +2 +1 account for splits
+                            unit_1_loc = data[2].split()[1].find(unit_1)\
+                                       + comp[0]\
+                                       + len(data[0])\
+                                       + len(data[1])\
+                                       + len(data[2].split()[0])\
+                                       + 2 + 1
+                            break
+                # if there is multiple hierarchy, test is somewhat more complex
+                else:
+                    check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
+                    if check:
+                        if unit_1 in data[2].split()[1]:
+                            # +2 +1 account for splits
+                            unit_1_loc = data[2].split()[1].find(unit_1)\
+                                       + comp[0]\
+                                       + len(data[0])\
+                                       + len(data[1])\
+                                       + len(data[2].split()[0])\
+                                       + 2 + 1
+                            break
 
             # if unit was not found in the file, something is very wrong
             if unit_1_loc is None:
@@ -195,16 +225,35 @@ def swap(board, pad_1, pad_2):
             comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
             for comp in zip(comp_starts, comp_ends):
                 data = current_sch_file[comp[0]:comp[1]].split('\n')
-                if footprint_reference in data[1]:
-                    if unit_2 in data[2].split()[1]:
-                        # +2 +1 account for splits
-                        unit_2_loc = data[2].split()[1].find(unit_2)\
-                                   + comp[0]\
-                                   + len(data[0])\
-                                   + len(data[1])\
-                                   + len(data[2].split()[0])\
-                                   + 2 + 1
-                        break
+                # filter lines so that
+                L_line = [x for x in data if x.startswith("L ")][0]
+                AR_lines = [x for x in data if x.startswith("AR ")]
+                # if there is no multiple hierarchy, get the unit location
+                # it is easy to check for reference
+                if not AR_lines:
+                    if L_line.split()[2] == footprint_reference:
+                        if unit_2 in data[2].split()[1]:
+                            # +2 +1 account for splits
+                            unit_2_loc = data[2].split()[1].find(unit_2)\
+                                       + comp[0]\
+                                       + len(data[0])\
+                                       + len(data[1])\
+                                       + len(data[2].split()[0])\
+                                       + 2 + 1
+                            break
+                # if there is multiple hierarchy, test is somewhat more complex
+                else:
+                    check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
+                    if check:
+                        if unit_2 in data[2].split()[1]:
+                            # +2 +1 account for splits
+                            unit_2_loc = data[2].split()[1].find(unit_2)\
+                                       + comp[0]\
+                                       + len(data[0])\
+                                       + len(data[1])\
+                                       + len(data[2].split()[0])\
+                                       + 2 + 1
+                            break
 
             # if unit was not found in the file, something is very wrong
             if unit_2_loc is None:
@@ -336,7 +385,8 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
-    test_list = ['same_sheet', 'different_sheets']
+    # test_list = ['same_sheet', 'different_sheets', 'different_sheets_different_hierarchy']
+    test_list = ['different_sheets_different_hierarchy']
     # same_sheet, different_sheets
     for test in test_list:
         if test == 'same_sheet':
@@ -360,6 +410,16 @@ def main():
                     pad2 = pad
             swap(board, pad1, pad2)
 
+        if test == 'different_sheets_different_hierarchy':
+            board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
+            mod = board.FindModuleByReference('U3')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'1':
+                    pad1 = pad
+                if pad.GetPadName() == u'14':
+                    pad2 = pad
+            swap(board, pad1, pad2)
 
 # for testing purposes only
 if __name__ == "__main__":
