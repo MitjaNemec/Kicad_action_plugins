@@ -255,4 +255,21 @@ Text GLabel 2300 3600 0    50   Input ~ 0
 RB5
 Text GLabel 4300 2600 2    50   Input ~ 0
 RB6
+$Comp
+L Amplifier_Operational:LM324 U3
+U 1 1 5C9D5CD8
+P 4000 6400
+F 0 "U3" H 4000 6600 50  0000 L CNN
+F 1 "LM324" H 4000 6200 50  0000 L CNN
+F 2 "Package_DIP:DIP-14_W7.62mm" H 3950 6500 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 4050 6600 50  0001 C CNN
+	1    4000 6400
+	1    0    0    -1  
+$EndComp
+Text GLabel 4300 6400 2    50   Input ~ 0
+A2
+Wire Wire Line
+	3700 6300 3500 6300
+Text GLabel 3500 6300 0    50   Input ~ 0
+A6
 $EndSCHEMATC
