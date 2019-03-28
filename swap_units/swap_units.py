@@ -166,8 +166,8 @@ def swap(board, pad_1, pad_2):
                                 page_2 = page
 
     logger.info("Files where the unites are:\n\t"
-                + page_1 or "None" + "\n\t"
-                + page_2 or "None")
+                + (page_1 or "None") + "\n\t"
+                + (page_2 or "None"))
 
     # swap units in schematics
     if page_1 is not None:
