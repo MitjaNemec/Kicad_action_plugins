@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 3
+Sheet 1 4
 Title ""
 Date ""
 Rev ""
@@ -251,4 +251,15 @@ Wire Wire Line
 	5700 3400 5700 3100
 Wire Wire Line
 	5700 3100 4750 3100
+$Comp
+L Amplifier_Operational:LM324 U3
+U 1 1 5C9CC657
+P 4300 6550
+F 0 "U3" H 4300 6750 50  0000 L CNN
+F 1 "LM324" H 4300 6350 50  0000 L CNN
+F 2 "Package_DIP:DIP-14_W7.62mm" H 4250 6650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" H 4350 6750 50  0001 C CNN
+	1    4300 6550
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
