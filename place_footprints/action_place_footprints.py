@@ -323,8 +323,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                             filename="place_footprints.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                            datefmt='%m-%d %H:%M:%S',
-                            disable_existing_loggers=False)
+                            datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
         logger.info("Action plugin Place footprints started")
 

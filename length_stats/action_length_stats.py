@@ -137,8 +137,7 @@ class LengthStats(pcbnew.ActionPlugin):
                             filename="length_stats.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                            datefmt='%m-%d %H:%M:%S',
-                            disable_existing_loggers=False)
+                            datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
         logger.info("Action plugin Length stats started")
 

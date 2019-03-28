@@ -112,8 +112,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                             filename="replicate_layout.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                            datefmt='%m-%d %H:%M:%S',
-                            disable_existing_loggers=False)
+                            datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
         logger.info("Action plugin Replicate layout started")
 

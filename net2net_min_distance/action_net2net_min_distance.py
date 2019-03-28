@@ -64,8 +64,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
                             filename="net2et distance.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                            datefmt='%m-%d %H:%M:%S',
-                            disable_existing_loggers=False)
+                            datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
         logger.info("Action plugin Net2net distance started")
 
