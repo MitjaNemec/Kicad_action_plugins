@@ -18,7 +18,7 @@
 #  MA 02110-1301, USA.
 #
 #
-
+from __future__ import absolute_import, division, print_function
 import pcbnew
 import os
 import math
@@ -89,12 +89,20 @@ def swap(board, pad_1, pad_2):
             for comp_location in component_locations:
                 component_reference = contents[comp_location[0]:comp_location[1]].split('\n')
                 symbol_name = None
+                sym_name_temp = None
                 for line in component_reference:
+                    # if there is no multiple hierarchy there is only one reference
+                    # and it is in the line starting with "L "
                     if line.startswith('L '):
-                        if footprint_reference == line.split()[2]:
-                            symbol_name = line.split()[1]
-                        else:
-                            break
+                        sym_name_temp = line.split()[1]
+                        if line.split()[2] == footprint_reference:
+                            symbol_name = sym_name_temp
+                    # if there are multiple hierachic pages, there are multiple references
+                    # stored in line starting with "AR "
+                    if line.startswith('AR '):
+                        if line.split()[2].split("\"")[1] == footprint_reference:
+                            symbol_name = sym_name_temp
+
                 if symbol_name is not None:
                     for line in component_reference:
                         if line.startswith('U '):
@@ -106,7 +114,7 @@ def swap(board, pad_1, pad_2):
                             break
 
     # if no symbol has been found raise an expcetion
-    if relevant_sch_files is None:
+    if not relevant_sch_files:
         logger.info("No coresponding symbols found in the schematics")
         raise ValueError("No coresponding symbols found in the schematics")
 
@@ -160,19 +168,19 @@ def swap(board, pad_1, pad_2):
             symbol_pins.append(tuple(field.split()))
 
     # select only relevant pins
-    relevant_pins = []
+    relevant_pins = [(), ()]
     for pin in symbol_pins:
         if pin[2] == pad_nr_1:
-            relevant_pins.append(pin)
+            relevant_pins[0] = pin
         if pin[2] == pad_nr_2:
-            relevant_pins.append(pin)
+            relevant_pins[1] = pin
 
     logger.info("Relevant pins are: name: " + relevant_pins[0][1] + ", number: " + relevant_pins[0][2] + "; " +
                                    "name: " + relevant_pins[1][1] + ", number: " + relevant_pins[1][2])
 
     unit_1 = relevant_pins[0][9]
     unit_2 = relevant_pins[1][9]
-    
+
     # check wheather any of the pins to swap are marked as common pins in multi unit symbol
     if unit_1 == "0" or unit_2 == "0":
         logger.info("Swapping common pins of multi unit symbol is not supported!\n" +
@@ -247,6 +255,7 @@ def swap(board, pad_1, pad_2):
 
     # remove duplicates
     list_line_1 = list(set(list_line_1))
+    logger.info("list_line_1="+repr(list_line_1))
     # find closest label
     if len(list_line_1) == 0:
         line_1 = None
@@ -278,7 +287,7 @@ def swap(board, pad_1, pad_2):
 
     # remove duplicates
     list_line_2 = list(set(list_line_2))
-
+    logger.info("list_line_2="+repr(list_line_2))
     # find closest label
     if len(list_line_2) == 0:
         line_2 = None
@@ -451,9 +460,10 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def main():
-    test_list = ('local', 'local_partial', 'global', 'global_partial_vertical',
+    """ test_list = ('local', 'local_partial', 'global', 'global_partial_vertical',
                  'hierarchical', 'across_hierarchy', 'across_hierarchy_wire', 'across_hierarchy_partial_wire',
-                 'label_orientation_both', 'label_orientation_single')
+                 'label_orientation_both', 'label_orientation_single', 'across_multiple_hierarchy')"""
+    test_list = ('across_multiple_hierarchy', )
     # local - swap two local labels
     # local_partial - swap one local label
     # global - swap two global labels
@@ -464,6 +474,7 @@ def main():
     # across_hierarchy_partial_wire - swap one label connected thorugh wire across hierarchical levels
     # label_orientation_both ??
     # label_orientation_single ??
+    # across_multiple_hierarchy - test pinswap across multiple hierarchy
     for test in test_list:
 
         if test == 'local':
@@ -537,9 +548,9 @@ def main():
             mod = board.FindModuleByReference('U1')
             pads = mod.Pads()
             for pad in pads:
-                if pad.GetPadName() == u'3':
-                    pad1 = pad
                 if pad.GetPadName() == u'10':
+                    pad1 = pad
+                if pad.GetPadName() == u'3':
                     pad2 = pad
             logger.info("Testing across_hierarchy_wire")
             swap(board, pad1, pad2)
@@ -576,6 +587,17 @@ def main():
                     pad2 = pad
             logger.info("Testing label_orientation_single")
             swap(board, pad1, pad2)
+        if test == 'across_multiple_hierarchy':
+            board = pcbnew.LoadBoard('swap_pins_test.kicad_pcb')
+            mod = board.FindModuleByReference('U3')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'10':
+                    pad1 = pad
+                if pad.GetPadName() == u'3':
+                    pad2 = pad
+            logger.info("Testing across_multiple_hierarhy")
+            swap(board, pad1, pad2)
 
 
 # for testing purposes only
@@ -583,18 +605,16 @@ if __name__ == "__main__":
     # if debugging outside of this folder change the folder
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    file_handler = logging.FileHandler(filename='swap_pins_V2.log', mode='w')
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    handlers = [file_handler, stdout_handler]
-    # handlers = [file_handler]
-
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                        datefmt='%m-%d %H:%M:%S',
-                        handlers=handlers
-                        )
-
-    logger = logging.getLogger(__name__)
-    logger.info("Swap pins plugin started in standalone mode")
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(fmt='%(asctime)s %(name)s %(lineno)d:%(message)s',
+                                  datefmt='%m-%d %H:%M:%S')
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(formatter)
+    fh = logging.FileHandler("swap_pins.log", "w")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(ch)
+    logger.addHandler(fh)
 
     main()
