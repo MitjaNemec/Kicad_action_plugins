@@ -220,9 +220,12 @@ class Replicator():
             sheet_id_up_to_level.append(sheet_id[i])
             if sheet_id[i] == level:
                 break
+        logger.debug("Sheet ids up to the level:" + repr(sheet_id_up_to_level))
 
         # dobodi vse footprinte z istim ID-jem
         list_of_modules = self.get_list_of_modules_with_same_id(mod.mod_id)
+        logger.debug("Modules on the sheets:\n" + repr([x.ref for x in list_of_modules]))
+
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
 
@@ -237,6 +240,7 @@ class Replicator():
                     if m.filename[i] == level_file:
                         break
                 all_sheets.append(sheet_id_list)
+        logger.debug("All sheets to replicate:\n" + repr(all_sheets))
 
         # remove duplicates
         all_sheets.sort()
@@ -246,7 +250,8 @@ class Replicator():
         if sheet_id_up_to_level in all_sheets:
             index = all_sheets.index(sheet_id_up_to_level)
             del all_sheets[index]
-        logger.info("suitable sheets are:"+repr(all_sheets))
+        logger.info("All sheets to replicate sorted and without pivot_sheet:\n" + repr(all_sheets))
+
         return all_sheets
 
     def get_modules_on_sheet(self, level):
