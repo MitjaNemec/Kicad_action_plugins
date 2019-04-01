@@ -116,7 +116,7 @@ def swap(board, pad_1, pad_2):
     # if no symbol has been found raise an expcetion
     if not relevant_sch_files:
         logger.info("No coresponding symbols found in the schematics")
-        raise ValueError("No coresponding symbols found in the schematics")
+        raise LookupError("No coresponding symbols found in the schematics")
 
     # load the symbol from cache library
     logger.info("Looking for: %s in cache.lib" % relevant_sch_files[0][3])
@@ -152,7 +152,7 @@ def swap(board, pad_1, pad_2):
         # here I should test if symbol was found
         if symbol is None:
             logger.info("Did not find symbol in the cache library. Cache library is not fresh")
-            raise ValueError("Did not find symbol in the cache library. Cache library is not fresh")
+            raise LookupError("Did not find symbol in the cache library. Cache library is not fresh")
 
     # get the number of units
     for field in symbol:
@@ -299,7 +299,7 @@ def swap(board, pad_1, pad_2):
 
     # swap the labels
     if line_1 is None and line_2 is None:
-        logger.info("It makes no sense in swapping two disconneted pins!")
+        logger.info("Could not find the pins connection. \nEither the pins are disconnected or they are connected through short wire segment\nand net name was overriden by some other label.")
         raise ValueError("It makes no sense in swapping two disconneted pins!")
     # if both pins are connected, just swap them
     # if pins are on the same page
