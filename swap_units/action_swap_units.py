@@ -81,7 +81,7 @@ class SwapUnits(pcbnew.ActionPlugin):
         sys.stderr = sl
 
         if is_eecshema_open:
-            caption = 'Swap pins'
+            caption = 'Swap units'
             message = "You need to close eeschema and then run the plugin again!"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
@@ -91,11 +91,11 @@ class SwapUnits(pcbnew.ActionPlugin):
 
         # load board
         board = pcbnew.GetBoard()
-                    
+
         # check if there are precisely two pads selected
         selected_pads = [x for x in pcbnew.GetBoard().GetPads() if x.IsSelected()]
         if len(selected_pads) != 2:
-            caption = 'Swap pins'
+            caption = 'Swap units'
             message = "More or less than 2 pads selected. Please select exactly two pads and run the script again"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
@@ -107,7 +107,7 @@ class SwapUnits(pcbnew.ActionPlugin):
         pad1 = selected_pads[0]
         pad2 = selected_pads[1]
         if pad1.GetParent().GetReference() != pad2.GetParent().GetReference():
-            caption = 'Swap pins'
+            caption = 'Swap units'
             message = "Pads don't belong to the same footprint"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
@@ -118,11 +118,18 @@ class SwapUnits(pcbnew.ActionPlugin):
         # swap pins
         try:
             swap_units.swap(board, pad1, pad2)
+        except LookupError as error:
+            caption = 'Swap units'
+            message = str(error)
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logger.exception("Gracefully hnadled error while running")
         except Exception:
             logger.exception("Fatal error when swapping units")
             raise
 
-        
+
 class StreamToLogger(object):
     """
     Fake file-like stream object that redirects writes to a logger instance.
