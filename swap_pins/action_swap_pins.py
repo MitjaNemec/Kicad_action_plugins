@@ -114,6 +114,13 @@ class SwapPins(pcbnew.ActionPlugin):
         # swap pins
         try:
             swap_pins.swap(board, pad1, pad2)
+        except (ValueError, LookupError) as error:
+            caption = 'Swap pins'
+            message = str(error)
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logger.exception("Gracefully handled error while running")
         except Exception:
             logger.exception("Fatal error when swapping units")
             raise

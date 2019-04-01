@@ -247,6 +247,7 @@ def swap(board, pad_1, pad_2):
                     list_line_1.append((line, next_line_1, line_index_1, 0.0))
                     logger.info("Found label at pin 1")
                 # or if label text matches the net name and is close enoght
+                # TODO if the label does not match the net name then we have a problem
                 if next_line_1.rstrip() == net_name_1:
                     label_location = (line_fields[2], line_fields[3])
                     distance = get_distance(pin_1_loc, label_location)
