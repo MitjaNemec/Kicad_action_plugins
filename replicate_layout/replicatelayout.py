@@ -209,6 +209,7 @@ class Replicator():
         return list_of_modules
 
     def get_sheets_to_replicate(self, mod, level):
+        # TODO - tukaj nekje tici htosc
         sheet_id = mod.sheet_id
         sheet_file = mod.filename
         # poisci level_id
@@ -245,6 +246,7 @@ class Replicator():
         # remove duplicates
         all_sheets.sort()
         all_sheets = list(k for k, _ in itertools.groupby(all_sheets))
+        logger.debug("All sheets to replicate sorted:\n" + repr(all_sheets))
 
         # remove pivot_sheet
         if sheet_id_up_to_level in all_sheets:
