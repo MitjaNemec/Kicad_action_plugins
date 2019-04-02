@@ -524,7 +524,7 @@ def main():
     board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=True)
-    except (ValueError, IOError, LookupError), error:
+    except (ValueError, IOError, LookupError) as error:
         print(str(error))
     except NameError as error:
         print(str(error))
