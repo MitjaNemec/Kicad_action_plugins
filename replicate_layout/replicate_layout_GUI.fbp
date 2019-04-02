@@ -45,7 +45,7 @@
             <property name="name">ReplicateLayoutGUI</property>
             <property name="pos"></property>
             <property name="size">257,491</property>
-            <property name="style">wxDEFAULT_DIALOG_STYLE</property>
+            <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; forward_declare</property>
             <property name="title">Replicate layout</property>
             <property name="tooltip"></property>

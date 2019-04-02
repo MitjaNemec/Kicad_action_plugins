@@ -45,7 +45,7 @@
             <property name="name">PlaceByReferenceGUI</property>
             <property name="pos"></property>
             <property name="size">257,496</property>
-            <property name="style">wxDEFAULT_DIALOG_STYLE</property>
+            <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; forward_declare</property>
             <property name="title">Place footprints</property>
             <property name="tooltip"></property>
@@ -516,6 +516,8 @@
                                 <property name="window_style"></property>
                                 <event name="OnChar"></event>
                                 <event name="OnCombobox">arr_changed</event>
+                                <event name="OnComboboxCloseup"></event>
+                                <event name="OnComboboxDropdown"></event>
                                 <event name="OnEnterWindow"></event>
                                 <event name="OnEraseBackground"></event>
                                 <event name="OnKeyDown"></event>

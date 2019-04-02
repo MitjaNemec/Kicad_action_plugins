@@ -110,7 +110,6 @@ class Replicator():
                 if line.startswith('U '):
                     subsheet_id = line.split()[1]
                 # found sheet name
-                # TODO handle spaces properly
                 if line.startswith('F0 '):
                     # remove the first field ("F0 ")
                     partial_line = line.lstrip("F0 ")

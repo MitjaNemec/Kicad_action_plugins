@@ -45,7 +45,7 @@
             <property name="name">LenghtStatsGUI</property>
             <property name="pos"></property>
             <property name="size">353,478</property>
-            <property name="style">wxDEFAULT_DIALOG_STYLE</property>
+            <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; forward_declare</property>
             <property name="title">Lenght stats</property>
             <property name="tooltip"></property>

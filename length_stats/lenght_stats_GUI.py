@@ -17,7 +17,7 @@ import wx.xrc
 class LenghtStatsGUI ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Lenght stats", pos = wx.DefaultPosition, size = wx.Size( 353,478 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Lenght stats", pos = wx.DefaultPosition, size = wx.Size( 353,478 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 		
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 		
