@@ -1,0 +1,120 @@
+EESchema Schematic File Version 4
+EELAYER 29 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 2
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Module:LAUNCHXL-F28379D U1
+U 1 1 5CA30270
+P 4400 3800
+F 0 "U1" H 4500 6300 50  0000 L CNN
+F 1 "LAUNCHXL-F28379D" H 4500 6200 50  0000 L CNN
+F 2 "Module:28379D_launchpad" H 4500 6100 50  0001 L CNN
+F 3 "http://www.ti.com/lit/ug/sprui77a/sprui77a.pdf" H 3400 6500 50  0001 L CNN
+	1    4400 3800
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR0101
+U 1 1 5CA317DA
+P 4100 1100
+F 0 "#PWR0101" H 4100 950 50  0001 C CNN
+F 1 "+3.3V" H 4100 1240 50  0000 C CNN
+F 2 "" H 4100 1100 50  0001 C CNN
+F 3 "" H 4100 1100 50  0001 C CNN
+	1    4100 1100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4100 1100 4100 1200
+Wire Wire Line
+	4100 1200 4200 1200
+Wire Wire Line
+	4200 1200 4200 1300
+Connection ~ 4100 1200
+Wire Wire Line
+	4100 1200 4100 1300
+$Comp
+L power:+5V #PWR0102
+U 1 1 5CA33D60
+P 3800 1100
+F 0 "#PWR0102" H 3800 950 50  0001 C CNN
+F 1 "+5V" H 3800 1240 50  0000 C CNN
+F 2 "" H 3800 1100 50  0001 C CNN
+F 3 "" H 3800 1100 50  0001 C CNN
+	1    3800 1100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3800 1100 3800 1200
+Wire Wire Line
+	3800 1200 3900 1200
+Wire Wire Line
+	3900 1200 3900 1300
+Connection ~ 3800 1200
+Wire Wire Line
+	3800 1200 3800 1300
+$Comp
+L Passives:GND #PWR0103
+U 1 1 5CA34F09
+P 4000 6500
+F 0 "#PWR0103" H 4000 6350 50  0001 C CNN
+F 1 "GND" H 4150 6450 50  0001 C CNN
+F 2 "" H 4000 6500 50  0001 C CNN
+F 3 "" H 4000 6500 50  0001 C CNN
+	1    4000 6500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4000 6500 4000 6400
+Wire Wire Line
+	4000 6400 4100 6400
+Wire Wire Line
+	4300 6400 4300 6300
+Connection ~ 4000 6400
+Wire Wire Line
+	4000 6400 4000 6300
+Wire Wire Line
+	4200 6300 4200 6400
+Connection ~ 4200 6400
+Wire Wire Line
+	4200 6400 4300 6400
+Wire Wire Line
+	4100 6300 4100 6400
+Connection ~ 4100 6400
+Wire Wire Line
+	4100 6400 4200 6400
+$Sheet
+S 7000 2400 1000 1000
+U 5CA367A0
+F0 "Leg1" 50
+F1 "Leg.sch" 50
+F2 "HIN" I L 7000 2800 50 
+F3 "LIN" I L 7000 2900 50 
+F4 "TOK" O R 8000 2900 50 
+$EndSheet
+Wire Wire Line
+	7000 2800 5700 2800
+Wire Wire Line
+	5700 2900 7000 2900
+Wire Wire Line
+	8000 2900 8200 2900
+Wire Wire Line
+	8200 2900 8200 800 
+Wire Wire Line
+	8200 800  2700 800 
+Wire Wire Line
+	2700 800  2700 3000
+Wire Wire Line
+	2700 3000 3100 3000
+$EndSCHEMATC
