@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 0)
+    (drawings 1)
     (tracks 48)
     (zones 0)
     (modules 31)
@@ -34,7 +34,7 @@
   )
 
   (setup
-    (last_trace_width 0.6)
+    (last_trace_width 0.25)
     (user_trace_width 0.4)
     (user_trace_width 0.6)
     (user_trace_width 1)
@@ -63,7 +63,7 @@
     (pad_to_mask_clearance 0.051)
     (solder_mask_min_width 0.25)
     (aux_axis_origin 0 0)
-    (visible_elements 7FFFFFFF)
+    (visible_elements 7FFFFF7F)
     (pcbplotparams
       (layerselection 0x010fc_ffffffff)
       (usegerberextensions false)
@@ -307,7 +307,7 @@
     (tags "SOIC 1.27")
     (path /5CA3706F/5CA3CA6D)
     (attr smd)
-    (fp_text reference U2 (at 0 -3.5 90) (layer F.SilkS)
+    (fp_text reference U2 (at -3.81 -3.81 180) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value IR2181 (at 0 3.5 90) (layer F.Fab) hide
@@ -361,7 +361,7 @@
     (tags "capacitor 1206")
     (path /5CA3706F/5CA3A2D0)
     (attr smd)
-    (fp_text reference R2 (at 0 -1.75 90) (layer F.SilkS)
+    (fp_text reference R2 (at 0 1.905 180) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value 22R (at 0 2 90) (layer F.Fab) hide
@@ -397,7 +397,7 @@
     (tags "capacitor 1206")
     (path /5CA3706F/5CA39EA2)
     (attr smd)
-    (fp_text reference R1 (at 0 -1.75 90) (layer F.SilkS)
+    (fp_text reference R1 (at 0 1.905 180) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value 22R (at 0 2 90) (layer F.Fab) hide
@@ -523,7 +523,7 @@
     (tags "Diode Mini-MELF")
     (path /5CA3706F/5CA6C201)
     (attr smd)
-    (fp_text reference D1 (at 0 -2 270) (layer F.SilkS)
+    (fp_text reference D1 (at -3.81 0.635) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value LL4148 (at 0 1.75 270) (layer F.Fab) hide
@@ -603,7 +603,7 @@
     (tags "capacitor 1206")
     (path /5CA3706F/5CA6C200)
     (attr smd)
-    (fp_text reference C2 (at 0 -1.75 180) (layer F.SilkS)
+    (fp_text reference C2 (at 0 1.905 180) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value 100n (at 0 2 180) (layer F.Fab) hide
@@ -639,7 +639,7 @@
     (tags "capacitor 1206")
     (path /5CA3706F/5CA3F09F)
     (attr smd)
-    (fp_text reference C1 (at 0 -1.75) (layer F.SilkS)
+    (fp_text reference C1 (at 0 1.905) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value 100n (at 0 2) (layer F.Fab) hide
@@ -1691,6 +1691,10 @@
     )
   )
 
+  (gr_text TEXT (at 180.34 63.5) (layer F.SilkS)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+
   (segment (start 172.085 74.525) (end 171.68 74.93) (width 0.6) (layer F.Cu) (net 1))
   (segment (start 172.085 71.915) (end 172.085 74.525) (width 0.6) (layer F.Cu) (net 1))
   (segment (start 178.000003 57.649999) (end 176.030001 57.649999) (width 0.6) (layer F.Cu) (net 1))
@@ -1725,6 +1729,8 @@
   (segment (start 170.18 50.8) (end 172.315 52.935) (width 0.6) (layer F.Cu) (net 4))
   (segment (start 172.085 63.73) (end 172.315 63.5) (width 0.6) (layer F.Cu) (net 4))
   (segment (start 172.085 66.515) (end 172.085 63.73) (width 0.6) (layer F.Cu) (net 4))
+  (segment (start 167.41 34.29) (end 167.64 34.06) (width 0.6) (layer B.Cu) (net 5))
+  (segment (start 165.1 34.29) (end 167.41 34.29) (width 0.6) (layer B.Cu) (net 5))
   (segment (start 165.1 50.8) (end 165.1 55.65) (width 1) (layer F.Cu) (net 10))
   (segment (start 177.878 55.572) (end 177.8 55.65) (width 1) (layer F.Cu) (net 11))
   (segment (start 177.878 50.8) (end 177.878 55.572) (width 1) (layer F.Cu) (net 11))
@@ -1737,7 +1743,29 @@
   (segment (start 174.255 71.915) (end 173.355 71.915) (width 0.6) (layer F.Cu) (net 64))
   (segment (start 177.8 68.37) (end 174.255 71.915) (width 0.6) (layer F.Cu) (net 64))
   (segment (start 177.8 58.65) (end 177.8 68.37) (width 0.6) (layer F.Cu) (net 64))
-  (segment (start 167.41 34.29) (end 167.64 34.06) (width 0.6) (layer B.Cu) (net 5))
-  (segment (start 165.1 34.29) (end 167.41 34.29) (width 0.6) (layer B.Cu) (net 5))
 
+  (zone (net 4) (net_name "Net-(C2-Pad1)") (layer F.Cu) (tstamp 0) (hatch edge 0.508)
+    (connect_pads yes (clearance 0.508))
+    (min_thickness 0.254)
+    (fill yes (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (polygon
+      (pts
+        (xy 169.545 41.275) (xy 181.61 41.275) (xy 181.61 52.07) (xy 168.91 52.07) (xy 168.91 41.275)
+      )
+    )
+    (filled_polygon
+      (pts
+        (xy 181.483 50.37451) (xy 181.44521 50.499087) (xy 181.415573 50.8) (xy 181.43531 51.000401) (xy 181.429342 51.006369)
+        (xy 181.393657 51.035655) (xy 181.276815 51.178028) (xy 181.189994 51.34046) (xy 181.163237 51.428666) (xy 181.13653 51.516708)
+        (xy 181.118477 51.699999) (xy 181.123001 51.745931) (xy 181.123001 51.943) (xy 179.36786 51.943) (xy 179.403812 51.824482)
+        (xy 179.416072 51.7) (xy 179.416072 49.9) (xy 179.403812 49.775518) (xy 179.367502 49.65582) (xy 179.308537 49.545506)
+        (xy 179.229185 49.448815) (xy 179.132494 49.369463) (xy 179.02218 49.310498) (xy 178.902482 49.274188) (xy 178.778 49.261928)
+        (xy 176.978 49.261928) (xy 176.853518 49.274188) (xy 176.73382 49.310498) (xy 176.623506 49.369463) (xy 176.526815 49.448815)
+        (xy 176.447463 49.545506) (xy 176.388498 49.65582) (xy 176.352188 49.775518) (xy 176.339928 49.9) (xy 176.339928 51.7)
+        (xy 176.352188 51.824482) (xy 176.38814 51.943) (xy 169.037 51.943) (xy 169.037 51.442677) (xy 169.065017 51.390261)
+        (xy 169.15279 51.100913) (xy 169.182427 50.8) (xy 169.15279 50.499087) (xy 169.065017 50.209739) (xy 169.037 50.157323)
+        (xy 169.037 41.402) (xy 181.483 41.402)
+      )
+    )
+  )
 )
