@@ -223,9 +223,12 @@ class Replicator():
                 break
         logger.debug("Sheet ids up to the level:" + repr(sheet_id_up_to_level))
 
-        # dobodi vse footprinte z istim ID-jem
+        # get all footprints with same ID
         list_of_modules = self.get_list_of_modules_with_same_id(mod.mod_id)
         logger.debug("Modules on the sheets:\n" + repr([x.ref for x in list_of_modules]))
+
+        # log all modules sheet id
+        logger.debug("Modules sheet ids:\n" + repr([x.sheet_id for x in list_of_modules]))
 
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
