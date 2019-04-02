@@ -97,7 +97,11 @@ class Placer():
                     subsheet_id = line.split()[1]
                 # found sheet name
                 if line.startswith('F0 '):
-                    subsheet_name = line.split()[1].rstrip("\"").lstrip("\"")
+                    # remove the first field ("F0 ")
+                    partial_line = line.lstrip("F0 ")
+                    partial_line = " ".join(partial_line.split()[:-1])
+                    # remove the last field (text size)
+                    subsheet_name = partial_line.rstrip("\"").lstrip("\"")
                 # found sheet filename
                 if line.startswith('F1 '):
                     subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
