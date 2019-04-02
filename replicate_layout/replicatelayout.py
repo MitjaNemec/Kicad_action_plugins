@@ -110,8 +110,13 @@ class Replicator():
                 if line.startswith('U '):
                     subsheet_id = line.split()[1]
                 # found sheet name
+                # TODO handle spaces properly
                 if line.startswith('F0 '):
-                    subsheet_name = line.split()[1].rstrip("\"").lstrip("\"")
+                    # remove the first field ("F0 ")
+                    partial_line = line.lstrip("F0 ")
+                    partial_line = " ".join(partial_line.split()[:-1])
+                    # remove the last field (text size)
+                    subsheet_name = partial_line.rstrip("\"").lstrip("\"")
                 # found sheet filename
                 if line.startswith('F1 '):
                     subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
@@ -228,7 +233,7 @@ class Replicator():
         logger.debug("Modules on the sheets:\n" + repr([x.ref for x in list_of_modules]))
 
         # log all modules sheet id
-        logger.debug("Modules sheet ids:\n" + repr([x.sheet_id for x in list_of_modules]))
+        logger.debug("Modules raw sheet ids:\n" + repr([x.mod.GetPath() for x in list_of_modules]))
 
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
