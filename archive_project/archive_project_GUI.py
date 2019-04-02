@@ -17,7 +17,7 @@ import wx.xrc
 class ArchiveProjectGUI ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Archive project", pos = wx.DefaultPosition, size = wx.Size( 224,159 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Archive project", pos = wx.DefaultPosition, size = wx.Size( 224,159 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 		
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 		
