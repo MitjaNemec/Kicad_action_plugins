@@ -264,7 +264,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     tested_components_hash = set()
     for loc in component_locations:
         component = project_archive_file[loc[0]:loc[1]]
-        hash_value = hashlib.md5("".join(component)).hexdigest()
+        hash_value = hashlib.md5("".join(component).encode('utf-8')).hexdigest()
         if hash_value not in tested_components_hash:
             tested_components_hash.add(hash_value)
             project_archive_file_output.extend(project_archive_file[loc[0]:loc[1]])
