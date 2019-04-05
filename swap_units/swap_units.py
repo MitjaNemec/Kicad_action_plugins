@@ -173,6 +173,7 @@ def swap(board, pad_1, pad_2):
     if page_1 is not None:
         with open(page_1) as f:
             unit_1_loc = None
+            unit_1ar_loc = []
             current_sch_file = f.read()
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
@@ -200,6 +201,7 @@ def swap(board, pad_1, pad_2):
                     check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
                     if check:
                         if unit_1 in data[2].split()[1]:
+                            # replace unit number in  U line
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
                                        + comp[0]\
@@ -207,6 +209,15 @@ def swap(board, pad_1, pad_2):
                                        + len(data[1])\
                                        + len(data[2].split()[0])\
                                        + 2 + 1
+                            # find all AR unit number locations
+                            for ar_line in AR_lines:
+                                if "Part=\""+unit_1+"\"" in ar_line:
+                                    data_index = data.index(ar_line)
+                                    unit_1ar_loc.append(  len("\n".join(data[0:data_index]))\
+                                                        + len(data[data_index].split("Part=\"")[0])\
+                                                        + data[data_index].split("Part=\"")[1].find(unit_1)\
+                                                        + comp[0]\
+                                                        + 6 + 1)
                             break
 
             # if unit was not found in the file, something is very wrong
@@ -215,10 +226,14 @@ def swap(board, pad_1, pad_2):
 
             # swap the unit
             unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
+            for ar_loc in unit_1ar_loc:
+                unit_1_sch_file = unit_1_sch_file[:ar_loc] + unit_2 + unit_1_sch_file[ar_loc + len(unit_1):]
 
-    if page_2 is not None:
+    # if page_1 == page_2 do not swap again
+    if (page_2 is not None) and (page_2 != page_1):
         with open(page_2) as f:
             unit_2_loc = None
+            unit_2ar_loc = []
             current_sch_file = f.read()
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
@@ -253,6 +268,15 @@ def swap(board, pad_1, pad_2):
                                        + len(data[1])\
                                        + len(data[2].split()[0])\
                                        + 2 + 1
+                            # find all AR unit number locations
+                            for ar_line in AR_lines:
+                                if "Part=\""+unit_2+"\"" in ar_line:
+                                    data_index = data.index(ar_line)
+                                    unit_2ar_loc.append(  len("\n".join(data[0:data_index]))\
+                                                        + len(data[data_index].split("Part=\"")[0])\
+                                                        + data[data_index].split("Part=\"")[1].find(unit_2)\
+                                                        + comp[0]\
+                                                        + 6 + 1)
                             break
 
             # if unit was not found in the file, something is very wrong
@@ -261,6 +285,9 @@ def swap(board, pad_1, pad_2):
 
             # swap the unit
             unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
+            # data = current_sch_file[comp[0]:comp[1]].split('\n')
+            for ar_loc in unit_2ar_loc:
+                unit_2_sch_file = unit_2_sch_file[:ar_loc] + unit_1 + unit_2_sch_file[ar_loc + len(unit_2):]
 
     # before saving the schematics, swap the pins in layout
     # swap pins in layout
@@ -294,7 +321,7 @@ def swap(board, pad_1, pad_2):
 
     # save board
     if __name__ == "__main__":
-        pcb_file_to_write = 'temp_' + board.GetFileName()
+        pcb_file_to_write = board.GetFileName().replace(".kicad_pcb", "_temp.kicad_pcb")
         pcbnew.SaveBoard(pcb_file_to_write, board)
     logger.info("Saved the layout.")
 
@@ -302,11 +329,8 @@ def swap(board, pad_1, pad_2):
     logger.info("Save the schematics")
     # if files are the same, then merge two strings
     if page_1 == page_2:
-        # reswap in cascade swap the unit
-        unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
-        unit_2_sch_file = unit_1_sch_file[:unit_2_loc] + unit_1 + unit_1_sch_file[unit_2_loc+len(unit_2):]
         if __name__ == "__main__":
-            with open(page_2+'_alt', 'w') as f:
+            with open(page_2.replace(".sch", "_temp.sch"), 'w') as f:
                 f.write(unit_2_sch_file)
         else:
             with open(page_2, 'w') as f:
@@ -315,10 +339,10 @@ def swap(board, pad_1, pad_2):
     else:
         if __name__ == "__main__":
             if page_1 is not None:
-                with open(page_1+'_alt', 'w') as f:
+                with open(page_1.replace(".sch", "_temp.sch"), 'w') as f:
                     f.write(unit_1_sch_file)
             if page_2 is not None:
-                with open(page_2+'_alt', 'w') as f:
+                with open(page_2.replace(".sch", "_temp.sch"), 'w') as f:
                     f.write(unit_2_sch_file)
         else:
             if page_1 is not None:
