@@ -383,6 +383,21 @@ class Replicator():
                     pivot_text.append(drawing)
         return pivot_text
 
+    def get_drawings(self, bounding_box, containing):
+        # get all drawings in pivot bounding box
+        pivot_drawings = []
+        for drawing in self.board.GetDrawings():
+            if not isinstance(drawing, pcbnew.DRAWSEGMENT):
+                continue
+            dwg_bb = drawing.GetBoundingBox()
+            if containing:
+                if bounding_box.Contains(dwg_bb):
+                    pivot_drawings.append(drawing)
+            else:
+                if bounding_box.Intersects(dwg_bb):
+                    pivot_drawings.append(drawing)
+        return pivot_drawings
+
     def get_sheet_anchor_module(self, sheet):
         # get all modules on this sheet
         mod_sheet = self.get_modules_on_sheet(sheet)
@@ -524,8 +539,9 @@ class Replicator():
         # get pivot text items
         logger.info("Getting pivot text items")
         self.pivot_text = self.get_text_items(self.pivot_bounding_box, containing)
-
-        a = 2
+        # get pivot drawings
+        logger.info("Getting pivot text items")
+        self.pivot_drawings = self.get_drawings(self.pivot_bounding_box, containing)
 
     def replicate_modules(self):
         logger.info("Replicating modules")
@@ -874,6 +890,30 @@ class Replicator():
                 newtext.SetPosition(pcbnew.wxPoint(*newposition))
                 self.board.Add(newtext)
 
+    def replicate_drawings(self):
+        logger.info("Replicating drawings")
+        for sheet in self.sheets_for_replication:
+            logger.info("Replicating drawings on sheet " + repr(sheet))
+            # get anchor module
+            anchor_mod = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to pivot module
+            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            # get exact anchor position
+            anchor_pos = anchor_mod.mod.GetPosition()
+
+            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+
+            # go through all the drawings
+            for drawing in self.pivot_drawings:
+
+                new_drawing = drawing.Duplicate()
+                new_drawing.Move(anchor_delta_pos)
+                new_drawing.Rotate(anchor_pos, -anchor_delta_angle * 10)
+                
+                self.board.Add(new_drawing)
+
+
     def remove_zones_tracks(self, containing):
         for sheet in self.sheets_for_replication:
             # get modules on a sheet
@@ -941,8 +981,26 @@ class Replicator():
                     if bounding_box.Intersects(text_bb):
                         self.board.RemoveNative(drawing)
 
+            # from all drawing items on the board
+            for drawing in self.board.GetDrawings():
+                if not isinstance(drawing, pcbnew.DRAWSEGMENT):
+                    continue
+                # ignore text in the pivot sheet
+                if drawing in self.pivot_drawings:
+                    continue
+
+                # add text in/intersecting with the replicated bounding box to
+                # the list for removal.
+                dwg_bb = drawing.GetBoundingBox()
+                if containing:
+                    if bounding_box.Contains(dwg_bb):
+                        self.board.RemoveNative(drawing)
+                else:
+                    if bounding_box.Intersects(dwg_bb):
+                        self.board.RemoveNative(drawing)
+
     def replicate_layout(self, pivot_mod, level, sheets_for_replication,
-                         containing, remove, tracks, zones, text):
+                         containing, remove, tracks, zones, text, drawings):
         logger.info( "Starting replication of sheets: " + repr(sheets_for_replication)
                     +"\non level: " + repr(level)
                     +"\nwith tracks="+repr(tracks)+", zone="+repr(zones)+", text="+repr(text)
@@ -968,6 +1026,8 @@ class Replicator():
             self.replicate_zones()
         if text:
             self.replicate_text()
+        if drawings:
+            self.replicate_drawings()
 
 def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containing, remove):
     board = pcbnew.LoadBoard(in_filename)
@@ -999,7 +1059,7 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
 
     # now we are ready for replication
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
-                                 containing=containing, remove=remove, tracks=True, zones=True, text=True)
+                                 containing=containing, remove=remove, tracks=True, zones=True, text=True, drawings=True)
 
     saved1 = pcbnew.SaveBoard(out_filename, board)
     test_file = out_filename.replace("temp", "test")

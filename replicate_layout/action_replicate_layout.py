@@ -188,6 +188,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             rep_tracks = dlg.chkbox_tracks.GetValue()
             rep_zones = dlg.chkbox_zones.GetValue()
             rep_text = dlg.chkbox_text.GetValue()
+            rep_drawings = dlg.chkbox_drawings.GetValue()
         else:
             logger.info("User canceled the dialog")
             return
@@ -207,7 +208,8 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                                         remove=remove_existing_nets_zones,
                                         tracks=rep_tracks,
                                         zones=rep_zones,
-                                        text=rep_text)
+                                        text=rep_text,
+                                        drawings=rep_drawings)
             logger.info("Replication complete")
             pcbnew.Refresh()
         except Exception:

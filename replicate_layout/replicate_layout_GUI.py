@@ -17,9 +17,9 @@ import wx.xrc
 class ReplicateLayoutGUI ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 257,491 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 313,492 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 		
-		self.SetSizeHints( wx.Size( 257,409 ), wx.DefaultSize )
+		self.SetSizeHints( wx.Size( 313,409 ), wx.DefaultSize )
 		
 		bSizer14 = wx.BoxSizer( wx.VERTICAL )
 		
@@ -31,7 +31,7 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 		
 		list_levelsChoices = []
 		self.list_levels = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_levelsChoices, 0 )
-		bSizer18.Add( self.list_levels, 0, wx.ALL|wx.EXPAND, 5 )
+		bSizer18.Add( self.list_levels, 1, wx.ALL|wx.EXPAND, 5 )
 		
 		
 		bSizer14.Add( bSizer18, 1, wx.EXPAND, 5 )
@@ -44,7 +44,7 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 		
 		list_sheetsChoices = []
 		self.list_sheets = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_sheetsChoices, wx.LB_MULTIPLE|wx.LB_NEEDED_SB )
-		bSizer16.Add( self.list_sheets, 0, wx.ALL|wx.EXPAND, 5 )
+		bSizer16.Add( self.list_sheets, 1, wx.ALL|wx.EXPAND, 5 )
 		
 		
 		bSizer14.Add( bSizer16, 2, wx.EXPAND, 5 )
@@ -61,10 +61,14 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 		self.chkbox_text.SetValue(True) 
 		bSizer14.Add( self.chkbox_text, 0, wx.ALL, 5 )
 		
-		self.chkbox_intersecting = wx.CheckBox( self, wx.ID_ANY, u"Replicate intersecting tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkbox_drawings = wx.CheckBox( self, wx.ID_ANY, u"Replicate drawings", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkbox_drawings.SetValue(True) 
+		bSizer14.Add( self.chkbox_drawings, 0, wx.ALL, 5 )
+		
+		self.chkbox_intersecting = wx.CheckBox( self, wx.ID_ANY, u"Replicate intersecting tracks/zones/drawings", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer14.Add( self.chkbox_intersecting, 0, wx.ALL, 5 )
 		
-		self.chkbox_remove = wx.CheckBox( self, wx.ID_ANY, u"Remove existing tracks/zones", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkbox_remove = wx.CheckBox( self, wx.ID_ANY, u"Remove existing tracks/zones/drawings", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer14.Add( self.chkbox_remove, 0, wx.ALL, 5 )
 		
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )

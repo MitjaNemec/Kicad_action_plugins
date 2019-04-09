@@ -1,8 +1,8 @@
-(kicad_pcb (version 20171130) (host pcbnew "(6.0.0-rc1-dev-1691-g44cb979e9)")
+(kicad_pcb (version 20171130) (host pcbnew "(5.1.0)-1")
 
   (general
     (thickness 1.6)
-    (drawings 1)
+    (drawings 8)
     (tracks 89)
     (zones 0)
     (modules 72)
@@ -3265,6 +3265,13 @@
     )
   )
 
+  (gr_poly (pts (xy 92.71 57.15) (xy 92.075 59.055) (xy 93.98 59.055) (xy 93.345 57.785) (xy 93.345 57.15)) (layer F.SilkS) (width 0.1))
+  (gr_arc (start 98.425 62.865) (end 99.695 62.865) (angle -71.56505118) (layer F.SilkS) (width 0.15))
+  (gr_circle (center 99.695 59.055) (end 100.33 59.69) (layer F.Fab) (width 0.15))
+  (gr_line (start 97.79 63.5) (end 95.25 65.405) (layer F.SilkS) (width 0.15))
+  (gr_line (start 97.79 63.5) (end 94.615 62.865) (layer F.SilkS) (width 0.15))
+  (gr_line (start 98.425 61.595) (end 99.06 63.5) (layer F.Fab) (width 0.15))
+  (gr_line (start 94.615 63.5) (end 98.425 61.595) (layer F.Fab) (width 0.15))
   (gr_text A (at 98.425 66.675 90) (layer F.Fab)
     (effects (font (size 3 3) (thickness 0.5)))
   )
@@ -3433,6 +3440,17 @@
       (pts
         (xy 98.933 23.547606) (xy 98.933 37.412394) (xy 96.467394 39.878) (xy 90.222606 39.878) (xy 87.757 37.412394)
         (xy 87.757 23.547606) (xy 88.317606 22.987) (xy 98.372394 22.987)
+      )
+    )
+  )
+  (zone (net 0) (net_name "") (layer F.Cu) (tstamp 0) (hatch edge 0.508)
+    (connect_pads (clearance 0.508))
+    (min_thickness 0.254)
+    (keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed))
+    (fill (arc_segments 32) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (polygon
+      (pts
+        (xy 87.63 56.515) (xy 89.535 56.515) (xy 89.535 58.42) (xy 87.63 58.42)
       )
     )
   )
