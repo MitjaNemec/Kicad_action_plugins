@@ -35,6 +35,11 @@ if __name__ == '__main__' or parent_module.__name__ == '__main__':
 else:
     from . import compare_boards
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
 
 def natural_sort(l): 
     convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -183,8 +188,8 @@ class Placer():
             path = self.dict_of_sheets[x][1]
             self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
 
-        # construct a list of modules with all pertinent data 
-        logger.info('getting a list of all modules on board') 
+        # construct a list of modules with all pertinent data
+        logger.info('getting a list of all modules on board')
         bmod = board.GetModules()
         self.modules = []
         mod_dict = {}
@@ -192,7 +197,7 @@ class Placer():
             mod_named_tuple = Module(mod=module,
                                      mod_id=self.get_module_id(module),
                                      sheet_id=self.get_sheet_id(module)[0],
-                                     filename=self.get_sheet_id(module)[1], 
+                                     filename=self.get_sheet_id(module)[1],
                                      ref=module.GetReference())
             mod_dict[module.GetReference()] = mod_named_tuple
             self.modules.append(mod_named_tuple)
@@ -477,6 +482,7 @@ def main():
 
     print ("all tests passed")
 
+
 # for testing purposes only
 if __name__ == "__main__":
     # if debugging outside of this folder change the folder
@@ -493,6 +499,6 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("Place footprints plugin started in standalone mode")
+    logger.info("Place footprints plugin version: " + VERSION + " started in standalone mode")
 
     main()

@@ -29,6 +29,10 @@ import math
 logger = logging.getLogger(__name__)
 SCALE = 1000000.0
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
 
 def segments_distance(x11, y11, x12, y12, x21, y21, x22, y22):
     """ distance between two segments in the plane:
@@ -170,6 +174,6 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("Net2net plugin started in standalone mode")
+    logger.info("Net2net plugin version: " + VERSION + " started in standalone mode")
 
     main()

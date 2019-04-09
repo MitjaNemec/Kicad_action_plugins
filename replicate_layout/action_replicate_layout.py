@@ -33,6 +33,11 @@ else:
     from . import replicatelayout
     from . import replicate_layout_GUI
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
 
 class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
@@ -114,7 +119,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
-        logger.info("Action plugin Replicate layout started")
+        logger.info("Replicate layout plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')
         sl_out = StreamToLogger(stdout_logger, logging.INFO)

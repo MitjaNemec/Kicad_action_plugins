@@ -27,6 +27,11 @@ import sys
 
 logger = logging.getLogger(__name__)
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
 
 def swap(board, pad_1, pad_2):
     logger.info("Starting swap_units")
@@ -462,6 +467,7 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("Swap units plugin started in standalone mode")
+    logger.info("Swap units plugin version: " + VERSION + " started in standalone mode")
+
 
     main()

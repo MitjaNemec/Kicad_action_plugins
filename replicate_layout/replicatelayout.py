@@ -38,6 +38,11 @@ else:
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
 
 def rotate_around_center(coordinates, angle):
     """ rotate coordinates for a defined angle in degrees around coordinate center"""
@@ -1041,6 +1046,6 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("Replicate layout plugin started in standalone mode")
+    logger.info("Replicate layout plugin version: " + VERSION + " started in standalone mode")
 
     main()

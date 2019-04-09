@@ -34,6 +34,10 @@ else:
 
 SCALE = 1000000.0
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
 
 class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
@@ -139,7 +143,7 @@ class LengthStats(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
-        logger.info("Action plugin Length stats started")
+        logger.info("Length stats plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')
         sl_out = StreamToLogger(stdout_logger, logging.INFO)

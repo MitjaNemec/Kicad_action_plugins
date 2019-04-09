@@ -31,6 +31,10 @@ else:
     from . import net2net_distance
 SCALE = 1000000.0
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
 
 class Net2NedDistance(pcbnew.ActionPlugin):
     """
@@ -66,7 +70,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
-        logger.info("Action plugin Net2net distance started")
+        logger.info("Net2net distance plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')
         sl_out = StreamToLogger(stdout_logger, logging.INFO)

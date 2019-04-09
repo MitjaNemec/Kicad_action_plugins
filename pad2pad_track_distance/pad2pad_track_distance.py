@@ -29,6 +29,11 @@ SCALE = 1000000.0
 
 logger = logging.getLogger(__name__)
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
 
 class Distance:
     def __init__(self, board, pad1, pad2):
@@ -186,7 +191,7 @@ def test(board, pad1, pad2):
 
 
 def main():
-    
+
     # test_board = "trivial"
     board = pcbnew.LoadBoard('En_mostic_test.kicad_pcb')
     module_1 = board.FindModuleByReference("R2")
@@ -265,6 +270,6 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("pad2pad distance plugin started in standalone mode")
+    logger.info("pad2pad distance plugin version: " + VERSION + " started in standalone mode")
 
     main()

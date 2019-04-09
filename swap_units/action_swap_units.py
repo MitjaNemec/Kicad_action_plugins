@@ -30,6 +30,10 @@ if __name__ == '__main__':
 else:
     from . import swap_units
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
 
 
 class SwapUnits(pcbnew.ActionPlugin):
@@ -70,7 +74,7 @@ class SwapUnits(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
-        logger.info("Action plugin Swap units started")
+        logger.info("Swap units plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')
         sl = StreamToLogger(stdout_logger, logging.INFO)

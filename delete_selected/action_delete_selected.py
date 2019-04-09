@@ -27,6 +27,10 @@ if __name__ == '__main__':
 else:
     from . import delete_selected_GUI
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
 
 class DeleteLayoutDialog(delete_selected_GUI.DeleteSelectedGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython

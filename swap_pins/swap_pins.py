@@ -29,6 +29,12 @@ import sys
 
 logger = logging.getLogger(__name__)
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
+
 def str_diff(str1, str2):
     num_diffs = 0
     diff_str = ""
@@ -617,5 +623,7 @@ if __name__ == "__main__":
     fh.setFormatter(formatter)
     logger.addHandler(ch)
     logger.addHandler(fh)
+
+    logger.info("Swap pins plugin version: " + VERSION + " started in standalone mode")
 
     main()
