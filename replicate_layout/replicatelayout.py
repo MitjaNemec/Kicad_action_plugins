@@ -863,32 +863,10 @@ class Replicator():
             anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
 
             for text in self.pivot_text:
-                pivot_position = text.GetPosition()
-                pivot_angle = text.GetTextAngle() / 10   # Returned in deci-degrees.
-                newtext = text.Duplicate()
-
-                # get module to clone position
-                pivot_text_pos = pivot_position
-                # get relative position with respect to pivot anchor
-                pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
-                pivot_mod_delta_pos = pivot_text_pos - pivot_anchor_pos
-
-                # new orientation is simple
-                old_position = pivot_mod_delta_pos + anchor_pos
-                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-                new_orientation = pivot_angle - anchor_delta_angle
-
-                # Calculate new angle.
-                if new_orientation > 360.0:
-                    new_orientation = new_orientation - 360
-                if new_orientation < 0.0:
-                    new_orientation = new_orientation + 360
-                newtext.SetTextAngle(new_orientation * 10)  # Set in deci-degrees.
-
-                # Update position and add to board.
-                newposition = [int(x) for x in newposition]
-                newtext.SetPosition(pcbnew.wxPoint(*newposition))
-                self.board.Add(newtext)
+                new_text = text.Duplicate()
+                new_text.Move(anchor_delta_pos)
+                new_text.Rotate(anchor_pos, -anchor_delta_angle * 10)
+                self.board.Add(new_text)
 
     def replicate_drawings(self):
         logger.info("Replicating drawings")
