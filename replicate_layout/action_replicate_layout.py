@@ -140,7 +140,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         # if more or less than one show only a messagebox
         if len(selected_names) != 1:
             caption = 'Replicate Layout'
-            message = "More or less than 1 module selected. Please select exactly one module and run the script again"
+            message = "More or less than 1 footprints selected. Please select exactly one footprint and run the script again"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
@@ -152,7 +152,25 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         # prepare the replicator
         logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
 
-        replicator = replicatelayout.Replicator(board)
+        try:
+            replicator = replicatelayout.Replicator(board)
+        except LookupError as exception:
+            caption = 'Replicate Layout'
+            message = str(exception)
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+        except Exception:
+            logger.exception("Fatal error when making an instance of replicator")
+            caption = 'Replicate Layout'
+            message = "Fatal error when making an instance of replicator.\n"\
+                    + "You can raise an issue on GiHub page.\n" \
+                    + "Please attach the replicate_layout.log which you should find in the project folder."
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
         pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
         logger.info("Pivot module is %s\nLocated on:%s\nWith filenames:%s\nWith sheet_id:%s" \
@@ -213,8 +231,15 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             logger.info("Replication complete")
             pcbnew.Refresh()
         except Exception:
-            logger.exception("Fatal error when replicating")
-            raise
+            logger.exception("Fatal error when making an instance of replicator")
+            caption = 'Replicate Layout'
+            message = "Fatal error when making an instance of replicator.\n"\
+                    + "You can raise an issue on GiHub page.\n" \
+                    + "Please attach the replicate_layout.log which you should find in the project folder."
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
 
 
 class StreamToLogger(object):

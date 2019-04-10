@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #  replicate_layout_V2.py
 #
-# Copyright (C) 2019 Mitja Nemec, Stephen Walker-Weinshenker
+# Copyright (C) 2019 Mitja Nemec, Stephen Walker-Weinshenker, Hildo Guillardi Júnior
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -184,6 +184,10 @@ class Replicator():
         self.pcb_filename = os.path.abspath(board.GetFileName())
         self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".sch")
         self.project_folder = os.path.dirname(self.pcb_filename)
+
+        # test if sch file exist
+        if not os.path.isfile(self.sch_filename):
+            raise LookupError("Schematics file " + self.sch_filename + " does not exist!")
 
         # get relation between sheetname and it's id
         logger.info('getting project hierarchy from schematics')
