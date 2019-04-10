@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 2
+Sheet 1 6
 Title ""
 Date ""
 Rev ""
@@ -95,15 +95,6 @@ Wire Wire Line
 Connection ~ 4100 6400
 Wire Wire Line
 	4100 6400 4200 6400
-$Sheet
-S 7000 2400 1000 1000
-U 5CA367A0
-F0 "Leg1" 50
-F1 "Leg.sch" 50
-F2 "HIN" I L 7000 2800 50 
-F3 "LIN" I L 7000 2900 50 
-F4 "TOK" O R 8000 2900 50 
-$EndSheet
 Wire Wire Line
 	7000 2800 5700 2800
 Wire Wire Line
@@ -118,4 +109,34 @@ Wire Wire Line
 	2700 800  2700 3000
 Wire Wire Line
 	2700 3000 3100 3000
+$Sheet
+S 7000 3650 1000 1000
+U 5CADA2A6
+F0 "power" 50
+F1 "Power.sch" 50
+F2 "OUT" O R 8000 4050 50 
+F3 "QH" I L 7000 3950 50 
+F4 "Ql" I L 7000 4150 50 
+$EndSheet
+$Sheet
+S 7000 2450 1000 1000
+U 5CADA6B4
+F0 "Leg" 50
+F1 "Leg.sch" 50
+F2 "QH" I L 7000 2800 50 
+F3 "QL" I L 7000 2900 50 
+F4 "Current" O R 8000 2900 50 
+$EndSheet
+Wire Wire Line
+	7000 3950 6750 3950
+Wire Wire Line
+	6750 3950 6750 3000
+Wire Wire Line
+	6750 3000 5700 3000
+Wire Wire Line
+	7000 4150 6650 4150
+Wire Wire Line
+	6650 4150 6650 3100
+Wire Wire Line
+	6650 3100 5700 3100
 $EndSCHEMATC

@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 2 2
+Sheet 3 6
 Title ""
 Date ""
 Rev ""
@@ -14,412 +14,97 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
+$Sheet
+S 4100 1450 1850 1350
+U 5B767FF2
+F0 "Power+" 50
+F1 "Power.sch" 50
+F2 "OUT" I R 5950 2100 50 
+F3 "QH" I L 4100 1950 50 
+F4 "Ql" I L 4100 2100 50 
+$EndSheet
+$Sheet
+S 4150 3400 1800 1300
+U 5B767FF5
+F0 "Sensor" 50
+F1 "Sensor.sch" 50
+F2 "IN" I R 5950 3700 50 
+F3 "OUT" O R 5950 4000 50 
+F4 "Current" O L 4150 3800 50 
+$EndSheet
+Wire Wire Line
+	5950 3700 6250 3700
+Wire Wire Line
+	6250 3700 6250 2100
+Wire Wire Line
+	6250 2100 5950 2100
+Wire Wire Line
+	5950 4000 6850 4000
+Text HLabel 3700 1950 0    50   Input ~ 0
+QH
+Text HLabel 3700 2100 0    50   Input ~ 0
+QL
+Text HLabel 3700 3800 0    50   Output ~ 0
+Current
+Wire Wire Line
+	3700 1950 3850 1950
+Wire Wire Line
+	4100 2100 3950 2100
+Wire Wire Line
+	3700 3800 4150 3800
+$Sheet
+S 4150 5200 1850 1350
+U 5B772791
+F0 "Power-" 50
+F1 "Power.sch" 50
+F2 "OUT" I R 6000 5850 50 
+F3 "QH" I L 4150 5700 50 
+F4 "Ql" I L 4150 5850 50 
+$EndSheet
+Wire Wire Line
+	4150 5700 3950 5700
+Wire Wire Line
+	3950 5700 3950 2100
+Connection ~ 3950 2100
+Wire Wire Line
+	3950 2100 3700 2100
+Wire Wire Line
+	3850 1950 3850 5850
+Wire Wire Line
+	3850 5850 4150 5850
+Connection ~ 3850 1950
+Wire Wire Line
+	3850 1950 4100 1950
+Wire Wire Line
+	6000 5850 6850 5850
 $Comp
-L Discretes:CSD19531KCS Q?
-U 1 1 5CA6C1F5
-P 3900 2300
-AR Path="/5CA63F16/5CA6C1F5" Ref="Q?"  Part="1" 
-AR Path="/5CA64568/5CA6C1F5" Ref="Q?"  Part="1" 
-AR Path="/5CA3706F/5CA6C1F5" Ref="Q?"  Part="1" 
-AR Path="/5CA367A0/5CA6C1F5" Ref="Q1"  Part="1" 
-F 0 "Q1" H 4100 2400 50  0000 L CNN
-F 1 "CSD19531KCS" H 4100 2300 50  0000 L CNN
-F 2 "Discretes:TO-220" H 4100 2200 50  0001 L CNN
-F 3 "http://www.ti.com/lit/ds/symlink/csd19531kcs.pdf" H 3900 2300 50  0001 C CNN
-	1    3900 2300
+L Connector:Pusa_4mm J?
+U 1 1 5B772913
+P 7050 4000
+AR Path="/5B767FE4/5B772913" Ref="J?"  Part="1" 
+AR Path="/5B76D023/5B772913" Ref="J?"  Part="1" 
+AR Path="/5B76D031/5B772913" Ref="J?"  Part="1" 
+AR Path="/5CADA6B4/5B772913" Ref="J1"  Part="1" 
+F 0 "J1" H 7129 4042 50  0000 L CNN
+F 1 "Pusa_4mm" H 7129 3951 50  0000 L CNN
+F 2 "Connector:Pusa_4mm" H 7125 3950 50  0001 L CNN
+F 3 "~" H 7050 4000 50  0001 C CNN
+	1    7050 4000
 	1    0    0    -1  
 $EndComp
 $Comp
-L Discretes:CSD19531KCS Q?
-U 1 1 5CA38D18
-P 3900 3200
-AR Path="/5CA63F16/5CA38D18" Ref="Q?"  Part="1" 
-AR Path="/5CA64568/5CA38D18" Ref="Q?"  Part="1" 
-AR Path="/5CA3706F/5CA38D18" Ref="Q?"  Part="1" 
-AR Path="/5CA367A0/5CA38D18" Ref="Q2"  Part="1" 
-F 0 "Q2" H 4100 3300 50  0000 L CNN
-F 1 "CSD19531KCS" H 4100 3200 50  0000 L CNN
-F 2 "Discretes:TO-220" H 4100 3100 50  0001 L CNN
-F 3 "http://www.ti.com/lit/ds/symlink/csd19531kcs.pdf" H 3900 3200 50  0001 C CNN
-	1    3900 3200
+L Connector:Pusa_4mm J?
+U 1 1 5B77299E
+P 7050 5850
+AR Path="/5B767FE4/5B77299E" Ref="J?"  Part="1" 
+AR Path="/5B76D023/5B77299E" Ref="J?"  Part="1" 
+AR Path="/5B76D031/5B77299E" Ref="J?"  Part="1" 
+AR Path="/5CADA6B4/5B77299E" Ref="J2"  Part="1" 
+F 0 "J2" H 7129 5892 50  0000 L CNN
+F 1 "Pusa_4mm" H 7129 5801 50  0000 L CNN
+F 2 "Connector:Pusa_4mm" H 7125 5800 50  0001 L CNN
+F 3 "~" H 7050 5850 50  0001 C CNN
+	1    7050 5850
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	4000 2500 4000 2750
-Connection ~ 4000 2750
-Wire Wire Line
-	4000 2750 4000 3000
-$Comp
-L Passives:R1206 R?
-U 1 1 5CA39EA2
-P 3400 2300
-AR Path="/5CA63F16/5CA39EA2" Ref="R?"  Part="1" 
-AR Path="/5CA64568/5CA39EA2" Ref="R?"  Part="1" 
-AR Path="/5CA3706F/5CA39EA2" Ref="R?"  Part="1" 
-AR Path="/5CA367A0/5CA39EA2" Ref="R1"  Part="1" 
-F 0 "R1" H 3300 2500 50  0000 L CNN
-F 1 "22R" H 3300 2400 50  0000 L CNN
-F 2 "Passives:R1206M" H 3300 2200 50  0001 L CNN
-F 3 "" H 3400 2300 50  0001 C CNN
-	1    3400 2300
-	1    0    0    -1  
-$EndComp
-$Comp
-L Passives:R1206 R?
-U 1 1 5CA3A2D0
-P 3400 3200
-AR Path="/5CA63F16/5CA3A2D0" Ref="R?"  Part="1" 
-AR Path="/5CA64568/5CA3A2D0" Ref="R?"  Part="1" 
-AR Path="/5CA3706F/5CA3A2D0" Ref="R?"  Part="1" 
-AR Path="/5CA367A0/5CA3A2D0" Ref="R2"  Part="1" 
-F 0 "R2" H 3300 3400 50  0000 L CNN
-F 1 "22R" H 3300 3300 50  0000 L CNN
-F 2 "Passives:R1206M" H 3300 3100 50  0001 L CNN
-F 3 "" H 3400 3200 50  0001 C CNN
-	1    3400 3200
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3600 2300 3700 2300
-Wire Wire Line
-	3600 3200 3700 3200
-Wire Wire Line
-	3200 2300 3100 2300
-Wire Wire Line
-	3100 2300 3100 3000
-$Comp
-L ICs:IR2181 U?
-U 1 1 5CA3CA6D
-P 2200 3000
-AR Path="/5CA63F16/5CA3CA6D" Ref="U?"  Part="1" 
-AR Path="/5CA64568/5CA3CA6D" Ref="U?"  Part="1" 
-AR Path="/5CA3706F/5CA3CA6D" Ref="U?"  Part="1" 
-AR Path="/5CA367A0/5CA3CA6D" Ref="U2"  Part="1" 
-F 0 "U2" H 2000 3400 50  0000 L CNN
-F 1 "IR2181" H 2000 3325 50  0000 L CNN
-F 2 "Package_SO:SO8" H 2000 3250 50  0001 L CNN
-F 3 "http://www.irf.com/product-info/datasheets/data/ir2104.pdf" H 2000 3500 50  0001 L CNN
-	1    2200 3000
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2500 3000 3100 3000
-$Comp
-L Passives:GND #PWR?
-U 1 1 5CA3DD1D
-P 4000 3650
-AR Path="/5CA63F16/5CA3DD1D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA3DD1D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA3DD1D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA3DD1D" Ref="#PWR09"  Part="1" 
-F 0 "#PWR09" H 4000 3500 50  0001 C CNN
-F 1 "GND" H 4150 3600 50  0001 C CNN
-F 2 "" H 4000 3650 50  0001 C CNN
-F 3 "" H 4000 3650 50  0001 C CNN
-	1    4000 3650
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4000 3400 4000 3650
-$Comp
-L Passives:GND #PWR?
-U 1 1 5CA3E57D
-P 1800 3300
-AR Path="/5CA63F16/5CA3E57D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA3E57D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA3E57D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA3E57D" Ref="#PWR07"  Part="1" 
-F 0 "#PWR07" H 1800 3150 50  0001 C CNN
-F 1 "GND" H 1950 3250 50  0001 C CNN
-F 2 "" H 1800 3300 50  0001 C CNN
-F 3 "" H 1800 3300 50  0001 C CNN
-	1    1800 3300
-	1    0    0    -1  
-$EndComp
-$Comp
-L Passives:C1206 C?
-U 1 1 5CA3F09F
-P 1250 2200
-AR Path="/5CA63F16/5CA3F09F" Ref="C?"  Part="1" 
-AR Path="/5CA64568/5CA3F09F" Ref="C?"  Part="1" 
-AR Path="/5CA3706F/5CA3F09F" Ref="C?"  Part="1" 
-AR Path="/5CA367A0/5CA3F09F" Ref="C1"  Part="1" 
-F 0 "C1" H 1350 2250 50  0000 L CNN
-F 1 "100n" H 1350 2150 50  0000 L CNN
-F 2 "Passives:C1206M" H 1300 2100 50  0001 L CNN
-F 3 "" H 1250 2200 50  0001 C CNN
-	1    1250 2200
-	1    0    0    -1  
-$EndComp
-$Comp
-L Passives:GND #PWR?
-U 1 1 5CA40318
-P 1250 2400
-AR Path="/5CA63F16/5CA40318" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA40318" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA40318" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA40318" Ref="#PWR05"  Part="1" 
-F 0 "#PWR05" H 1250 2250 50  0001 C CNN
-F 1 "GND" H 1400 2350 50  0001 C CNN
-F 2 "" H 1250 2400 50  0001 C CNN
-F 3 "" H 1250 2400 50  0001 C CNN
-	1    1250 2400
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1250 2300 1250 2400
-Wire Wire Line
-	1250 1950 1250 2050
-$Comp
-L power:+12V #PWR?
-U 1 1 5CA6C1FE
-P 1250 1950
-AR Path="/5CA63F16/5CA6C1FE" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA6C1FE" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA6C1FE" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA6C1FE" Ref="#PWR04"  Part="1" 
-F 0 "#PWR04" H 1250 1800 50  0001 C CNN
-F 1 "+12V" H 1250 2090 50  0000 C CNN
-F 2 "" H 1250 1950 50  0001 C CNN
-F 3 "" H 1250 1950 50  0001 C CNN
-	1    1250 1950
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:+12V #PWR?
-U 1 1 5CA6C1FF
-P 1800 2800
-AR Path="/5CA63F16/5CA6C1FF" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA6C1FF" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA6C1FF" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA6C1FF" Ref="#PWR06"  Part="1" 
-F 0 "#PWR06" H 1800 2650 50  0001 C CNN
-F 1 "+12V" H 1800 2940 50  0000 C CNN
-F 2 "" H 1800 2800 50  0001 C CNN
-F 3 "" H 1800 2800 50  0001 C CNN
-	1    1800 2800
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1800 2800 1800 2900
-Wire Wire Line
-	1800 2900 1900 2900
-Wire Wire Line
-	1900 3200 1800 3200
-Wire Wire Line
-	1800 3200 1800 3300
-$Comp
-L Passives:C1206 C?
-U 1 1 5CA6C200
-P 2750 2200
-AR Path="/5CA63F16/5CA6C200" Ref="C?"  Part="1" 
-AR Path="/5CA64568/5CA6C200" Ref="C?"  Part="1" 
-AR Path="/5CA3706F/5CA6C200" Ref="C?"  Part="1" 
-AR Path="/5CA367A0/5CA6C200" Ref="C2"  Part="1" 
-F 0 "C2" H 2850 2150 50  0000 L CNN
-F 1 "100n" H 2850 2250 50  0000 L CNN
-F 2 "Passives:C1206M" H 2800 2100 50  0001 L CNN
-F 3 "" H 2750 2200 50  0001 C CNN
-	1    2750 2200
-	1    0    0    1   
-$EndComp
-$Comp
-L Discretes:LL4148 D?
-U 1 1 5CA6C201
-P 1750 2050
-AR Path="/5CA63F16/5CA6C201" Ref="D?"  Part="1" 
-AR Path="/5CA64568/5CA6C201" Ref="D?"  Part="1" 
-AR Path="/5CA3706F/5CA6C201" Ref="D?"  Part="1" 
-AR Path="/5CA367A0/5CA6C201" Ref="D1"  Part="1" 
-F 0 "D1" H 1800 2150 50  0000 L CNN
-F 1 "LL4148" H 1650 2250 50  0000 L CNN
-F 2 "Discretes:D_MiniMELF" H 1650 1950 50  0001 L CNN
-F 3 "http://www.vishay.com/docs/85557/ll4148.pdf" H 1750 2050 50  0001 C CNN
-	1    1750 2050
-	-1   0    0    1   
-$EndComp
-Wire Wire Line
-	1250 2050 1600 2050
-Connection ~ 1250 2050
-Wire Wire Line
-	1250 2050 1250 2100
-Wire Wire Line
-	2500 2900 2600 2900
-Wire Wire Line
-	2600 2900 2600 2050
-Wire Wire Line
-	2600 2050 2750 2050
-Wire Wire Line
-	2750 2050 2750 2100
-Wire Wire Line
-	1900 2050 2600 2050
-Connection ~ 2600 2050
-Wire Wire Line
-	1900 3000 1250 3000
-Wire Wire Line
-	1900 3100 1250 3100
-Text HLabel 1250 3000 0    50   Input ~ 0
-HIN
-Text HLabel 1250 3100 0    50   Input ~ 0
-LIN
-$Comp
-L power:+12V #PWR?
-U 1 1 5CA6C202
-P 4000 1950
-AR Path="/5CA63F16/5CA6C202" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA6C202" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA6C202" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA6C202" Ref="#PWR08"  Part="1" 
-F 0 "#PWR08" H 4000 1800 50  0001 C CNN
-F 1 "+12V" H 4000 2090 50  0000 C CNN
-F 2 "" H 4000 1950 50  0001 C CNN
-F 3 "" H 4000 1950 50  0001 C CNN
-	1    4000 1950
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4000 1950 4000 2100
-$Comp
-L Sensor_Current:LTS_15 U?
-U 1 1 5CA51397
-P 5550 3050
-AR Path="/5CA63F16/5CA51397" Ref="U?"  Part="1" 
-AR Path="/5CA64568/5CA51397" Ref="U?"  Part="1" 
-AR Path="/5CA3706F/5CA51397" Ref="U?"  Part="1" 
-AR Path="/5CA367A0/5CA51397" Ref="U3"  Part="1" 
-F 0 "U3" H 5250 3850 50  0000 L CNN
-F 1 "LTS_15" H 5250 3750 50  0000 L CNN
-F 2 "Sensor_Current:LTS_15" H 5250 3650 50  0001 L CNN
-F 3 "http://www.lem.com/docs/products/lts_15-np.pdf" H 5350 3850 50  0001 L CNN
-	1    5550 3050
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4000 2750 4950 2750
-Wire Wire Line
-	5050 2650 4950 2650
-Wire Wire Line
-	4950 2650 4950 2750
-Connection ~ 4950 2750
-Wire Wire Line
-	4950 2750 5050 2750
-Wire Wire Line
-	4950 2750 4950 2850
-Wire Wire Line
-	4950 2850 5050 2850
-Wire Wire Line
-	6050 2650 6150 2650
-Wire Wire Line
-	6150 2650 6150 2750
-Wire Wire Line
-	6150 2850 6050 2850
-Wire Wire Line
-	6050 2750 6150 2750
-Connection ~ 6150 2750
-Wire Wire Line
-	6150 2750 6150 2850
-Wire Wire Line
-	6150 2750 6400 2750
-$Comp
-L power:+3.3V #PWR?
-U 1 1 5CA6C204
-P 4950 3050
-AR Path="/5CA63F16/5CA6C204" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA6C204" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA6C204" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA6C204" Ref="#PWR010"  Part="1" 
-F 0 "#PWR010" H 4950 2900 50  0001 C CNN
-F 1 "+3.3V" H 4950 3190 50  0000 C CNN
-F 2 "" H 4950 3050 50  0001 C CNN
-F 3 "" H 4950 3050 50  0001 C CNN
-	1    4950 3050
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	4950 3050 5050 3050
-$Comp
-L Passives:GND #PWR?
-U 1 1 5CA573F4
-P 4950 3350
-AR Path="/5CA63F16/5CA573F4" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA573F4" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA573F4" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA573F4" Ref="#PWR011"  Part="1" 
-F 0 "#PWR011" H 4950 3200 50  0001 C CNN
-F 1 "GND" H 5100 3300 50  0001 C CNN
-F 2 "" H 4950 3350 50  0001 C CNN
-F 3 "" H 4950 3350 50  0001 C CNN
-	1    4950 3350
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	5050 3250 4950 3250
-Wire Wire Line
-	4950 3250 4950 3350
-Wire Wire Line
-	6050 3150 6300 3150
-Text HLabel 6300 3150 2    50   Output ~ 0
-TOK
-$Comp
-L power:+3.3V #PWR?
-U 1 1 5CA59426
-P 5550 3650
-AR Path="/5CA63F16/5CA59426" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA59426" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA59426" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA59426" Ref="#PWR012"  Part="1" 
-F 0 "#PWR012" H 5550 3500 50  0001 C CNN
-F 1 "+3.3V" H 5550 3790 50  0000 C CNN
-F 2 "" H 5550 3650 50  0001 C CNN
-F 3 "" H 5550 3650 50  0001 C CNN
-	1    5550 3650
-	1    0    0    -1  
-$EndComp
-$Comp
-L Passives:GND #PWR?
-U 1 1 5CA5984D
-P 5550 4050
-AR Path="/5CA63F16/5CA5984D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA64568/5CA5984D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA3706F/5CA5984D" Ref="#PWR?"  Part="1" 
-AR Path="/5CA367A0/5CA5984D" Ref="#PWR013"  Part="1" 
-F 0 "#PWR013" H 5550 3900 50  0001 C CNN
-F 1 "GND" H 5700 4000 50  0001 C CNN
-F 2 "" H 5550 4050 50  0001 C CNN
-F 3 "" H 5550 4050 50  0001 C CNN
-	1    5550 4050
-	1    0    0    -1  
-$EndComp
-$Comp
-L Passives:C1206 C?
-U 1 1 5CA59E4B
-P 5550 3850
-AR Path="/5CA63F16/5CA59E4B" Ref="C?"  Part="1" 
-AR Path="/5CA64568/5CA59E4B" Ref="C?"  Part="1" 
-AR Path="/5CA3706F/5CA59E4B" Ref="C?"  Part="1" 
-AR Path="/5CA367A0/5CA59E4B" Ref="C3"  Part="1" 
-F 0 "C3" H 5650 3800 50  0000 L CNN
-F 1 "100n" H 5650 3900 50  0000 L CNN
-F 2 "Passives:C1206M" H 5600 3750 50  0001 L CNN
-F 3 "" H 5550 3850 50  0001 C CNN
-	1    5550 3850
-	1    0    0    1   
-$EndComp
-Wire Wire Line
-	5550 4050 5550 3950
-Wire Wire Line
-	5550 3750 5550 3650
-Wire Wire Line
-	2500 3200 3200 3200
-Wire Wire Line
-	2500 3100 2750 3100
-Wire Wire Line
-	2750 3100 2750 2300
-Wire Wire Line
-	4000 2750 3200 2750
-Wire Wire Line
-	3200 2750 3200 3100
-Wire Wire Line
-	3200 3100 2750 3100
-Connection ~ 2750 3100
 $EndSCHEMATC
