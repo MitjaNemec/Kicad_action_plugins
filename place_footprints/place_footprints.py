@@ -109,7 +109,7 @@ class Placer():
                     subsheet_name = partial_line.rstrip("\"").lstrip("\"")
                 # found sheet filename
                 if line.startswith('F1 '):
-                    subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
+                    subsheet_path = re.findall("\s\"(.*.sch)\"\s", line)[0]
                     subsheet_line = file_lines.split("\n").index(line)
                     if not os.path.isabs(subsheet_path):
                         # check if path is encoded with variables
