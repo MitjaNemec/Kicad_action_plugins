@@ -68,10 +68,13 @@ class CopyLayout():
                     subsheet_id = line.split()[1]
                 # found sheet name
                 if line.startswith('F0 '):
-                    subsheet_name = line.split()[1].rstrip("\"").lstrip("\"")
+                    partial_line = line.lstrip("F0 ")
+                    partial_line = " ".join(partial_line.split()[:-1])
+                    # remove the last field (text size)
+                    subsheet_name = partial_line.rstrip("\"").lstrip("\"")
                 # found sheet filename
                 if line.startswith('F1 '):
-                    subsheet_path = line.split()[1].rstrip("\"").lstrip("\"")
+                    subsheet_path = re.findall("\s\"(.*.sch)\"\s", line)[0]
                     subsheet_line = file_lines.split("\n").index(line)
                     if not os.path.isabs(subsheet_path):
                         # check if path is encoded with variables
@@ -441,7 +444,24 @@ class CopyLayout():
                     self.board.RemoveNative(zone)
 
     def remove_tracks(self, bounding_box, containing):
-        pass
+        # find all tracks within the pivot bounding box
+        all_tracks = self.board.GetTracks()
+        # get all the tracks for replication
+        for track in all_tracks:
+            track_bb = track.GetBoundingBox()
+            # if track is contained or intersecting the bounding box
+            if containing:
+                if not bounding_box.Contains(track_bb):
+                    # TODO don't- delete if track is on local nets
+                    self.board.RemoveNative(track)
+            else:
+                if not bounding_box.Intersects(track_bb):
+                    # TODO don't- delete if track is on local nets
+                    self.board.RemoveNative(track)
+
+    def remove_modules(self):
+        for mod in self.other_modules:
+            self.board.RemoveNative(mod.mod)
 
     def prepare_for_copy(self, level, containing):
         # get a list of modules for replication
@@ -494,8 +514,10 @@ class CopyLayout():
         self.remove_zones(self.pivot_bounding_box, True)
 
         # remove tracks
+        self.remove_tracks(self.pivot_bounding_box, True)
 
         # remove modules
+        self.remove_modules()
 
         # save under a new name
         saved = pcbnew.SaveBoard(new_file, self.board)
