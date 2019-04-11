@@ -200,7 +200,7 @@ class Replicator():
             self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
 
         # construct a list of modules with all pertinent data 
-        logger.info('getting a list of all modules on board') 
+        logger.info('getting a list of all footprints on board') 
         bmod = board.GetModules()
         self.modules = []
         mod_dict = {}
@@ -238,10 +238,10 @@ class Replicator():
 
         # get all footprints with same ID
         list_of_modules = self.get_list_of_modules_with_same_id(mod.mod_id)
-        logger.debug("Modules on the sheets:\n" + repr([x.ref for x in list_of_modules]))
+        logger.debug("Footprints on the sheets:\n" + repr([x.ref for x in list_of_modules]))
 
         # log all modules sheet id
-        logger.debug("Modules raw sheet ids:\n" + repr([x.mod.GetPath() for x in list_of_modules]))
+        logger.debug("Footprints raw sheet ids:\n" + repr([x.mod.GetPath() for x in list_of_modules]))
 
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
@@ -523,13 +523,13 @@ class Replicator():
 
     def prepare_for_replication(self, level, containing):
         # get a list of modules for replication
-        logger.info("Getting the list of pivot modules")
+        logger.info("Getting the list of pivot footprints")
         self.pivot_modules = self.get_modules_on_sheet(level)
         # get the rest of the modules
-        logger.info("Getting the list of all the remaining modules")
+        logger.info("Getting the list of all the remaining footprints")
         self.other_modules = self.get_modules_not_on_sheet(level)
         # get nets local to pivot modules
-        logger.info("Getting nets local to pivot modules")
+        logger.info("Getting nets local to pivot footprints")
         self.pivot_local_nets = self.get_local_nets(self.pivot_modules, self.other_modules)
         # get pivot bounding box
         logger.info("Getting pivot bounding box")
@@ -548,9 +548,9 @@ class Replicator():
         self.pivot_drawings = self.get_drawings(self.pivot_bounding_box, containing)
 
     def replicate_modules(self):
-        logger.info("Replicating modules")
+        logger.info("Replicating footprints")
         for sheet in self.sheets_for_replication:
-            logger.info("Replicating modules on sheet " + repr(sheet))
+            logger.info("Replicating footprints on sheet " + repr(sheet))
             # get anchor module
             anchor_mod = self.get_sheet_anchor_module(sheet)
             # get anchor angle with respect to pivot module

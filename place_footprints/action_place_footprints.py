@@ -298,9 +298,9 @@ class PlaceFootprints(pcbnew.ActionPlugin):
     A script to replicate layout
     How to use:
     - move to GAL
-    - select module of layout to replicate
+    - select footprint of layout to replicate
     - call the plugin
-    - enter pivot step and confirm pivod module
+    - enter pivot step and confirm pivot footprint
     """
 
     def defaults(self):
@@ -351,7 +351,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         # if more or less than one show only a messagebox
         if len(selected_names) != 1:
             caption = 'Place footprints'
-            message = "More or less than 1 module selected. Please select exactly one module and run the script again"
+            message = "More or less than 1 footprint selected. Please select exactly one footprint and run the script again"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()

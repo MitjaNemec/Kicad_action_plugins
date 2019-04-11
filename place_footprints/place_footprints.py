@@ -189,7 +189,7 @@ class Placer():
             self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
 
         # construct a list of modules with all pertinent data
-        logger.info('getting a list of all modules on board')
+        logger.info('getting a list of all footprints on board')
         bmod = board.GetModules()
         self.modules = []
         mod_dict = {}
@@ -366,7 +366,7 @@ class Placer():
                 mod.mod.Flip(mod.mod.GetPosition())
 
     def place_matrix(self, modules_to_place, step_x, step_y, nr_columns):
-        logger.info("Starting placing with linear layout")
+        logger.info("Starting placing with matrix layout")
         # get proper module_list
         modules = []
         for mod_ref in modules_to_place:

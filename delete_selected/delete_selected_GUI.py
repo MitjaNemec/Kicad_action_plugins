@@ -37,7 +37,7 @@ class DeleteSelectedGUI ( wx.Dialog ):
 		self.chkbox_zones = wx.CheckBox( self.m_panel1, wx.ID_ANY, u"Zones", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer3.Add( self.chkbox_zones, 0, wx.ALL, 5 )
 		
-		self.chkbox_modules = wx.CheckBox( self.m_panel1, wx.ID_ANY, u"Modules", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkbox_modules = wx.CheckBox( self.m_panel1, wx.ID_ANY, u"Footprints", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer3.Add( self.chkbox_modules, 0, wx.ALL, 5 )
 		
 		

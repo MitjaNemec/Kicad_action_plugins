@@ -93,9 +93,8 @@ class ReplicateLayout(pcbnew.ActionPlugin):
     A script to replicate layout
     How to use:
     - move to GAL
-    - select module of layout to replicate
+    - select footprint of layout to replicate
     - call the plugin
-    - enter pivot step and confirm pivod module
     """
 
     def defaults(self):
@@ -173,17 +172,17 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             return
         pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
-        logger.info("Pivot module is %s\nLocated on:%s\nWith filenames:%s\nWith sheet_id:%s" \
+        logger.info("Pivot footprint is %s\nLocated on:%s\nWith filenames:%s\nWith sheet_id:%s" \
                     % (repr(pivot_mod.ref), repr(pivot_mod.sheet_id), repr(pivot_mod.filename), repr(pivot_mod.sheet_id)))
 
         list_of_modules_with_same_id = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
         nice_list = [(x.ref, x.sheet_id) for x in list_of_modules_with_same_id]
-        logger.info("Corresponding modules are \n%s" % repr(nice_list))
+        logger.info("Corresponding footprints are \n%s" % repr(nice_list))
 
         list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
         if not list_of_modules:
             caption = 'Replicate Layout'
-            message = "Selected module is uniqe in the pcb (only one module with this ID)"
+            message = "Selected footprint is uniqe in the pcb (only one footprint with this ID)"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()

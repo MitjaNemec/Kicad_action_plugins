@@ -52,7 +52,7 @@ class DeleteSelected(pcbnew.ActionPlugin):
     A script to delete selection
     How to use:
     - move to GAL
-    - select modules/tracks/zones to delete
+    - select footprints/tracks/zones to delete
     - call the plugin
     - choose which items to delete
     """
