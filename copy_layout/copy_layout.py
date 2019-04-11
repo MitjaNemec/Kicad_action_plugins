@@ -25,9 +25,7 @@ from collections import namedtuple
 import os
 import sys
 import logging
-import itertools
 import re
-import math
 import hashlib
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
@@ -42,6 +40,35 @@ def get_coordinate_points_of_shape_poly_set(ps):
     numpts = int(lines[2])
     pts = [[int(n) for n in x.split(" ")] for x in lines[3:-2]]  # -1 because of the extra two \n
     return pts
+
+
+def get_module_id(module):
+    """ get module id """
+    module_path = module.GetPath().split('/')
+    module_id = "/".join(module_path[-1:])
+    return module_id
+
+
+def get_sheet_id(module):
+    """ get sheet id """
+    module_path = module.GetPath().split('/')
+    sheet_id = module_path[1:-1]
+    return sheet_id
+
+
+def get_board_modules(board):
+    bmod = board.GetModules()
+    modules = []
+    mod_dict = {}
+    for module in bmod:
+        mod_named_tuple = Module(mod=module,
+                                    mod_id=get_module_id(module),
+                                    sheet_id=get_sheet_id(module),
+                                    filename="", 
+                                    ref=module.GetReference())
+        mod_dict[module.GetReference()] = mod_named_tuple
+        modules.append(mod_named_tuple)
+    return modules
 
 
 class CopyLayout():
@@ -148,8 +175,11 @@ class CopyLayout():
 
         # construct a list of modules with all pertinent data 
         logger.info('getting a list of all footprints on board') 
+        self.modules = self.get_board_modules(board)
+
+    def get_board_modules(self, board):
         bmod = board.GetModules()
-        self.modules = []
+        modules = []
         mod_dict = {}
         for module in bmod:
             mod_named_tuple = Module(mod=module,
@@ -158,8 +188,9 @@ class CopyLayout():
                                      filename=self.get_sheet_id(module)[1], 
                                      ref=module.GetReference())
             mod_dict[module.GetReference()] = mod_named_tuple
-            self.modules.append(mod_named_tuple)
-        pass
+            modules.append(mod_named_tuple)
+
+        return modules
 
     def get_modules_on_sheet(self, level):
         modules_on_sheet = []
@@ -394,7 +425,12 @@ class CopyLayout():
             sch_lines = f.readlines()
 
         # remove all lines containing references (L, U, AR)
-        sch_file_without_reference = [line for line in sch_lines if (not line.startswith("L ") and not line.startswith("U ") and not line.startswith("AR "))]
+        sch_file_without_reference = [line for line in sch_lines if (not line.startswith("L ")
+                                                                     and not line.startswith("F0 ")
+                                                                     and not line.startswith("F 0")
+                                                                     and not line.startswith("AR ")
+                                                                     and not line.startswith("Sheet")
+                                                                     and not line.startswith("LIBS:"))]
 
         # caluclate the hash
         for line in sch_file_without_reference:
@@ -523,31 +559,86 @@ class CopyLayout():
         saved = pcbnew.SaveBoard(new_file, self.board)
 
         # place all drawings from old_board to new_board
+        return os.path.abspath(new_file)
+
+    def import_layout(self, mod, level, layout_file):
+        self.pivot_anchor_mod = mod
+        # load schematics and calculate hash of schematics (you have to support nested hierarchy)
+        list_of_sheet_files = mod.filename[len(level)-1:]
+
+        md5hash = hashlib.md5()
+        for sch_file in list_of_sheet_files:
+            md5hash = self.get_sch_hash(sch_file, md5hash)
+
+        hex_hash = md5hash.hexdigest()
+
+        # check the hash
+        saved_hash = layout_file.rstrip(".kicad_pcb").split("_")[-1]
+
+        if not saved_hash == hex_hash:
+            raise ValueError("Source and destination schematics don't match!")
+
+        # if hashes match then proceed
+        self.prepare_for_copy(level, True)
+
+        # find modules pairs
+        saved_board = pcbnew.LoadBoard(layout_file)
+
+        saved_modules = get_board_modules(saved_board)
+
+        modules_to_place = self.pivot_modules
+
+        # sort by ID - I am counting that source and destination sheed have been
+        # anotated by KiCad in their final form (reset anotation and then re-anotate)
+        modules_to_place = sorted(modules_to_place, key=lambda x: (x.mod_id, x.ref))
+        saved_modules = sorted(saved_modules, key=lambda x: (x.mod_id, x.ref))
+
+        # self.pivot_modules, saved_layout.modules
+        if len(modules_to_place) != len(saved_modules):
+            raise ValueError("Source and destination footprint count don't match!")
 
 
-    def import_layout():
+
+        # get the saved layout ID numbers and try to figure out a match (at least the same depth, ...)
+
+        a = 2
         pass
 
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Source_project"))
-    input_file = 'multiple_hierarchy.kicad_pcb'
+    source_file = 'multiple_hierarchy.kicad_pcb'
 
     backup_file = 'multiple_hierarchy.kicad_pcb_bak'
 
     # create a backup'
-    board = pcbnew.LoadBoard(input_file)
+    board = pcbnew.LoadBoard(source_file)
     saved = pcbnew.SaveBoard(backup_file, board)
-    copy_layout = CopyLayout(board)
+    save_layout = CopyLayout(board)
 
     pivot_mod_ref = 'Q301'
-    pivot_mod = copy_layout.get_mod_by_ref(pivot_mod_ref)
+    pivot_mod = save_layout.get_mod_by_ref(pivot_mod_ref)
 
     levels = pivot_mod.filename
     # get the level index from user
     index = levels.index(levels[0])
 
-    copy_layout.export_layout(pivot_mod, pivot_mod.sheet_id[0:index+1])
+    layout_file = save_layout.export_layout(pivot_mod, pivot_mod.sheet_id[0:index+1])
+
+    # restore layout
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Destination_project"))
+    destination_file = 'Destination_project.kicad_pcb'
+    board = pcbnew.LoadBoard(destination_file)
+    restore_layout = CopyLayout(board)
+
+    pivot_mod_ref = 'Q3'
+    pivot_mod = restore_layout.get_mod_by_ref(pivot_mod_ref)
+    levels = pivot_mod.filename
+    # get the level index from user
+    index = levels.index(levels[0])
+
+    restore_layout.import_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], layout_file)
+
 
 
 # for testing purposes only

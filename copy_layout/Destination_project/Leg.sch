@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 3 6
+Sheet 7 10
 Title ""
 Date ""
 Rev ""
@@ -85,7 +85,8 @@ AR Path="/5B767FE4/5B772913" Ref="J?"  Part="1"
 AR Path="/5B76D023/5B772913" Ref="J?"  Part="1" 
 AR Path="/5B76D031/5B772913" Ref="J?"  Part="1" 
 AR Path="/5CADA6B4/5B772913" Ref="J1"  Part="1" 
-F 0 "J1" H 7129 4042 50  0000 L CNN
+AR Path="/5CAF0FB9/5B772913" Ref="J3"  Part="1" 
+F 0 "J3" H 7129 4042 50  0000 L CNN
 F 1 "Pusa_4mm" H 7129 3951 50  0000 L CNN
 F 2 "Connector:Pusa_4mm" H 7125 3950 50  0001 L CNN
 F 3 "~" H 7050 4000 50  0001 C CNN
@@ -100,7 +101,8 @@ AR Path="/5B767FE4/5B77299E" Ref="J?"  Part="1"
 AR Path="/5B76D023/5B77299E" Ref="J?"  Part="1" 
 AR Path="/5B76D031/5B77299E" Ref="J?"  Part="1" 
 AR Path="/5CADA6B4/5B77299E" Ref="J2"  Part="1" 
-F 0 "J2" H 7129 5892 50  0000 L CNN
+AR Path="/5CAF0FB9/5B77299E" Ref="J4"  Part="1" 
+F 0 "J4" H 7129 5892 50  0000 L CNN
 F 1 "Pusa_4mm" H 7129 5801 50  0000 L CNN
 F 2 "Connector:Pusa_4mm" H 7125 5800 50  0001 L CNN
 F 3 "~" H 7050 5850 50  0001 C CNN

@@ -4,7 +4,7 @@ EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
-Sheet 1 6
+Sheet 1 10
 Title ""
 Date ""
 Rev ""
@@ -139,4 +139,43 @@ Wire Wire Line
 	6650 4150 6650 3100
 Wire Wire Line
 	6650 3100 5700 3100
+$Sheet
+S 7000 5000 1000 1000
+U 5CAF0FB9
+F0 "Leg 2" 50
+F1 "Leg.sch" 50
+F2 "QH" I L 7000 5350 50 
+F3 "QL" I L 7000 5450 50 
+F4 "Current" O R 8000 5450 50 
+$EndSheet
+Wire Wire Line
+	7000 5350 6600 5350
+Wire Wire Line
+	6600 5350 6600 5000
+Wire Wire Line
+	6600 5000 5700 5000
+Wire Wire Line
+	5700 5100 6300 5100
+Wire Wire Line
+	6300 5100 6300 5450
+Wire Wire Line
+	6300 5450 7000 5450
+Wire Wire Line
+	5000 6300 5000 6850
+Wire Wire Line
+	5000 6850 2650 6850
+Wire Wire Line
+	2650 6850 2650 5450
+Wire Wire Line
+	2650 5450 2500 5450
+Wire Wire Line
+	2500 5450 2500 5000
+Wire Wire Line
+	2500 5000 3100 5000
+Wire Wire Line
+	8350 5450 8350 6300
+Wire Wire Line
+	5000 6300 8350 6300
+Wire Wire Line
+	8000 5450 8350 5450
 $EndSCHEMATC
