@@ -597,8 +597,6 @@ class CopyLayout():
         if len(modules_to_place) != len(saved_modules):
             raise ValueError("Source and destination footprint count don't match!")
 
-
-
         # get the saved layout ID numbers and try to figure out a match (at least the same depth, ...)
 
         a = 2
