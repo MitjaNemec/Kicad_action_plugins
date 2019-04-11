@@ -147,7 +147,7 @@ class CopyLayout():
             self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
 
         # construct a list of modules with all pertinent data 
-        logger.info('getting a list of all modules on board') 
+        logger.info('getting a list of all footprints on board') 
         bmod = board.GetModules()
         self.modules = []
         mod_dict = {}
@@ -465,13 +465,13 @@ class CopyLayout():
 
     def prepare_for_copy(self, level, containing):
         # get a list of modules for replication
-        logger.info("Getting the list of pivot modules")
+        logger.info("Getting the list of pivot footprints")
         self.pivot_modules = self.get_modules_on_sheet(level)
         # get the rest of the modules
-        logger.info("Getting the list of all the remaining modules")
+        logger.info("Getting the list of all the remaining footprints")
         self.other_modules = self.get_modules_not_on_sheet(level)
         # get nets local to pivot modules
-        logger.info("Getting nets local to pivot modules")
+        logger.info("Getting nets local to pivot footprints")
         self.pivot_local_nets = self.get_local_nets(self.pivot_modules, self.other_modules)
         # get pivot bounding box
         logger.info("Getting pivot bounding box")
