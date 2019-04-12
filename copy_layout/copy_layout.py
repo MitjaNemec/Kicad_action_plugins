@@ -31,19 +31,10 @@ import pickle
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 
-LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets'])
+LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets', 'list_of_local_nets'])
 
 logger = logging.getLogger(__name__)
 
-
-class Footprint():
-    def __init__(self, ref, mod, mod_id, sheet_id, sheetname=None, filename=None):
-        self.ref = ref
-        self.mod = mod
-        self.mod_id = mod_id
-        self.sheet_id = sheet_id
-        self.sheetname = sheetname
-        self.filename = filename
 
 # this function was made by Miles Mccoo
 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
@@ -55,33 +46,14 @@ def get_coordinate_points_of_shape_poly_set(ps):
     return pts
 
 
-def get_module_id(module):
-    """ get module id """
-    module_path = module.GetPath().split('/')
-    module_id = "/".join(module_path[-1:])
-    return module_id
-
-
-def get_sheet_id(module):
-    """ get sheet id """
-    module_path = module.GetPath().split('/')
-    sheet_id = module_path[1:-1]
-    return sheet_id
-
-
-def get_board_modules(board):
-    bmod = board.GetModules()
-    modules = []
-    mod_dict = {}
-    for module in bmod:
-        mod_named_tuple = Module(mod=module,
-                                    mod_id=get_module_id(module),
-                                    sheet_id=get_sheet_id(module),
-                                    filename="", 
-                                    ref=module.GetReference())
-        mod_dict[module.GetReference()] = mod_named_tuple
-        modules.append(mod_named_tuple)
-    return modules
+class Footprint():
+    def __init__(self, ref, mod, mod_id, sheet_id, sheetname=None, filename=None):
+        self.ref = ref
+        self.mod = mod
+        self.mod_id = mod_id
+        self.sheet_id = sheet_id
+        self.sheetname = sheetname
+        self.filename = filename
 
 
 class SchData():
@@ -433,6 +405,104 @@ class SaveLayout():
         for mod in modules:
             self.board.RemoveNative(mod.mod)
 
+    @staticmethod
+    def get_index_of_tuple(list_of_tuples, index, value):
+        for pos, t in enumerate(list_of_tuples):
+            if t[index] == value:
+                return pos
+
+    def get_net_pairs(self, modules_sheet_1, modules_sheet_2):
+        """ find all net pairs between pivot sheet and current sheet"""
+        # find all modules, pads and nets on this sheet
+        sheet_modules = modules_sheet_1
+        # find all net pairs via same modules pads,
+        net_pairs = []
+        net_dict = {}
+        # construct module pairs
+        mod_matches = []
+        for p_mod in modules_sheet_2:
+            mod_matches.append([p_mod.mod, p_mod.mod_id, p_mod.sheet_id])
+
+        for s_mod in sheet_modules:
+            for mod in mod_matches:
+                if mod[1] == s_mod.mod_id:
+                    index = mod_matches.index(mod)
+                    mod_matches[index].append(s_mod.mod)
+                    mod_matches[index].append(s_mod.mod_id)
+                    mod_matches[index].append(s_mod.sheet_id)
+        # find closest match
+        mod_pairs = []
+        mod_pairs_by_reference = []
+        for mod in mod_matches:
+            index = mod_matches.index(mod)
+            matches = (len(mod) - 3) // 3
+            if matches != 1:
+                match_len = []
+                for index in range(0, matches):
+                    match_len.append(len(set(mod[2]) & set(mod[2+3*(index+1)])))
+                index = match_len.index(max(match_len))
+                mod_pairs.append((mod[0], mod[3*(index+1)]))
+                mod_pairs_by_reference.append((mod[0].GetReference(), mod[3*(index+1)].GetReference()))
+            elif matches == 1:
+                mod_pairs.append((mod[0], mod[3]))
+                mod_pairs_by_reference.append((mod[0].GetReference(), mod[3].GetReference()))
+
+        pad_pairs = []
+        for x in range(len(mod_pairs)):
+            pad_pairs.append([])
+
+        for pair in mod_pairs:
+            index = mod_pairs.index(pair)
+            # get all footprint pads
+            p_mod_pads = pair[0].PadsList()
+            s_mod_pads = pair[1].PadsList()
+            # create a list of padsnames and pads
+            p_pads = []
+            s_pads = []
+            for pad in p_mod_pads:
+                p_pads.append((pad.GetName(), pad))
+            for pad in s_mod_pads:
+                s_pads.append((pad.GetName(), pad))
+            # sort by padnames
+            p_pads.sort(key=lambda tup: tup[0])
+            s_pads.sort(key=lambda tup: tup[0])
+            # extract pads and append them to pad pairs list
+            pad_pairs[index].append([x[1] for x in p_pads])
+            pad_pairs[index].append([x[1] for x in s_pads])
+
+        for pair in mod_pairs:
+            index = mod_pairs.index(pair)
+            p_mod = pair[0]
+            s_mod = pair[1]
+            # get their pads
+            p_mod_pads = pad_pairs[index][0]
+            s_mod_pads = pad_pairs[index][1]
+            # I am going to assume pads are in the same order
+            p_nets = []
+            s_nets = []
+            # get nelists for each pad
+            for p_pad in p_mod_pads:
+                pad_name = p_pad.GetName()
+                p_nets.append((pad_name, p_pad.GetNetname()))
+            for s_pad in s_mod_pads:
+                pad_name = s_pad.GetName()
+                s_nets.append((pad_name, s_pad.GetNetname()))
+                net_dict[s_pad.GetNetname()] = s_pad.GetNet()
+            # sort both lists by pad name
+            # so that they have the same order - needed in some cases
+            # as the iterator thorugh the pads list does not return pads always in the proper order
+            p_nets.sort(key=lambda tup: tup[0])
+            s_nets.sort(key=lambda tup: tup[0])
+            # build list of net tupules
+            for net in p_nets:
+                index = self.get_index_of_tuple(p_nets, 1, net[1])
+                net_pairs.append((p_nets[index][1], s_nets[index][1]))
+
+        # remove duplicates
+        net_pairs_clean = list(set(net_pairs))
+
+        return net_pairs_clean, net_dict
+
     def export_layout(self, mod, level):
         self.pivot_anchor_mod = mod
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
@@ -449,7 +519,12 @@ class SaveLayout():
 
         # get modules on a sheet
         modules = self.layout.get_modules_on_sheet(level)
-        # the rest
+
+        # get other modules
+        other_modules = self.layout.get_modules_not_on_sheet(level)
+        # get nets local to pivot modules
+        local_nets = self.layout.get_local_nets(modules, other_modules)
+
         # get modules bounding box
         bounding_box = self.layout.get_modules_bounding_box(modules)
 
@@ -477,7 +552,7 @@ class SaveLayout():
             layout = f.read()
 
         # save all data
-        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets)
+        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets)
         # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
         data_file = new_file.replace(".kicad_pcb", ".pckl")
         with open(data_file, 'wb') as f:
@@ -520,7 +595,7 @@ class SaveLayout():
 
         modules_to_place = self.layout.get_modules_on_sheet(level)
 
-        if len(modules_to_place) != len(saved_modules):
+        if len(modules_to_place) != len(modules_saved):
             raise ValueError("Source and destination footprint count don't match!")
 
         # sort by ID - I am counting that source and destination sheed have been
@@ -529,7 +604,8 @@ class SaveLayout():
         modules_saved = sorted(modules_saved, key=lambda x: (x.mod_id, x.ref))
 
         # get the saved layout ID numbers and try to figure out a match (at least the same depth, ...)
-
+        # find net pairs
+        net_pairs, net_dict = self.get_net_pairs(modules_to_place, modules_saved)
         a = 2
         pass
 
