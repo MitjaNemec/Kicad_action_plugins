@@ -335,11 +335,11 @@ def swap(board, pad_1, pad_2):
     # if files are the same, then merge two strings
     if page_1 == page_2:
         if __name__ == "__main__":
-            with open(page_2.replace(".sch", "_temp.sch"), 'w') as f:
-                f.write(unit_2_sch_file)
+            with open(page_1.replace(".sch", "_temp.sch"), 'w') as f:
+                f.write(unit_1_sch_file)
         else:
-            with open(page_2, 'w') as f:
-                f.write(unit_2_sch_file)
+            with open(page_1, 'w') as f:
+                f.write(unit_1_sch_file)
     # if files are different, then there is no problem, write both of them and be done with it
     else:
         if __name__ == "__main__":
