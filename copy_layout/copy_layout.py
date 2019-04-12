@@ -28,12 +28,45 @@ import logging
 import re
 import hashlib
 import pickle
+import math
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 
-LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets', 'list_of_local_nets'])
+LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets', 'list_of_local_nets', 'level'])
 
 logger = logging.getLogger(__name__)
+
+
+def rotate_around_center(coordinates, angle):
+    """ rotate coordinates for a defined angle in degrees around coordinate center"""
+    new_x = coordinates[0] * math.cos(2 * math.pi * angle/360)\
+          - coordinates[1] * math.sin(2 * math.pi * angle/360)
+    new_y = coordinates[0] * math.sin(2 * math.pi * angle/360)\
+          + coordinates[1] * math.cos(2 * math.pi * angle/360)
+    return new_x, new_y
+
+
+def rotate_around_pivot_point(old_position, pivot_point, angle):
+    """ rotate coordinates for a defined angle in degrees around a pivot point """
+    # get relative position to pivot point
+    rel_x = old_position[0] - pivot_point[0]
+    rel_y = old_position[1] - pivot_point[1]
+    # rotate around
+    new_rel_x, new_rel_y = rotate_around_center((rel_x, rel_y), angle)
+    # get absolute position
+    new_position = (new_rel_x + pivot_point[0], new_rel_y + pivot_point[1])
+    return new_position
+
+
+def get_module_text_items(module):
+    """ get all text item belonging to a modules """
+    list_of_items = [module.mod.Reference(), module.mod.Value()]
+
+    module_items = module.mod.GraphicalItemsList()
+    for item in module_items:
+        if type(item) is pcbnew.TEXTE_MODULE:
+            list_of_items.append(item)
+    return list_of_items
 
 
 # this function was made by Miles Mccoo
@@ -332,14 +365,12 @@ class PcbData():
         return pivot_drawings
 
 
-class SaveLayout():
+class RestoreLayout():
     def __init__(self, board):
         self.board = board
         self.schematics = SchData(board)
         self.layout = PcbData(board)
         self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
-        # get basic layout info
-        pass
 
     def get_mod_by_ref(self, mod_ref):
         return self.layout.get_mod_by_ref(mod_ref)
@@ -503,7 +534,333 @@ class SaveLayout():
 
         return net_pairs_clean, net_dict
 
-    def export_layout(self, mod, level):
+    def replicate_modules(self, pivot_anchor_mod, pivot_modules, anchor_mod, modules):
+        logger.info("Replicating footprints")
+        # get anchor angle with respect to pivot module
+        anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+        # get exact anchor position
+        anchor_pos = anchor_mod.mod.GetPosition()
+
+        anchor_delta_angle = pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+        anchor_delta_pos = anchor_pos - pivot_anchor_mod.mod.GetPosition()
+
+        # go through all modules
+        for mod in modules:
+            # find proper match in pivot modules
+            mod_to_clone = None
+            list_of_possible_pivot_modules = []
+            for pmod in pivot_modules:
+                if pmod.mod_id == mod.mod_id:
+                    list_of_possible_pivot_modules.append(pmod)
+
+            # if there is more than one possible anchor, select the correct one
+            if len(list_of_possible_pivot_modules) == 1:
+                mod_to_clone = list_of_possible_pivot_modules[0]
+            else:
+                list_of_matches = []
+                for m in list_of_possible_pivot_modules:
+                    index = list_of_possible_pivot_modules.index(m)
+                    matches = 0
+                    for item in mod.sheet_id:
+                        if item in m.sheet_id:
+                            matches = matches + 1
+                    list_of_matches.append((index, matches))
+                # todo select the one with most matches
+                index, _ = max(list_of_matches, key=lambda item: item[1])
+                mod_to_clone = list_of_possible_pivot_modules[index]
+
+            # get module to clone position
+            pivot_mod_orientation = mod_to_clone.mod.GetOrientationDegrees()
+            pivot_mod_pos = mod_to_clone.mod.GetPosition()
+            # get relative position with respect to pivot anchor
+            pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+            pivot_mod_delta_pos = pivot_mod_pos - pivot_anchor_pos
+
+            # new orientation is simple
+            new_orientation = pivot_mod_orientation - anchor_delta_angle
+            old_position = pivot_mod_delta_pos + anchor_pos
+            newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
+            # convert to tuple of integers
+            newposition = [int(x) for x in newposition]
+            # place current module - only if current module is not also the anchor
+            if mod.ref != anchor_mod.ref:
+                mod.mod.SetPosition(pcbnew.wxPoint(*newposition))
+                mod.mod.SetOrientationDegrees(new_orientation)
+
+                pivot_mod_flipped = mod_to_clone.mod.IsFlipped()
+                if (mod.mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.mod.IsFlipped()):
+                    mod.mod.Flip(mod.mod.GetPosition())
+
+                # Copy local settings.
+                mod.mod.SetLocalClearance(mod_to_clone.mod.GetLocalClearance())
+                mod.mod.SetLocalSolderMaskMargin(mod_to_clone.mod.GetLocalSolderMaskMargin())
+                mod.mod.SetLocalSolderPasteMargin(mod_to_clone.mod.GetLocalSolderPasteMargin())
+                mod.mod.SetLocalSolderPasteMarginRatio(mod_to_clone.mod.GetLocalSolderPasteMarginRatio())
+                mod.mod.SetZoneConnection(mod_to_clone.mod.GetZoneConnection())
+
+            # replicate also text layout - also for anchor module. I am counting that the user is lazy and will
+            # just position the anchors and will not edit them
+            # get pivot_module_text
+            # get module text
+            pivot_mod_text_items = get_module_text_items(mod_to_clone)
+            mod_text_items = get_module_text_items(mod)
+            # replicate each text item
+            for pivot_text in pivot_mod_text_items:
+                index = pivot_mod_text_items.index(pivot_text)
+                pivot_text_position = pivot_text.GetPosition() + anchor_delta_pos
+
+                newposition = rotate_around_pivot_point(pivot_text_position, anchor_pos, anchor_delta_angle)
+
+                # convert to tuple of integers
+                newposition = [int(x) for x in newposition]
+                mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
+
+                # set orientation
+                mod_text_items[index].SetTextAngle(pivot_text.GetTextAngle())
+                # thickness
+                mod_text_items[index].SetThickness(pivot_text.GetThickness())
+                # width
+                mod_text_items[index].SetTextWidth(pivot_text.GetTextWidth())
+                # height
+                mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
+                # rest of the parameters
+                # TODO check SetEffects method, might be better
+                mod_text_items[index].SetItalic(pivot_text.IsItalic())
+                mod_text_items[index].SetBold(pivot_text.IsBold())
+                mod_text_items[index].SetMirrored(pivot_text.IsMirrored())
+                mod_text_items[index].SetMultilineAllowed(pivot_text.IsMultilineAllowed())
+                mod_text_items[index].SetHorizJustify(pivot_text.GetHorizJustify())
+                mod_text_items[index].SetVertJustify(pivot_text.GetVertJustify())
+                # set visibility
+                mod_text_items[index].SetVisible(pivot_text.IsVisible())
+
+    def replicate_tracks(self, pivot_anchor_mod, pivot_tracks, anchor_mod, net_pairs):
+        logger.info("Replicating tracks")
+        # get anchor angle with respect to pivot module
+        anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+        # get exact anchor position
+        anchor_pos = anchor_mod.mod.GetPosition()
+
+        anchor_delta_angle = pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+        anchor_delta_pos = anchor_pos - pivot_anchor_mod.mod.GetPosition()
+
+        net_pairs, net_dict = net_pairs
+
+        # go through all the tracks
+        for track in pivot_tracks:
+            # get from which net we are clonning
+            from_net_name = track.GetNetname()
+            # find to net
+            tup = [item for item in net_pairs if item[0] == from_net_name]
+            # if net was not fount, then the track is not part of this sheet and should not be cloned
+            if not tup:
+                pass
+            else:
+                to_net_name = tup[0][1]
+                to_net = net_dict[to_net_name]
+
+                # finally make a copy
+                # this came partially from Miles Mccoo
+                # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
+                if track.GetClass() == "VIA":
+                    newvia = pcbnew.VIA(self.board)
+                    # need to add before SetNet will work, so just doing it first
+                    self.board.Add(newvia)
+                    toplayer = -1
+                    bottomlayer = pcbnew.PCB_LAYER_ID_COUNT
+                    for l in range(pcbnew.PCB_LAYER_ID_COUNT):
+                        if not track.IsOnLayer(l):
+                            continue
+                        toplayer = max(toplayer, l)
+                        bottomlayer = min(bottomlayer, l)
+                    newvia.SetLayerPair(toplayer, bottomlayer)
+
+                    # get module to clone position
+                    pivot_track_pos = track.GetPosition()
+                    # get relative position with respect to pivot anchor
+                    pivot_anchor_pos = pivot_anchor_mod.mod.GetPosition()
+                    pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
+
+                    # new orientation is simple
+                    old_position = pivot_mod_delta_pos + anchor_pos
+                    newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
+                    # convert to tuple of integers
+                    newposition = [int(x) for x in newposition]
+
+                    newvia.SetPosition(pcbnew.wxPoint(*newposition))
+
+                    newvia.SetViaType(track.GetViaType())
+                    newvia.SetWidth(track.GetWidth())
+                    newvia.SetDrill(track.GetDrill())
+                    newvia.SetNet(to_net)
+                else:
+                    newtrack = pcbnew.TRACK(self.board)
+                    # need to add before SetNet will work, so just doing it first
+                    self.board.Add(newtrack)
+
+                    # get module to clone position
+                    pivot_track_pos = track.GetStart()
+                    # get relative position with respect to pivot anchor
+                    pivot_anchor_pos = pivot_anchor_mod.mod.GetPosition()
+                    pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
+
+                    # new orientation is simple
+                    old_position = pivot_mod_delta_pos + anchor_pos
+                    newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+                    newposition = [int(x) for x in newposition]
+                    newtrack.SetStart(pcbnew.wxPoint(*newposition))
+
+                    pivot_track_pos = track.GetEnd()
+                    # get relative position with respect to pivot anchor
+                    pivot_anchor_pos = pivot_anchor_mod.mod.GetPosition()
+                    pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
+
+                    # new orientation is simple
+                    old_position = pivot_mod_delta_pos + anchor_pos
+                    newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+                    newposition = [int(x) for x in newposition]
+                    newtrack.SetEnd(pcbnew.wxPoint(*newposition))
+
+                    newtrack.SetWidth(track.GetWidth())
+                    newtrack.SetLayer(track.GetLayer())
+
+                    newtrack.SetNet(to_net)
+
+    def replicate_zones(self, pivot_anchor_mod, pivot_zones, anchor_mod, net_pairs):
+        """ method which replicates zones"""
+        logger.info("Replicating zones")
+
+        # get anchor angle with respect to pivot module
+        anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+        # get exact anchor position
+        anchor_pos = anchor_mod.mod.GetPosition()
+
+        anchor_delta_angle = pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+        anchor_delta_pos = anchor_pos - pivot_anchor_mod.mod.GetPosition()
+
+        net_pairs, net_dict = net_pairs
+        # go through all the zones
+        for zone in pivot_zones:
+            # get from which net we are clonning
+            from_net_name = zone.GetNetname()
+            # if zone is not on copper layer it does not matter on which net it is
+            if not zone.IsOnCopperLayer():
+                tup = [('', '')]
+            else:
+                tup = [item for item in net_pairs if item[0] == from_net_name]
+
+            # there is no net
+            if not tup:
+                # Allow keepout zones to be cloned.
+                if zone.GetIsKeepout():
+                    tup = [('', '')]
+                # do not clone
+                else:
+                    logger.info('Skipping replication of a zone')
+                    continue
+
+            # start the clone
+            to_net_name = tup[0][1]
+            if to_net_name == u'':
+                to_net = 0
+            else:
+                to_net = net_dict[to_net_name].GetNet()
+
+            # now I can finally make a copy of a zone
+            # this came partially from Miles Mccoo.
+            # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
+            coords = get_coordinate_points_of_shape_poly_set(zone.Outline())
+
+            # get module to clone position
+            pivot_zone_pos = (coords[0][0], coords[0][1])
+            # get relative position with respect to pivot anchor
+            pivot_anchor_pos = (pivot_anchor_mod.mod.GetPosition().x, pivot_anchor_mod.mod.GetPosition().y)
+            pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
+
+            # new orientation is simple
+            old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
+            newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
+            newposition = [int(x) for x in newposition]
+            newzone = self.board.InsertArea(to_net,
+                                            0,
+                                            zone.GetLayer(),
+                                            newposition[0],
+                                            newposition[1],
+                                            pcbnew.ZONE_CONTAINER.DIAGONAL_EDGE)
+            newoutline = newzone.Outline()
+            for pt in coords[1:]:
+                pivot_zone_pos = (pt[0], pt[1])
+                # get relative position with respect to pivot anchor
+                pivot_anchor_pos = (pivot_anchor_mod.mod.GetPosition().x, pivot_anchor_mod.mod.GetPosition().y)
+                pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
+
+                # new orientation is simple
+                old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
+                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+
+                newposition = [int(x) for x in newposition]
+                newoutline.Append(newposition[0], newposition[1])
+
+            # copy zone settings
+            newzone.SetPriority(zone.GetPriority())
+            newzone.SetLayerSet(zone.GetLayerSet())
+            newzone.SetFillMode(zone.GetFillMode())
+            newzone.SetThermalReliefGap(zone.GetThermalReliefGap())
+            newzone.SetThermalReliefCopperBridge(zone.GetThermalReliefCopperBridge())
+            newzone.SetIsFilled(zone.IsFilled())
+            newzone.SetZoneClearance(zone.GetZoneClearance())
+            newzone.SetPadConnection(zone.GetPadConnection())
+            newzone.SetMinThickness(zone.GetMinThickness())
+
+            # Copy the keepout properties.
+            if zone.GetIsKeepout():
+                newzone.SetIsKeepout(True)
+                newzone.SetLayerSet(zone.GetLayerSet())
+                newzone.SetDoNotAllowCopperPour(zone.GetDoNotAllowCopperPour())
+                newzone.SetDoNotAllowTracks(zone.GetDoNotAllowTracks())
+                newzone.SetDoNotAllowVias(zone.GetDoNotAllowVias())
+            pass
+
+    def replicate_text(self, pivot_anchor_mod, pivot_text, anchor_mod):
+        logger.info("Replicating text")
+
+        # get anchor angle with respect to pivot module
+        anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+        # get exact anchor position
+        anchor_pos = anchor_mod.mod.GetPosition()
+
+        anchor_delta_angle = pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+        anchor_delta_pos = anchor_pos - pivot_anchor_mod.mod.GetPosition()
+
+        for text in pivot_text:
+            new_text = text.Duplicate()
+            new_text.Move(anchor_delta_pos)
+            new_text.Rotate(anchor_pos, -anchor_delta_angle * 10)
+            self.board.Add(new_text)
+
+    def replicate_drawings(self, pivot_anchor_mod, pivot_drawings, anchor_mod):
+        logger.info("Replicating drawings")
+        # get anchor angle with respect to pivot module
+        anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+        # get exact anchor position
+        anchor_pos = anchor_mod.mod.GetPosition()
+
+        anchor_delta_angle = pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
+        anchor_delta_pos = anchor_pos - pivot_anchor_mod.mod.GetPosition()
+
+        # go through all the drawings
+        for drawing in pivot_drawings:
+
+            new_drawing = drawing.Duplicate()
+            new_drawing.Move(anchor_delta_pos)
+            new_drawing.Rotate(anchor_pos, -anchor_delta_angle * 10)
+
+            self.board.Add(new_drawing)
+
+    def export_layout(self, mod, level, data_file):
         self.pivot_anchor_mod = mod
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = mod.filename[len(level)-1:]
@@ -544,28 +901,24 @@ class SaveLayout():
         other_modules = self.layout.get_modules_not_on_sheet(level)
         self.remove_modules(other_modules)
 
-        # save under a new name
-        saved = pcbnew.SaveBoard(new_file, self.board)
-
         # load as text
         with open(new_file, 'r') as f:
             layout = f.read()
 
         # save all data
-        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets)
+        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level)
         # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
-        data_file = new_file.replace(".kicad_pcb", ".pckl")
         with open(data_file, 'wb') as f:
             pickle.dump(data_to_save, f, 0)
 
-        return os.path.abspath(data_file)        
-
-    def import_layout(self, mod, level, layout_file):
+    def import_layout(self, mod, layout_file):
         # load saved design
         with open(layout_file, 'rb') as f:
             data_saved = pickle.load(f)
 
-        self.pivot_anchor_mod = mod
+        level = data_saved.level
+
+        self.anchor_mod = mod
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = mod.filename[len(level)-1:]
 
@@ -605,8 +958,46 @@ class SaveLayout():
 
         # get the saved layout ID numbers and try to figure out a match (at least the same depth, ...)
         # find net pairs
-        net_pairs, net_dict = self.get_net_pairs(modules_to_place, modules_saved)
+        net_pairs = self.get_net_pairs(modules_to_place, modules_saved)
+
+        # replicate modules
+        self.pivot_anchor_mod = modules_saved[modules_to_place.index(self.anchor_mod)]
+        self.replicate_modules(self.pivot_anchor_mod, modules_saved, self.anchor_mod, modules_to_place)
+
+        # replicate tracks
+        self.replicate_tracks(self.pivot_anchor_mod, saved_board.GetTracks(), self.anchor_mod, net_pairs)
+
+        # replicate zones
+        pivot_zones = [saved_board.GetArea(zone_id) for zone_id in range(saved_board.GetAreaCount()) ]
+        self.replicate_zones(self.pivot_anchor_mod, pivot_zones, self.anchor_mod, net_pairs)
+
+        # replicate text
+        pivot_text = [item for item in saved_board.GetDrawings() if isinstance(item, pcbnew.TEXTE_PCB)]
+        self.replicate_text(self.pivot_anchor_mod, pivot_text, self.anchor_mod)
+
+        # replicate drawings
+        pivot_drawings = [item for item in saved_board.GetDrawings() if isinstance(item, pcbnew.DRAWSEGMENT)]
+        self.replicate_drawings(self.pivot_anchor_mod, pivot_drawings, self.anchor_mod)
         a = 2
+        pass
+
+
+class SaveLayout(RestoreLayout):
+    def __init__(self, board):
+        # generate new tempfile
+        self.tempfilename = 'temp_boardfile.kicad_pcb'
+        if os.path.isfile(self.tempfilename):
+            raise IOError("Temporary file exists")
+        saved = pcbnew.SaveBoard(self.tempfilename, board)
+        self.board = pcbnew.LoadBoard(self.tempfilename)
+
+        # create a copy of the board and then work on the copy
+        self.schematics = SchData(self.board)
+        self.layout = PcbData(self.board)
+        self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
+
+    def __del__(self):
+        # os.remove(self.tempfilename)
         pass
 
 
@@ -618,7 +1009,6 @@ def main():
 
     # create a backup'
     board = pcbnew.LoadBoard(source_file)
-    saved = pcbnew.SaveBoard(backup_file, board)
     save_layout = SaveLayout(board)
 
     pivot_mod_ref = 'Q301'
@@ -628,13 +1018,14 @@ def main():
     # get the level index from user
     index = levels.index(levels[0])
 
-    layout_file = save_layout.export_layout(pivot_mod, pivot_mod.sheetname[0:index+1])
+    data_file = 'temp_data_file.pckl'
+    save_layout.export_layout(pivot_mod, pivot_mod.sheetname[0:index+1], data_file)
 
     # restore layout
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Destination_project"))
     destination_file = 'Destination_project.kicad_pcb'
     board = pcbnew.LoadBoard(destination_file)
-    restore_layout = SaveLayout(board)
+    restore_layout = RestoreLayout(board)
 
     pivot_mod_ref = 'Q3'
     pivot_mod = restore_layout.get_mod_by_ref(pivot_mod_ref)
@@ -643,6 +1034,11 @@ def main():
     index = levels.index(levels[0])
 
     restore_layout.import_layout(pivot_mod, pivot_mod.sheetname[0:index+1], layout_file)
+
+    saved = pcbnew.SaveBoard(destination_file.replace(".kicad_pcb", "_temp.kicad_pcb"), board)
+
+    b = 2
+    
 
 
 # for testing purposes only
