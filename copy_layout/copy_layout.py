@@ -32,7 +32,7 @@ import math
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 
-LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets', 'list_of_local_nets', 'level'])
+LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets', 'list_of_local_nets', 'level', 'level_filename'])
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +241,14 @@ class PcbData():
                 modules_on_sheet.append(mod)
         return modules_on_sheet
 
+    def get_modules_on_sheetfile(self, sheetfile):
+        modules_on_sheet = []
+        level_depth = len(sheetfile)
+        for mod in self.modules:
+            if sheetfile == mod.filename[0:level_depth]:
+                modules_on_sheet.append(mod)
+        return modules_on_sheet
+
     def get_modules_not_on_sheet(self, level):
         modules_not_on_sheet = []
         level_depth = len(level)
@@ -374,67 +382,6 @@ class RestoreLayout():
 
     def get_mod_by_ref(self, mod_ref):
         return self.layout.get_mod_by_ref(mod_ref)
-
-    def remove_drawings(self, bounding_box, containing):
-        # remove all drawings outside of bounding box
-        for drawing in self.board.GetDrawings():
-            if not isinstance(drawing, pcbnew.DRAWSEGMENT):
-                continue
-            drawing_bb = drawing.GetBoundingBox()
-            if containing:
-                if not bounding_box.Contains(drawing_bb):
-                    self.board.RemoveNative(drawing)
-            else:
-                if bounding_box.Intersects(drawing_bb):
-                    self.board.RemoveNative(drawing)
-
-    def remove_text(self, bounding_box, containing):
-        # remove all text outside of bounding box
-        for text in self.board.GetDrawings():
-            if not isinstance(text, pcbnew.TEXTE_PCB):
-                continue
-            text_bb = text.GetBoundingBox()
-            if containing:
-                if not bounding_box.Contains(text_bb):
-                    self.board.RemoveNative(text)
-            else:
-                if bounding_box.Intersects(text_bb):
-                    self.board.RemoveNative(text)
-
-    def remove_zones(self, bounding_box, containing):
-        # remove all zones outisde of bounding box
-        all_zones = []
-        for zoneid in range(self.board.GetAreaCount()):
-            all_zones.append(self.board.GetArea(zoneid))
-        # find all zones which are outside the pivot bounding box
-        for zone in all_zones:
-            zone_bb = zone.GetBoundingBox()
-            if containing:
-                if not bounding_box.Contains(zone_bb):
-                    self.board.RemoveNative(zone)
-            else:
-                if not bounding_box.Intersects(zone_bb):
-                    self.board.RemoveNative(zone)
-
-    def remove_tracks(self, bounding_box, containing):
-        # find all tracks within the pivot bounding box
-        all_tracks = self.board.GetTracks()
-        # get all the tracks for replication
-        for track in all_tracks:
-            track_bb = track.GetBoundingBox()
-            # if track is contained or intersecting the bounding box
-            if containing:
-                if not bounding_box.Contains(track_bb):
-                    # TODO don't- delete if track is on local nets
-                    self.board.RemoveNative(track)
-            else:
-                if not bounding_box.Intersects(track_bb):
-                    # TODO don't- delete if track is on local nets
-                    self.board.RemoveNative(track)
-
-    def remove_modules(self, modules):
-        for mod in modules:
-            self.board.RemoveNative(mod.mod)
 
     @staticmethod
     def get_index_of_tuple(list_of_tuples, index, value):
@@ -860,67 +807,18 @@ class RestoreLayout():
 
             self.board.Add(new_drawing)
 
-    def export_layout(self, mod, level, data_file):
-        self.pivot_anchor_mod = mod
-        # load schematics and calculate hash of schematics (you have to support nested hierarchy)
-        list_of_sheet_files = mod.filename[len(level)-1:]
-
-        md5hash = hashlib.md5()
-        for sch_file in list_of_sheet_files:
-            md5hash = self.schematics.get_sch_hash(sch_file, md5hash)
-
-        hex_hash = md5hash.hexdigest()
-
-        # append hash to new_board filename, so that can be checked on import
-        new_file = "_".join(list_of_sheet_files) + "_" + hex_hash + ".kicad_pcb"
-
-        # get modules on a sheet
-        modules = self.layout.get_modules_on_sheet(level)
-
-        # get other modules
-        other_modules = self.layout.get_modules_not_on_sheet(level)
-        # get nets local to pivot modules
-        local_nets = self.layout.get_local_nets(modules, other_modules)
-
-        # get modules bounding box
-        bounding_box = self.layout.get_modules_bounding_box(modules)
-
-        # remove text items
-        self.remove_text(bounding_box, True)
-
-        # remove drawings
-        self.remove_drawings(bounding_box, True)
-
-        # remove zones
-        self.remove_zones(bounding_box, True)
-
-        # remove tracks
-        self.remove_tracks(bounding_box, True)
-
-        # remove modules
-        other_modules = self.layout.get_modules_not_on_sheet(level)
-        self.remove_modules(other_modules)
-
-        # load as text
-        with open(new_file, 'r') as f:
-            layout = f.read()
-
-        # save all data
-        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level)
-        # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
-        with open(data_file, 'wb') as f:
-            pickle.dump(data_to_save, f, 0)
-
     def import_layout(self, mod, layout_file):
         # load saved design
         with open(layout_file, 'rb') as f:
             data_saved = pickle.load(f)
 
-        level = data_saved.level
+        level_filename = data_saved.level_filename
+
+        level = [mod.sheetname[mod.filename.index(x)] for x in level_filename]
 
         self.anchor_mod = mod
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
-        list_of_sheet_files = mod.filename[len(level)-1:]
+        list_of_sheet_files = mod.filename[len(level_filename)-1:]
 
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
@@ -987,12 +885,13 @@ class SaveLayout(RestoreLayout):
         # generate new tempfile
         self.tempfilename = 'temp_boardfile.kicad_pcb'
         if os.path.isfile(self.tempfilename):
-            raise IOError("Temporary file exists")
+            os.remove(self.tempfilename)
+            # raise IOError("Temporary file exists")
         saved = pcbnew.SaveBoard(self.tempfilename, board)
         self.board = pcbnew.LoadBoard(self.tempfilename)
 
         # create a copy of the board and then work on the copy
-        self.schematics = SchData(self.board)
+        self.schematics = SchData(board)
         self.layout = PcbData(self.board)
         self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
 
@@ -1000,14 +899,124 @@ class SaveLayout(RestoreLayout):
         # os.remove(self.tempfilename)
         pass
 
+    def remove_drawings(self, bounding_box, containing):
+        # remove all drawings outside of bounding box
+        for drawing in self.board.GetDrawings():
+            if not isinstance(drawing, pcbnew.DRAWSEGMENT):
+                continue
+            drawing_bb = drawing.GetBoundingBox()
+            if containing:
+                if not bounding_box.Contains(drawing_bb):
+                    self.board.RemoveNative(drawing)
+            else:
+                if bounding_box.Intersects(drawing_bb):
+                    self.board.RemoveNative(drawing)
+
+    def remove_text(self, bounding_box, containing):
+        # remove all text outside of bounding box
+        for text in self.board.GetDrawings():
+            if not isinstance(text, pcbnew.TEXTE_PCB):
+                continue
+            text_bb = text.GetBoundingBox()
+            if containing:
+                if not bounding_box.Contains(text_bb):
+                    self.board.RemoveNative(text)
+            else:
+                if bounding_box.Intersects(text_bb):
+                    self.board.RemoveNative(text)
+
+    def remove_zones(self, bounding_box, containing):
+        # remove all zones outisde of bounding box
+        all_zones = []
+        for zoneid in range(self.board.GetAreaCount()):
+            all_zones.append(self.board.GetArea(zoneid))
+        # find all zones which are outside the pivot bounding box
+        for zone in all_zones:
+            zone_bb = zone.GetBoundingBox()
+            if containing:
+                if not bounding_box.Contains(zone_bb):
+                    self.board.RemoveNative(zone)
+            else:
+                if not bounding_box.Intersects(zone_bb):
+                    self.board.RemoveNative(zone)
+
+    def remove_tracks(self, bounding_box, containing):
+        # find all tracks within the pivot bounding box
+        all_tracks = self.board.GetTracks()
+        # get all the tracks for replication
+        for track in all_tracks:
+            track_bb = track.GetBoundingBox()
+            # if track is contained or intersecting the bounding box
+            if containing:
+                if not bounding_box.Contains(track_bb):
+                    # TODO don't- delete if track is on local nets
+                    self.board.RemoveNative(track)
+            else:
+                if not bounding_box.Intersects(track_bb):
+                    # TODO don't- delete if track is on local nets
+                    self.board.RemoveNative(track)
+
+    def remove_modules(self, modules):
+        for mod in modules:
+            self.board.RemoveNative(mod.mod)
+
+    def export_layout(self, mod, level, data_file):
+        self.pivot_anchor_mod = mod
+        # load schematics and calculate hash of schematics (you have to support nested hierarchy)
+        list_of_sheet_files = mod.filename[len(level)-1:]
+
+        md5hash = hashlib.md5()
+        for sch_file in list_of_sheet_files:
+            md5hash = self.schematics.get_sch_hash(sch_file, md5hash)
+
+        hex_hash = md5hash.hexdigest()
+
+        # get modules on a sheet
+        modules = self.layout.get_modules_on_sheet(level)
+
+        # get other modules
+        other_modules = self.layout.get_modules_not_on_sheet(level)
+        # get nets local to pivot modules
+        local_nets = self.layout.get_local_nets(modules, other_modules)
+
+        # get modules bounding box
+        bounding_box = self.layout.get_modules_bounding_box(modules)
+
+        # remove text items
+        self.remove_text(bounding_box, True)
+
+        # remove drawings
+        self.remove_drawings(bounding_box, True)
+
+        # remove zones
+        self.remove_zones(bounding_box, True)
+
+        # remove tracks
+        self.remove_tracks(bounding_box, True)
+
+        # remove modules
+        other_modules = self.layout.get_modules_not_on_sheet(level)
+        self.remove_modules(other_modules)
+
+        # save the layout
+        saved = pcbnew.SaveBoard(self.tempfilename, self.board)
+        # load as text
+        with open(self.tempfilename, 'r') as f:
+            layout = f.read()
+
+        # level_filename, level, 
+        level_filename = [mod.filename[mod.sheetname.index(x)] for x in level]
+        # save all data
+        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level, level_filename)
+        # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
+        with open(data_file, 'wb') as f:
+            pickle.dump(data_to_save, f, 0)
+
 
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Source_project"))
     source_file = 'multiple_hierarchy.kicad_pcb'
 
-    backup_file = 'multiple_hierarchy.kicad_pcb_bak'
-
-    # create a backup'
     board = pcbnew.LoadBoard(source_file)
     save_layout = SaveLayout(board)
 
@@ -1033,7 +1042,7 @@ def main():
     # get the level index from user
     index = levels.index(levels[0])
 
-    restore_layout.import_layout(pivot_mod, pivot_mod.sheetname[0:index+1], layout_file)
+    restore_layout.import_layout(pivot_mod, data_file)
 
     saved = pcbnew.SaveBoard(destination_file.replace(".kicad_pcb", "_temp.kicad_pcb"), board)
 
