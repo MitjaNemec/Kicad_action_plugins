@@ -27,10 +27,23 @@ import sys
 import logging
 import re
 import hashlib
+import pickle
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
+
+LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets'])
+
 logger = logging.getLogger(__name__)
 
+
+class Footprint():
+    def __init__(self, ref, mod, mod_id, sheet_id, sheetname=None, filename=None):
+        self.ref = ref
+        self.mod = mod
+        self.mod_id = mod_id
+        self.sheet_id = sheet_id
+        self.sheetname = sheetname
+        self.filename = filename
 
 # this function was made by Miles Mccoo
 # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
@@ -71,7 +84,7 @@ def get_board_modules(board):
     return modules
 
 
-class CopyLayout():
+class SchData():
     @staticmethod
     def extract_subsheets(filename):
         with open(filename) as f:
@@ -135,6 +148,41 @@ class CopyLayout():
             dict_of_sheets = self.find_all_sch_files(file_path, dict_of_sheets)
         return dict_of_sheets
 
+    def __init__(self, board):
+        main_sch_file = os.path.abspath(board.GetFileName()).replace(".kicad_pcb", ".sch")
+        self.project_folder = os.path.dirname(main_sch_file)
+        # get relation between sheetname and it's id
+        logger.info('getting project hierarchy from schematics')
+        self.dict_of_sheets = self.find_all_sch_files(main_sch_file, {})
+        logger.info("Project hierarchy looks like:\n%s" % repr(self.dict_of_sheets))
+
+        # make all paths relative
+        for x in self.dict_of_sheets.keys():
+            path = self.dict_of_sheets[x][1]
+            self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
+
+    @staticmethod
+    def get_sch_hash(sch_file, md5hash):
+        # load sch file
+        with open(sch_file) as f:
+            sch_lines = f.readlines()
+
+        # remove all lines containing references (L, U, AR)
+        sch_file_without_reference = [line for line in sch_lines if (not line.startswith("L ")
+                                                                     and not line.startswith("F0 ")
+                                                                     and not line.startswith("F 0")
+                                                                     and not line.startswith("AR ")
+                                                                     and not line.startswith("Sheet")
+                                                                     and not line.startswith("LIBS:"))]
+
+        # caluclate the hash
+        for line in sch_file_without_reference:
+            md5hash.update(line)
+
+        return md5hash
+
+
+class PcbData():
     @staticmethod
     def get_module_id(module):
         """ get module id """
@@ -144,11 +192,9 @@ class CopyLayout():
 
     def get_sheet_id(self, module):
         """ get sheet id """
-        module_path = module.GetPath().split('/')
-        sheet_id = module_path[0:-1]
-        sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
-        sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
-        sheet_id = [sheet_names, sheet_files]
+        module_path = module.GetPath()
+        sheet_path = module_path.split('/')
+        sheet_id = sheet_path[1:-1]
         return sheet_id
 
     def get_mod_by_ref(self, ref):
@@ -157,46 +203,36 @@ class CopyLayout():
                 return m
         return None
 
-    def __init__(self, board):
-        self.board = board
-        self.pcb_filename = os.path.abspath(board.GetFileName())
-        self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".sch")
-        self.project_folder = os.path.dirname(self.pcb_filename)
-
-        # get relation between sheetname and it's id
-        logger.info('getting project hierarchy from schematics')
-        self.dict_of_sheets = self.find_all_sch_files(self.sch_filename, {})
-        logger.info("Project hierarchy looks like:\n%s" % repr(self.dict_of_sheets))
-
-        # make all paths relative
-        for x in self.dict_of_sheets.keys():
-            path = self.dict_of_sheets[x][1]
-            self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
-
-        # construct a list of modules with all pertinent data 
-        logger.info('getting a list of all footprints on board') 
-        self.modules = self.get_board_modules(board)
-
     def get_board_modules(self, board):
         bmod = board.GetModules()
         modules = []
         mod_dict = {}
         for module in bmod:
-            mod_named_tuple = Module(mod=module,
-                                     mod_id=self.get_module_id(module),
-                                     sheet_id=self.get_sheet_id(module)[0],
-                                     filename=self.get_sheet_id(module)[1], 
-                                     ref=module.GetReference())
+            mod_named_tuple = Footprint(mod=module,
+                                        mod_id=self.get_module_id(module),
+                                        sheet_id=self.get_sheet_id(module),
+                                        ref=module.GetReference())
             mod_dict[module.GetReference()] = mod_named_tuple
             modules.append(mod_named_tuple)
 
         return modules
 
+    def set_modules_hierarchy_names(self, dict_of_sheets):
+        for mod in self.modules:
+            mod.sheetname = [dict_of_sheets[x][0] for x in mod.sheet_id]
+            mod.filename = [dict_of_sheets[x][1] for x in mod.sheet_id]
+
+    def __init__(self, board):
+        self.board = board
+        # construct a list of modules with all pertinent data 
+        logger.info('getting a list of all footprints on board') 
+        self.modules = self.get_board_modules(board)
+
     def get_modules_on_sheet(self, level):
         modules_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
-            if level == mod.sheet_id[0:level_depth]:
+            if level == mod.sheetname[0:level_depth]:
                 modules_on_sheet.append(mod)
         return modules_on_sheet
 
@@ -204,7 +240,7 @@ class CopyLayout():
         modules_not_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
-            if level != mod.sheet_id[0:level_depth]:
+            if level != mod.sheetname[0:level_depth]:
                 modules_not_on_sheet.append(mod)
         return modules_not_on_sheet
 
@@ -239,7 +275,8 @@ class CopyLayout():
 
         return pivot_local_nets
 
-    def get_modules_bounding_box(self, modules):
+    @staticmethod
+    def get_modules_bounding_box(modules):
         # get the pivot bounding box
         bounding_box = modules[0].mod.GetFootprintRect()
         top = bounding_box.GetTop()
@@ -322,121 +359,18 @@ class CopyLayout():
                     pivot_drawings.append(drawing)
         return pivot_drawings
 
-    def get_net_pairs(self, sheet):
-        """ find all net pairs between pivot sheet and current sheet"""
-        # find all modules, pads and nets on this sheet
-        sheet_modules = self.get_modules_on_sheet(sheet)
 
-        # find all net pairs via same modules pads,
-        net_pairs = []
-        net_dict = {}
-        # construct module pairs
-        mod_matches = []
-        for p_mod in self.pivot_modules:
-            mod_matches.append([p_mod.mod, p_mod.mod_id, p_mod.sheet_id])
+class SaveLayout():
+    def __init__(self, board):
+        self.board = board
+        self.schematics = SchData(board)
+        self.layout = PcbData(board)
+        self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
+        # get basic layout info
+        pass
 
-        for s_mod in sheet_modules:
-            for mod in mod_matches:
-                if mod[1] == s_mod.mod_id:
-                    index = mod_matches.index(mod)
-                    mod_matches[index].append(s_mod.mod)
-                    mod_matches[index].append(s_mod.mod_id)
-                    mod_matches[index].append(s_mod.sheet_id)
-        # find closest match
-        mod_pairs = []
-        mod_pairs_by_reference = []
-        for mod in mod_matches:
-            index = mod_matches.index(mod)
-            matches = (len(mod) - 3) // 3
-            if matches != 1:
-                match_len = []
-                for index in range(0, matches):
-                    match_len.append(len(set(mod[2]) & set(mod[2+3*(index+1)])))
-                index = match_len.index(max(match_len))
-                mod_pairs.append((mod[0], mod[3*(index+1)]))
-                mod_pairs_by_reference.append((mod[0].GetReference(), mod[3*(index+1)].GetReference()))
-            elif matches == 1:
-                mod_pairs.append((mod[0], mod[3]))
-                mod_pairs_by_reference.append((mod[0].GetReference(), mod[3].GetReference()))
-
-        pad_pairs = []
-        for x in range(len(mod_pairs)):
-            pad_pairs.append([])
-
-        for pair in mod_pairs:
-            index = mod_pairs.index(pair)
-            # get all footprint pads
-            p_mod_pads = pair[0].PadsList()
-            s_mod_pads = pair[1].PadsList()
-            # create a list of padsnames and pads
-            p_pads = []
-            s_pads = []
-            for pad in p_mod_pads:
-                p_pads.append((pad.GetName(), pad))
-            for pad in s_mod_pads:
-                s_pads.append((pad.GetName(), pad))
-            # sort by padnames
-            p_pads.sort(key=lambda tup: tup[0])
-            s_pads.sort(key=lambda tup: tup[0])
-            # extract pads and append them to pad pairs list
-            pad_pairs[index].append([x[1] for x in p_pads])
-            pad_pairs[index].append([x[1] for x in s_pads])
-
-        for pair in mod_pairs:
-            index = mod_pairs.index(pair)
-            p_mod = pair[0]
-            s_mod = pair[1]
-            # get their pads
-            p_mod_pads = pad_pairs[index][0]
-            s_mod_pads = pad_pairs[index][1]
-            # I am going to assume pads are in the same order
-            p_nets = []
-            s_nets = []
-            # get nelists for each pad
-            for p_pad in p_mod_pads:
-                pad_name = p_pad.GetName()
-                p_nets.append((pad_name, p_pad.GetNetname()))
-            for s_pad in s_mod_pads:
-                pad_name = s_pad.GetName()
-                s_nets.append((pad_name, s_pad.GetNetname()))
-                net_dict[s_pad.GetNetname()] = s_pad.GetNet()
-            # sort both lists by pad name
-            # so that they have the same order - needed in some cases
-            # as the iterator thorugh the pads list does not return pads always in the proper order
-            p_nets.sort(key=lambda tup: tup[0])
-            s_nets.sort(key=lambda tup: tup[0])
-            # build list of net tupules
-            for net in p_nets:
-                index = get_index_of_tuple(p_nets, 1, net[1])
-                net_pairs.append((p_nets[index][1], s_nets[index][1]))
-
-        # remove duplicates
-        net_pairs_clean = list(set(net_pairs))
-
-        return net_pairs_clean, net_dict
-
-
-
-        a = 2
-
-    def get_sch_hash(self, sch_file, md5hash):
-        # load sch file
-        with open(sch_file) as f:
-            sch_lines = f.readlines()
-
-        # remove all lines containing references (L, U, AR)
-        sch_file_without_reference = [line for line in sch_lines if (not line.startswith("L ")
-                                                                     and not line.startswith("F0 ")
-                                                                     and not line.startswith("F 0")
-                                                                     and not line.startswith("AR ")
-                                                                     and not line.startswith("Sheet")
-                                                                     and not line.startswith("LIBS:"))]
-
-        # caluclate the hash
-        for line in sch_file_without_reference:
-            md5hash.update(line)
-
-        return md5hash
+    def get_mod_by_ref(self, mod_ref):
+        return self.layout.get_mod_by_ref(mod_ref)
 
     def remove_drawings(self, bounding_box, containing):
         # remove all drawings outside of bounding box
@@ -495,34 +429,9 @@ class CopyLayout():
                     # TODO don't- delete if track is on local nets
                     self.board.RemoveNative(track)
 
-    def remove_modules(self):
-        for mod in self.other_modules:
+    def remove_modules(self, modules):
+        for mod in modules:
             self.board.RemoveNative(mod.mod)
-
-    def prepare_for_copy(self, level, containing):
-        # get a list of modules for replication
-        logger.info("Getting the list of pivot footprints")
-        self.pivot_modules = self.get_modules_on_sheet(level)
-        # get the rest of the modules
-        logger.info("Getting the list of all the remaining footprints")
-        self.other_modules = self.get_modules_not_on_sheet(level)
-        # get nets local to pivot modules
-        logger.info("Getting nets local to pivot footprints")
-        self.pivot_local_nets = self.get_local_nets(self.pivot_modules, self.other_modules)
-        # get pivot bounding box
-        logger.info("Getting pivot bounding box")
-        self.pivot_bounding_box = self.get_modules_bounding_box(self.pivot_modules)
-        # get pivot tracks
-        logger.info("Getting pivot tracks")
-        self.pivot_tracks = self.get_tracks(self.pivot_bounding_box, self.pivot_local_nets, containing)
-        # get pivot zones
-        logger.info("Getting pivot zones")
-        self.pivot_zones = self.get_zones(self.pivot_bounding_box, containing)
-        # get pivot text items
-        logger.info("Getting pivot text items")
-        self.pivot_text = self.get_text_items(self.pivot_bounding_box, containing)
-        logger.info("Getting pivot text items")
-        self.pivot_drawings = self.get_drawings(self.pivot_bounding_box, containing)
 
     def export_layout(self, mod, level):
         self.pivot_anchor_mod = mod
@@ -531,71 +440,93 @@ class CopyLayout():
 
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
-            md5hash = self.get_sch_hash(sch_file, md5hash)
+            md5hash = self.schematics.get_sch_hash(sch_file, md5hash)
 
         hex_hash = md5hash.hexdigest()
 
         # append hash to new_board filename, so that can be checked on import
         new_file = "_".join(list_of_sheet_files) + "_" + hex_hash + ".kicad_pcb"
 
-        self.prepare_for_copy(level, True)
+        # get modules on a sheet
+        modules = self.layout.get_modules_on_sheet(level)
+        # the rest
+        # get modules bounding box
+        bounding_box = self.layout.get_modules_bounding_box(modules)
 
         # remove text items
-        self.remove_text(self.pivot_bounding_box, True)
+        self.remove_text(bounding_box, True)
 
         # remove drawings
-        self.remove_drawings(self.pivot_bounding_box, True)
+        self.remove_drawings(bounding_box, True)
 
         # remove zones
-        self.remove_zones(self.pivot_bounding_box, True)
+        self.remove_zones(bounding_box, True)
 
         # remove tracks
-        self.remove_tracks(self.pivot_bounding_box, True)
+        self.remove_tracks(bounding_box, True)
 
         # remove modules
-        self.remove_modules()
+        other_modules = self.layout.get_modules_not_on_sheet(level)
+        self.remove_modules(other_modules)
 
         # save under a new name
         saved = pcbnew.SaveBoard(new_file, self.board)
 
-        # place all drawings from old_board to new_board
-        return os.path.abspath(new_file)
+        # load as text
+        with open(new_file, 'r') as f:
+            layout = f.read()
+
+        # save all data
+        data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets)
+        # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
+        data_file = new_file.replace(".kicad_pcb", ".pckl")
+        with open(data_file, 'wb') as f:
+            pickle.dump(data_to_save, f, 0)
+
+        return os.path.abspath(data_file)        
 
     def import_layout(self, mod, level, layout_file):
+        # load saved design
+        with open(layout_file, 'rb') as f:
+            data_saved = pickle.load(f)
+
         self.pivot_anchor_mod = mod
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = mod.filename[len(level)-1:]
 
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
-            md5hash = self.get_sch_hash(sch_file, md5hash)
+            md5hash = self.schematics.get_sch_hash(sch_file, md5hash)
 
         hex_hash = md5hash.hexdigest()
 
         # check the hash
-        saved_hash = layout_file.rstrip(".kicad_pcb").split("_")[-1]
+        saved_hash = data_saved.hash
 
         if not saved_hash == hex_hash:
             raise ValueError("Source and destination schematics don't match!")
 
-        # if hashes match then proceed
-        self.prepare_for_copy(level, True)
+        # load saved
+        temp_filename = 'temp_layout.kicad_pcb'
+        with open(temp_filename, 'w') as f:
+            f.write(data_saved.layout)
 
-        # find modules pairs
-        saved_board = pcbnew.LoadBoard(layout_file)
+        # restore layout data
+        saved_board = pcbnew.LoadBoard(temp_filename)
+        saved_layout = PcbData(saved_board)
+        saved_layout.set_modules_hierarchy_names(data_saved.dict_of_sheets)
 
-        saved_modules = get_board_modules(saved_board)
+        modules_saved = saved_layout.modules
 
-        modules_to_place = self.pivot_modules
+        modules_to_place = self.layout.get_modules_on_sheet(level)
+
+        if len(modules_to_place) != len(saved_modules):
+            raise ValueError("Source and destination footprint count don't match!")
 
         # sort by ID - I am counting that source and destination sheed have been
         # anotated by KiCad in their final form (reset anotation and then re-anotate)
         modules_to_place = sorted(modules_to_place, key=lambda x: (x.mod_id, x.ref))
-        saved_modules = sorted(saved_modules, key=lambda x: (x.mod_id, x.ref))
-
-        # self.pivot_modules, saved_layout.modules
-        if len(modules_to_place) != len(saved_modules):
-            raise ValueError("Source and destination footprint count don't match!")
+        modules_saved = sorted(modules_saved, key=lambda x: (x.mod_id, x.ref))
 
         # get the saved layout ID numbers and try to figure out a match (at least the same depth, ...)
 
@@ -612,7 +543,7 @@ def main():
     # create a backup'
     board = pcbnew.LoadBoard(source_file)
     saved = pcbnew.SaveBoard(backup_file, board)
-    save_layout = CopyLayout(board)
+    save_layout = SaveLayout(board)
 
     pivot_mod_ref = 'Q301'
     pivot_mod = save_layout.get_mod_by_ref(pivot_mod_ref)
@@ -621,13 +552,13 @@ def main():
     # get the level index from user
     index = levels.index(levels[0])
 
-    layout_file = save_layout.export_layout(pivot_mod, pivot_mod.sheet_id[0:index+1])
+    layout_file = save_layout.export_layout(pivot_mod, pivot_mod.sheetname[0:index+1])
 
     # restore layout
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Destination_project"))
     destination_file = 'Destination_project.kicad_pcb'
     board = pcbnew.LoadBoard(destination_file)
-    restore_layout = CopyLayout(board)
+    restore_layout = SaveLayout(board)
 
     pivot_mod_ref = 'Q3'
     pivot_mod = restore_layout.get_mod_by_ref(pivot_mod_ref)
@@ -635,8 +566,7 @@ def main():
     # get the level index from user
     index = levels.index(levels[0])
 
-    restore_layout.import_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], layout_file)
-
+    restore_layout.import_layout(pivot_mod, pivot_mod.sheetname[0:index+1], layout_file)
 
 
 # for testing purposes only
