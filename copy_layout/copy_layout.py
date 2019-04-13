@@ -29,6 +29,7 @@ import re
 import hashlib
 import pickle
 import math
+import tempfile
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 
@@ -833,12 +834,16 @@ class RestoreLayout():
             raise ValueError("Source and destination schematics don't match!")
 
         # load saved
-        temp_filename = 'temp_layout.kicad_pcb'
+        tempdir = tempfile.gettempdir()
+        temp_filename = os.path.join(tempdir, 'temp_layout_for_restore.kicad_pcb')
         with open(temp_filename, 'w') as f:
             f.write(data_saved.layout)
 
         # restore layout data
         saved_board = pcbnew.LoadBoard(temp_filename)
+        # delete temporary file
+        os.remove(temp_filename)
+
         saved_layout = PcbData(saved_board)
         saved_layout.set_modules_hierarchy_names(data_saved.dict_of_sheets)
 
@@ -876,17 +881,16 @@ class RestoreLayout():
         # replicate drawings
         pivot_drawings = [item for item in saved_board.GetDrawings() if isinstance(item, pcbnew.DRAWSEGMENT)]
         self.replicate_drawings(self.pivot_anchor_mod, pivot_drawings, self.anchor_mod)
-        a = 2
         pass
 
 
 class SaveLayout(RestoreLayout):
     def __init__(self, board):
         # generate new tempfile
-        self.tempfilename = 'temp_boardfile.kicad_pcb'
+        tempdir = tempfile.gettempdir()
+        self.tempfilename = os.path.join(tempdir, 'temp_boardfile_for_save.kicad_pcb')
         if os.path.isfile(self.tempfilename):
             os.remove(self.tempfilename)
-            # raise IOError("Temporary file exists")
         saved = pcbnew.SaveBoard(self.tempfilename, board)
         self.board = pcbnew.LoadBoard(self.tempfilename)
 
@@ -894,10 +898,6 @@ class SaveLayout(RestoreLayout):
         self.schematics = SchData(board)
         self.layout = PcbData(self.board)
         self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
-
-    def __del__(self):
-        # os.remove(self.tempfilename)
-        pass
 
     def remove_drawings(self, bounding_box, containing):
         # remove all drawings outside of bounding box
@@ -1004,6 +1004,9 @@ class SaveLayout(RestoreLayout):
         with open(self.tempfilename, 'r') as f:
             layout = f.read()
 
+        # remove the file
+        os.remove(self.tempfilename)
+        
         # level_filename, level, 
         level_filename = [mod.filename[mod.sheetname.index(x)] for x in level]
         # save all data
