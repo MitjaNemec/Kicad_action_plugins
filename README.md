@@ -16,9 +16,9 @@ While the action plugin works within pcbnew, the `replicatelayout` module can be
 The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets.
 The basic requirement for replication is that the section to be replicated is completely contained within a single hierarchical sheet, and replicated sections are just copies of the same sheet. Complex hierarchies are supported because as replicated sheet can contain subsheets. The plugin replicates footprints, zones, tracks and text.
 
-After the section for replication (pivot section) has been laid out (modules, tracks, text objects and zones placed) you need to:
-1. Place the anchor modules for the sections you want to replicate. This defines the position and orientation of replicated sections. You can use [Place footprints] action plugin for this.
-2. Select the same anchor module within the pivot section.
+After the section for replication (pivot section) has been laid out (footprints, tracks, text objects and zones placed) you need to:
+1. Place the anchor footprints for the sections you want to replicate. This defines the position and orientation of replicated sections. You can use [Place footprints] action plugin for this.
+2. Select the same anchor footprint within the pivot section.
 3. Run the plugin.
 4. Choose which hierarchical level you wish to replicate.
 5. Select which sheets you want to replicate (default is all of them)
@@ -27,7 +27,7 @@ After the section for replication (pivot section) has been laid out (modules, tr
 8. Select whether you want to delete already laid out tracks/zones/text (this is useful when updating an already replicated layout).
 9. Hit OK.
 
-Additionally you can choose whether you want to also replicate zones, text and/or tracks. By default, only objects which are contained in the bounding box constituted by all the modules in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that bounding boxes are squares aligned with the x and y axis, regardless of section orientation.
+Additionally you can choose whether you want to also replicate zones, text and/or tracks. By default, only objects which are contained in the bounding box constituted by all the footprints in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that bounding boxes are squares aligned with the x and y axis, regardless of section orientation.
 
 Example replication of a complex hierarchical project. Replicating inner sheet first, then outer.
 
@@ -81,7 +81,7 @@ This plugin has been developed as a complex plugin according the [Python Plugin 
 
 Within the plugin folder only the *.py files are required for operation.
 
-This plugin deletes selected items. Items can be: zones and/or tracks and/or modules. The main intention is to delete selected tracks in order to redo parts of the layout.
+This plugin deletes selected items. Items can be: zones and/or tracks and/or footprints. The main intention is to delete selected tracks in order to redo parts of the layout.
 
 To run the plugin:
 1. Select items you want to delete (note that in KiCad it is different if you start your selection box from left or right)
@@ -191,5 +191,25 @@ Workflow:
 Example:
 ![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/length_stats_ff.gif)
 
+## Save/Restore Layout
+This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
 
+This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
+Within the plugin folder only the *.py files are required for operation.
+
+This plugin saves the partial layout of a selected pcb (only specific hierarchical level is saved). This layout can be imported into another pcb, which is based upon the same hierarchical subsheets. The equality is tested and checked.
+
+Workflow:
+1. Select one footprint which is in the hierarchy that you want to save the layout for.
+2. Run the plugin and choose "Save layout"
+3. Select into which file should the layout be saved
+4. Create a new project. Copy the chosen .sch files used for hierarchy to the project folder and link it into schematics
+5. Create a new layout.
+6. Place and select the anchor footprint. This defines the position and orientation of restored layout.
+7. Run the plugin.
+8. Choose "Restore layout"
+9: Select in which file is tha layout data stored
+
+Example:
+![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/save_restore.gif)
