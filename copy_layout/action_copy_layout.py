@@ -84,8 +84,7 @@ class CopyLayout(pcbnew.ActionPlugin):
         self.name = "Copy layout"
         self.category = "Modify Drawing PCB"
         self.description = "A plugin to save/restore layout"
-        #self.icon_file_name = os.path.join(
-        #        os.path.dirname(__file__), 'array-place_footprints.svg.png')
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), 'copy_layout-pcbnew.svg.png')
 
     def Run(self):
         # load board
