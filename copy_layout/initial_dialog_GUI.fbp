@@ -47,7 +47,7 @@
             <property name="size">242,74</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; forward_declare</property>
-            <property name="title">Copy layout</property>
+            <property name="title">Save/Restore Layout</property>
             <property name="tooltip"></property>
             <property name="window_extra_style"></property>
             <property name="window_name"></property>

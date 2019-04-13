@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#  replicate_layout_V2.py
+#  save_restore_layout.py
 #
 # Copyright (C) 2019 Mitja Nemec, Stephen Walker-Weinshenker
 #
@@ -121,7 +121,6 @@ class SchData():
                 # found sheet filename
                 if line.startswith('F1 '):
                     subsheet_path = re.findall("\s\"(.*.sch)\"\s", line)[0]
-                    subsheet_line = file_lines.split("\n").index(line)
                     if not os.path.isabs(subsheet_path):
                         # check if path is encoded with variables
                         if "${" in subsheet_path:
@@ -180,7 +179,6 @@ class SchData():
                                                                      and not line.startswith("AR ")
                                                                      and not line.startswith("Sheet")
                                                                      and not line.startswith("LIBS:"))]
-
         # caluclate the hash
         for line in sch_file_without_reference:
             md5hash.update(line)
@@ -196,7 +194,8 @@ class PcbData():
         module_id = "/".join(module_path[-1:])
         return module_id
 
-    def get_sheet_id(self, module):
+    @staticmethod
+    def get_sheet_id(module):
         """ get sheet id """
         module_path = module.GetPath()
         sheet_path = module_path.split('/')
@@ -239,14 +238,6 @@ class PcbData():
         level_depth = len(level)
         for mod in self.modules:
             if level == mod.sheetname[0:level_depth]:
-                modules_on_sheet.append(mod)
-        return modules_on_sheet
-
-    def get_modules_on_sheetfile(self, sheetfile):
-        modules_on_sheet = []
-        level_depth = len(sheetfile)
-        for mod in self.modules:
-            if sheetfile == mod.filename[0:level_depth]:
                 modules_on_sheet.append(mod)
         return modules_on_sheet
 
@@ -521,7 +512,7 @@ class RestoreLayout():
             pivot_mod_orientation = mod_to_clone.mod.GetOrientationDegrees()
             pivot_mod_pos = mod_to_clone.mod.GetPosition()
             # get relative position with respect to pivot anchor
-            pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
+            pivot_anchor_pos = pivot_anchor_mod.mod.GetPosition()
             pivot_mod_delta_pos = pivot_mod_pos - pivot_anchor_pos
 
             # new orientation is simple
@@ -808,18 +799,17 @@ class RestoreLayout():
 
             self.board.Add(new_drawing)
 
-    def import_layout(self, mod, layout_file):
+    def restore_layout(self, anchor_mod, layout_file):
         # load saved design
         with open(layout_file, 'rb') as f:
             data_saved = pickle.load(f)
 
         level_filename = data_saved.level_filename
 
-        level = [mod.sheetname[mod.filename.index(x)] for x in level_filename]
+        level = [anchor_mod.sheetname[anchor_mod.filename.index(x)] for x in level_filename]
 
-        self.anchor_mod = mod
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
-        list_of_sheet_files = mod.filename[len(level_filename)-1:]
+        list_of_sheet_files = anchor_mod.filename[len(level_filename)-1:]
 
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
@@ -864,23 +854,23 @@ class RestoreLayout():
         net_pairs = self.get_net_pairs(modules_to_place, modules_saved)
 
         # replicate modules
-        self.pivot_anchor_mod = modules_saved[modules_to_place.index(self.anchor_mod)]
-        self.replicate_modules(self.pivot_anchor_mod, modules_saved, self.anchor_mod, modules_to_place)
+        pivot_anchor_mod = modules_saved[modules_to_place.index(anchor_mod)]
+        self.replicate_modules(pivot_anchor_mod, modules_saved, anchor_mod, modules_to_place)
 
         # replicate tracks
-        self.replicate_tracks(self.pivot_anchor_mod, saved_board.GetTracks(), self.anchor_mod, net_pairs)
+        self.replicate_tracks(pivot_anchor_mod, saved_board.GetTracks(), anchor_mod, net_pairs)
 
         # replicate zones
         pivot_zones = [saved_board.GetArea(zone_id) for zone_id in range(saved_board.GetAreaCount()) ]
-        self.replicate_zones(self.pivot_anchor_mod, pivot_zones, self.anchor_mod, net_pairs)
+        self.replicate_zones(pivot_anchor_mod, pivot_zones, anchor_mod, net_pairs)
 
         # replicate text
         pivot_text = [item for item in saved_board.GetDrawings() if isinstance(item, pcbnew.TEXTE_PCB)]
-        self.replicate_text(self.pivot_anchor_mod, pivot_text, self.anchor_mod)
+        self.replicate_text(pivot_anchor_mod, pivot_text, anchor_mod)
 
         # replicate drawings
         pivot_drawings = [item for item in saved_board.GetDrawings() if isinstance(item, pcbnew.DRAWSEGMENT)]
-        self.replicate_drawings(self.pivot_anchor_mod, pivot_drawings, self.anchor_mod)
+        self.replicate_drawings(pivot_anchor_mod, pivot_drawings, anchor_mod)
         pass
 
 
@@ -960,10 +950,9 @@ class SaveLayout(RestoreLayout):
         for mod in modules:
             self.board.RemoveNative(mod.mod)
 
-    def export_layout(self, mod, level, data_file):
-        self.pivot_anchor_mod = mod
+    def save_layout(self, pivot_anchor_mod, level, data_file):
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
-        list_of_sheet_files = mod.filename[len(level)-1:]
+        list_of_sheet_files = pivot_anchor_mod.filename[len(level)-1:]
 
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
@@ -1008,7 +997,7 @@ class SaveLayout(RestoreLayout):
         os.remove(self.tempfilename)
         
         # level_filename, level, 
-        level_filename = [mod.filename[mod.sheetname.index(x)] for x in level]
+        level_filename = [pivot_anchor_mod.filename[pivot_anchor_mod.sheetname.index(x)] for x in level]
         # save all data
         data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level, level_filename)
         # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
@@ -1031,7 +1020,7 @@ def main():
     index = levels.index(levels[0])
 
     data_file = 'temp_data_file.pckl'
-    save_layout.export_layout(pivot_mod, pivot_mod.sheetname[0:index+1], data_file)
+    save_layout.save_layout(pivot_mod, pivot_mod.sheetname[0:index + 1], data_file)
 
     # restore layout
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "Destination_project"))
@@ -1041,17 +1030,13 @@ def main():
 
     pivot_mod_ref = 'Q3'
     pivot_mod = restore_layout.get_mod_by_ref(pivot_mod_ref)
-    levels = pivot_mod.filename
-    # get the level index from user
-    index = levels.index(levels[0])
 
-    restore_layout.import_layout(pivot_mod, data_file)
+    restore_layout.restore_layout(pivot_mod, data_file)
 
     saved = pcbnew.SaveBoard(destination_file.replace(".kicad_pcb", "_temp.kicad_pcb"), board)
 
     b = 2
     
-
 
 # for testing purposes only
 if __name__ == "__main__":
@@ -1069,6 +1054,6 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("Copy layout plugin started in standalone mode")
+    logger.info("Save/Restore Layout plugin started in standalone mode")
 
     main()
