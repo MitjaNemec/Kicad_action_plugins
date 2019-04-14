@@ -367,9 +367,13 @@ class PcbData():
 
 class RestoreLayout():
     def __init__(self, board):
+        logger.info("Getting board info")
         self.board = board
+        logger.info("Getting schematics info")
         self.schematics = SchData(board)
+        logger.info("Getting layout info")
         self.layout = PcbData(board)
+        logger.info("Updating layout info with schematics info")
         self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
 
     def get_mod_by_ref(self, mod_ref):
@@ -800,6 +804,7 @@ class RestoreLayout():
             self.board.Add(new_drawing)
 
     def restore_layout(self, anchor_mod, layout_file):
+        logger.info("Loading saved design")
         # load saved design
         with open(layout_file, 'rb') as f:
             data_saved = pickle.load(f)
@@ -811,6 +816,7 @@ class RestoreLayout():
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = anchor_mod.filename[len(level_filename)-1:]
 
+        logger.info("Getting current schematics hash")
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
             md5hash = self.schematics.get_sch_hash(sch_file, md5hash)
@@ -823,7 +829,7 @@ class RestoreLayout():
         if not saved_hash == hex_hash:
             raise ValueError("Source and destination schematics don't match!")
 
-        # load saved
+        # save board from the saved layout only temporary
         tempdir = tempfile.gettempdir()
         temp_filename = os.path.join(tempdir, 'temp_layout_for_restore.kicad_pcb')
         with open(temp_filename, 'w') as f:
@@ -834,6 +840,8 @@ class RestoreLayout():
         # delete temporary file
         os.remove(temp_filename)
 
+        # get layout data from saved board
+        logger.info("Get layout data from saved board")
         saved_layout = PcbData(saved_board)
         saved_layout.set_modules_hierarchy_names(data_saved.dict_of_sheets)
 
@@ -841,6 +849,7 @@ class RestoreLayout():
 
         modules_to_place = self.layout.get_modules_on_sheet(level)
 
+        # check if saved layout and layotu to be restored match at least in footprint count
         if len(modules_to_place) != len(modules_saved):
             raise ValueError("Source and destination footprint count don't match!")
 
@@ -875,7 +884,9 @@ class RestoreLayout():
 
 
 class SaveLayout(RestoreLayout):
+    # overwrites the master class init
     def __init__(self, board):
+        logger.info("Saving the current board temporary in order to leave current layout intact")
         # generate new tempfile
         tempdir = tempfile.gettempdir()
         self.tempfilename = os.path.join(tempdir, 'temp_boardfile_for_save.kicad_pcb')
@@ -885,11 +896,15 @@ class SaveLayout(RestoreLayout):
         self.board = pcbnew.LoadBoard(self.tempfilename)
 
         # create a copy of the board and then work on the copy
+        logger.info("Getting schematics info")
         self.schematics = SchData(board)
+        logger.info("Getting layout info")
         self.layout = PcbData(self.board)
+        logger.info("Updating layout info with schematics info")
         self.layout.set_modules_hierarchy_names(self.schematics.dict_of_sheets)
 
     def remove_drawings(self, bounding_box, containing):
+        logger.info("Removing drawing")
         # remove all drawings outside of bounding box
         for drawing in self.board.GetDrawings():
             if not isinstance(drawing, pcbnew.DRAWSEGMENT):
@@ -903,6 +918,7 @@ class SaveLayout(RestoreLayout):
                     self.board.RemoveNative(drawing)
 
     def remove_text(self, bounding_box, containing):
+        logger.info("Removing text")
         # remove all text outside of bounding box
         for text in self.board.GetDrawings():
             if not isinstance(text, pcbnew.TEXTE_PCB):
@@ -916,6 +932,7 @@ class SaveLayout(RestoreLayout):
                     self.board.RemoveNative(text)
 
     def remove_zones(self, bounding_box, containing):
+        logger.info("Removing zones")
         # remove all zones outisde of bounding box
         all_zones = []
         for zoneid in range(self.board.GetAreaCount()):
@@ -931,6 +948,7 @@ class SaveLayout(RestoreLayout):
                     self.board.RemoveNative(zone)
 
     def remove_tracks(self, bounding_box, containing):
+        logger.info("Removing tracks")
         # find all tracks within the pivot bounding box
         all_tracks = self.board.GetTracks()
         # get all the tracks for replication
@@ -947,10 +965,12 @@ class SaveLayout(RestoreLayout):
                     self.board.RemoveNative(track)
 
     def remove_modules(self, modules):
+        logger.info("Removing modules")
         for mod in modules:
             self.board.RemoveNative(mod.mod)
 
     def save_layout(self, pivot_anchor_mod, level, data_file):
+        logger.info("Calculating hash of the layout schematics")
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = pivot_anchor_mod.filename[len(level)-1:]
 
@@ -971,6 +991,8 @@ class SaveLayout(RestoreLayout):
         # get modules bounding box
         bounding_box = self.layout.get_modules_bounding_box(modules)
 
+        logger.info("Removing everything else from the layout")
+
         # remove text items
         self.remove_text(bounding_box, True)
 
@@ -988,15 +1010,18 @@ class SaveLayout(RestoreLayout):
         self.remove_modules(other_modules)
 
         # save the layout
+        logger.info("Saving layout in temporary file")
         saved = pcbnew.SaveBoard(self.tempfilename, self.board)
         # load as text
+        logger.info("Reading layout as text")
         with open(self.tempfilename, 'r') as f:
             layout = f.read()
 
         # remove the file
         os.remove(self.tempfilename)
-        
-        # level_filename, level, 
+
+        logger.info("Saving layout data")
+        # level_filename, level
         level_filename = [pivot_anchor_mod.filename[pivot_anchor_mod.sheetname.index(x)] for x in level]
         # save all data
         data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level, level_filename)

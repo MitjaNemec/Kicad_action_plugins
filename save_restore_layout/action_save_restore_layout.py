@@ -136,24 +136,44 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
         res = dlg.ShowModal()
 
         # save layout
-        if res == wx.ID_OK:
-            # show the gui and wait for user to select the hierarchical level which to save
-            
-            # i should create a copy of a board and then work on a copy of the board, and finally i Should delete it
-            # but I don't know how to move this into class
+        if res == wx.ID_OK: 
+            logger.info("Save layout chosen")
 
-            save_layout = save_restore_layout.SaveLayout(board)
+            # prepare the layout to save
+            try:
+                save_layout = save_restore_layout.SaveLayout(board)
+            except Exception:
+                logger.exception("Fatal error when creating an instance of SaveLayout")
+                caption = 'Save/Restore Layout'
+                message = "Fatal error when creating an instance of SaveLayout.\n"\
+                        + "You can raise an issue on GiHub page.\n" \
+                        + "Please attach the save_restore_layout.log which you should find in the project folder."
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
+            # find out the available hierarchical levels
             pivot_mod = save_layout.get_mod_by_ref(pivot_module_reference)
             levels = pivot_mod.filename
+
+            # and show the GUI
             level_dialog = SaveDialog(_pcbnew_frame, levels)
             res = level_dialog.ShowModal()
             if res != wx.ID_OK:
                 return
             index = level_dialog.list_levels.GetSelection()
             level_dialog.Destroy()
+            # if user did not select any level available cancel
+            if index < 0:
+                caption = 'Save/Restore Layout'
+                message = "One hierarchical level has to be chosen"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
-            # ask the user top specify file
+            # Once user selects a level ask the user top specify file
             wildcard = "Saved Layout Files (*.pckl)|*.pckl"
             dlg = wx.FileDialog(_pcbnew_frame, "Select a file", os.getcwd(), "", wildcard, wx.SAVE)
             res = dlg.ShowModal()
@@ -162,10 +182,23 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             layout_file = dlg.GetPath()
             dlg.Destroy()
 
-            save_layout.save_layout(pivot_mod, pivot_mod.sheetname[0:index + 1], layout_file)
+            try:
+                save_layout.save_layout(pivot_mod, pivot_mod.sheetname[0:index + 1], layout_file)
+            except Exception:
+                logger.exception("Fatal error when saving layout")
+                caption = 'Save/Restore Layout'
+                message = "Fatal error when saving layout.\n"\
+                        + "You can raise an issue on GiHub page.\n" \
+                        + "Please attach the save_restore_layout.log which you should find in the project folder."
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
         # restore layout
         else:
+            logger.info("Restore layout chosen")
+
             # ask the user to finde the layout information file
             wildcard = "Saved Layout Files (*.pckl)|*.pckl"
             dlg = wx.FileDialog(_pcbnew_frame, "Choose a file", os.getcwd(), "", wildcard, wx.OPEN)
@@ -176,11 +209,33 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             dlg.Destroy()
 
             # restore layout
-            restore_layout = save_restore_layout.RestoreLayout(board)
+            try:
+                restore_layout = save_restore_layout.RestoreLayout(board)
+            except Exception:
+                logger.exception("Fatal error when creating an instance of RestoreLayout")
+                caption = 'Save/Restore Layout'
+                message = "Fatal error when creating an instance of RestoreLayout.\n"\
+                        + "You can raise an issue on GiHub page.\n" \
+                        + "Please attach the save_restore_layout.log which you should find in the project folder."
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
             pivot_mod = restore_layout.get_mod_by_ref(pivot_module_reference)
 
-            restore_layout.restore_layout(pivot_mod, layout_file)
+            try:
+                restore_layout.restore_layout(pivot_mod, layout_file)
+            except Exception:
+                logger.exception("Fatal error when restoring layout")
+                caption = 'Save/Restore Layout'
+                message = "Fatal error when restoring layout.\n"\
+                        + "You can raise an issue on GiHub page.\n" \
+                        + "Please attach the save_restore_layout.log which you should find in the project folder."
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
 
 class StreamToLogger(object):
