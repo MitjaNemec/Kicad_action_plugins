@@ -235,7 +235,7 @@ def swap(board, pad_1, pad_2):
                 unit_1_sch_file = unit_1_sch_file[:ar_loc] + unit_2 + unit_1_sch_file[ar_loc + len(unit_1):]
 
     # if page_1 == page_2 do not swap again
-    if (page_2 is not None) and (page_2 != page_1):
+    if (page_2 is not None):
         with open(page_2) as f:
             unit_2_loc = None
             unit_2ar_loc = []
@@ -289,10 +289,16 @@ def swap(board, pad_1, pad_2):
                 raise LookupError("Did not find unit: %s in file %s" % (unit_2, page_2))
 
             # swap the unit
-            unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
-            # data = current_sch_file[comp[0]:comp[1]].split('\n')
-            for ar_loc in unit_2ar_loc:
-                unit_2_sch_file = unit_2_sch_file[:ar_loc] + unit_1 + unit_2_sch_file[ar_loc + len(unit_2):]
+            if page_2 == page_1:
+                unit_2_sch_file = unit_1_sch_file[:unit_2_loc] + unit_1 + unit_1_sch_file[unit_2_loc + len(unit_2):]
+                # data = current_sch_file[comp[0]:comp[1]].split('\n')
+                for ar_loc in unit_2ar_loc:
+                    unit_2_sch_file = unit_2_sch_file[:ar_loc] + unit_1 + unit_2_sch_file[ar_loc + len(unit_2):]
+            else:
+                unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
+                # data = current_sch_file[comp[0]:comp[1]].split('\n')
+                for ar_loc in unit_2ar_loc:
+                    unit_2_sch_file = unit_2_sch_file[:ar_loc] + unit_1 + unit_2_sch_file[ar_loc + len(unit_2):]
 
     # before saving the schematics, swap the pins in layout
     # swap pins in layout
@@ -336,10 +342,10 @@ def swap(board, pad_1, pad_2):
     if page_1 == page_2:
         if __name__ == "__main__":
             with open(page_1.replace(".sch", "_temp.sch"), 'w') as f:
-                f.write(unit_1_sch_file)
+                f.write(unit_2_sch_file)
         else:
             with open(page_1, 'w') as f:
-                f.write(unit_1_sch_file)
+                f.write(unit_2_sch_file)
     # if files are different, then there is no problem, write both of them and be done with it
     else:
         if __name__ == "__main__":
@@ -415,7 +421,7 @@ def find_all_sch_files(filename, list_of_files):
 
 def main():
     # test_list = ['same_sheet', 'different_sheets', 'different_sheets_different_hierarchy']
-    test_list = ['different_sheets_different_hierarchy']
+    test_list = ['same_sheet']
     # same_sheet, different_sheets
     for test in test_list:
         if test == 'same_sheet':
