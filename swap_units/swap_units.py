@@ -24,6 +24,7 @@ import os
 import re
 import logging
 import sys
+from distutils.dir_util import copy_tree
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +171,7 @@ def swap(board, pad_1, pad_2):
                             if U_line[0].split()[1] == unit_2:
                                 page_2 = page
 
-    logger.info("Files where the unites are:\n\t"
+    logger.info("Files where the units are:\n\t"
                 + (page_1 or "None") + "\n\t"
                 + (page_2 or "None"))
 
@@ -332,8 +333,10 @@ def swap(board, pad_1, pad_2):
 
     # save board
     if __name__ == "__main__":
-        pcb_file_to_write = board.GetFileName().replace(".kicad_pcb", "_temp.kicad_pcb")
-        pcbnew.SaveBoard(pcb_file_to_write, board)
+        dirname = os.path.dirname(os.path.abspath(board.GetFileName()))
+        filename = os.path.basename(board.GetFileName())
+        new_name = os.path.join(dirname + "_temp", filename)
+        pcbnew.SaveBoard(new_name, board)
     logger.info("Saved the layout.")
 
     # save the schematics
@@ -341,7 +344,10 @@ def swap(board, pad_1, pad_2):
     # if files are the same, then merge two strings
     if page_1 == page_2:
         if __name__ == "__main__":
-            with open(page_1.replace(".sch", "_temp.sch"), 'w') as f:
+            dirname = os.path.dirname(page_1)
+            filename = os.path.basename(page_1)
+            new_name = os.path.join(dirname + "_temp", filename)
+            with open(new_name, 'w') as f:
                 f.write(unit_2_sch_file)
         else:
             with open(page_1, 'w') as f:
@@ -349,11 +355,17 @@ def swap(board, pad_1, pad_2):
     # if files are different, then there is no problem, write both of them and be done with it
     else:
         if __name__ == "__main__":
+            dirname = os.path.dirname(page_1)
+            filename = os.path.basename(page_1)
+            new_name = os.path.join(dirname + "_temp", filename)
             if page_1 is not None:
-                with open(page_1.replace(".sch", "_temp.sch"), 'w') as f:
+                with open(new_name, 'w') as f:
                     f.write(unit_1_sch_file)
             if page_2 is not None:
-                with open(page_2.replace(".sch", "_temp.sch"), 'w') as f:
+                dirname = os.path.dirname(page_2)
+                filename = os.path.basename(page_2)
+                new_name = os.path.join(dirname + "_temp", filename)
+                with open(new_name, 'w') as f:
                     f.write(unit_2_sch_file)
         else:
             if page_1 is not None:
@@ -412,19 +424,24 @@ def extract_subsheets(filename):
 def find_all_sch_files(filename, list_of_files):
     list_of_files.append(filename)
     for sheet, line_nr in extract_subsheets(filename):
-        logger.info("found subsheet:\n\t" + sheet +
-                    "\n in:\n\t" + filename + ", line: " + str(line_nr))
+        #logger.info("found subsheet:\n\t" + sheet +
+        #            "\n in:\n\t" + filename + ", line: " + str(line_nr))
         seznam = find_all_sch_files(sheet, list_of_files)
         list_of_files = seznam
     return list_of_files
 
 
 def main():
-    # test_list = ['same_sheet', 'different_sheets', 'different_sheets_different_hierarchy']
-    test_list = ['same_sheet']
+    import compare_projects
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "swap_units_test_project"))
+    test_list = ['same_sheet', 'different_sheets', 'different_sheets_different_hierarchy', 'same_sheet_different_hierarchy']
+    # test_list = ['same_sheet']
     # same_sheet, different_sheets
     for test in test_list:
         if test == 'same_sheet':
+            # copy fresh project to _temp folder to overwrite previous changes
+            copy_tree(os.getcwd(), os.getcwd() + "_temp")
+            # load board and find reference module and select proper pads
             board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
             mod = board.FindModuleByReference('U1')
             pads = mod.Pads()
@@ -434,7 +451,14 @@ def main():
                 if pad.GetPadName() == u'7':
                     pad2 = pad
             swap(board, pad1, pad2)
+            # compare schematics
+            err = compare_projects.compare_projects(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_same_sheet\\swap_units_test.pro'),
+                                                    os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_temp\\swap_units_test.pro'))
+            assert (err == 0), "same_sheet failed"
         if test == 'different_sheets':
+            # copy fresh project to _temp folder to overwrite previous changes
+            copy_tree(os.getcwd(), os.getcwd() + "_temp")
+            # load board and find reference module and select proper pads
             board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
             mod = board.FindModuleByReference('U1')
             pads = mod.Pads()
@@ -444,8 +468,14 @@ def main():
                 if pad.GetPadName() == u'14':
                     pad2 = pad
             swap(board, pad1, pad2)
-
+            # compare schematics
+            err = compare_projects.compare_projects(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_different_sheets\\swap_units_test.pro'),
+                                                    os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_temp\\swap_units_test.pro'))
+            assert (err == 0), "different_sheets failed"
         if test == 'different_sheets_different_hierarchy':
+            # copy fresh project to _temp folder to overwrite previous changes
+            copy_tree(os.getcwd(), os.getcwd() + "_temp")
+            # load board and find reference module and select proper pads
             board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
             mod = board.FindModuleByReference('U3')
             pads = mod.Pads()
@@ -455,6 +485,28 @@ def main():
                 if pad.GetPadName() == u'14':
                     pad2 = pad
             swap(board, pad1, pad2)
+            # compare schematics
+            err = compare_projects.compare_projects(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_different_sheets_different_hierarchy\\swap_units_test.pro'),
+                                                    os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_temp\\swap_units_test.pro'))
+            assert (err == 0), "different_sheets failed"
+        if test == 'same_sheet_different_hierarchy':
+            # copy fresh project to _temp folder to overwrite previous changes
+            copy_tree(os.getcwd(), os.getcwd() + "_temp")
+            # load board and find reference module and select proper pads
+            board = pcbnew.LoadBoard('swap_units_test.kicad_pcb')
+            mod = board.FindModuleByReference('U7')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'7':
+                    pad1 = pad
+                if pad.GetPadName() == u'14':
+                    pad2 = pad
+            swap(board, pad1, pad2)
+            # compare schematics
+            err = compare_projects.compare_projects(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_same_sheet_different_hierarchy\\swap_units_test.pro'),
+                                                    os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_temp\\swap_units_test.pro'))
+            assert (err == 0), "same_sheet_different_hierarchy failed"
+
 
 # for testing purposes only
 if __name__ == "__main__":
