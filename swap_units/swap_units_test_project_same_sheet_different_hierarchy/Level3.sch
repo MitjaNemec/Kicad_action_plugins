@@ -194,7 +194,7 @@ Wire Wire Line
 Wire Wire Line
 	3550 4300 3400 4300
 Text HLabel 3550 4300 2    50   Output ~ 0
-out_level_2
+out_level_1
 $Comp
 L Amplifier_Operational:LM324 U7
 U 4 1 5CB4FDE6
