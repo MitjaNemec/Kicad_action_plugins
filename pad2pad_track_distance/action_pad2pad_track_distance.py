@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  action_pad2pad_track_distance.py
 #
 # Copyright (C) 2018 Mitja Nemec
@@ -27,8 +28,10 @@ import sys
 
 if __name__ == '__main__':
     import pad2pad_track_distance
+    import pad2pad_track_distance_GUI
 else:
     from . import pad2pad_track_distance
+    from . import pad2pad_track_distance_GUI
 
 SCALE = 1000000.0
 
@@ -37,6 +40,32 @@ version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ve
 with open(version_filename) as f:
     VERSION = f.readline().strip()
 
+    
+class Pad2PadTrackDistanceDialog(pad2pad_track_distance_GUI.Pad2PadTrackDistanceGUI):
+    # hack for new wxFormBuilder generating code incompatible with old wxPython
+    # noinspection PyMethodOverriding
+    def SetSizeHints(self, sz1, sz2):
+        try:
+            # wxPython 3
+            self.SetSizeHintsSz(sz1, sz2)
+        except TypeError:
+            # wxPython 4
+            super(ArchiveProjectDialog, self).SetSizeHints(sz1, sz2)
+    
+    def __init__(self, parent, all_tracks, selected_tracks):
+        pad2pad_track_distance_GUI.Pad2PadTrackDistanceGUI.__init__(self, parent)
+        self.Fit()
+        self.all_tracks = all_tracks
+        self.selected_tracks = selected_tracks
+    
+    def highlight_tracks(self, event):
+        for track in self.all_tracks:
+            if track not in self.selected_tracks:
+                track.ClearBrightened()
+            else:
+                track.SetBrightened()
+        pcbnew.Refresh()
+    
 
 class Pad2PadTrackDistance(pcbnew.ActionPlugin):
     """
@@ -148,44 +177,17 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         # deselect all tracks except used ones
         all_tracks = board.GetTracks()
 
-        for track in all_tracks:
-            if track not in measure_distance.track_list:
-                track.ClearSelected()
-            else:
-                track.SetSelected()
-                track.SetBrightened()
-                track.SetHighlighted()
+        dlg = Pad2PadTrackDistanceDialog(_pcbnew_frame, all_tracks, measure_distance.track_list)
 
-        # zoom the layout window to show the tracks taken into account
-        pad1_pos = selected_pads[0].GetPosition()
-        pad2_pos = selected_pads[1].GetPosition()
-        if pad1_pos[0] > pad2_pos[0]:
-            x = pad2_pos[0]
-            width = pad1_pos[0] - pad2_pos[0]
-        else:
-            x = pad1_pos[0]
-            width = pad2_pos[0] - pad1_pos[0]
-
-        if pad1_pos[1] > pad2_pos[1]:
-            y = pad2_pos[1]
-            height = pad1_pos[1] - pad2_pos[1]
-        else:
-            y = pad1_pos[1]
-            height = pad2_pos[1] - pad1_pos[1]
-
-        pcbnew.WindowZoom(x, y, width, height)
-        # pcbnew.Refresh()
-
-        caption = 'Pad2Pad Track Distance'
         if user_units == 'mm':
-            message = "Distance between pads is " + "%.3f" % (distance) + " mm" \
-                    + "\nResistance between pads is " + "%.4f" % resistance + " Ohm"
+            dlg.lbl_length.SetLabelText("%.3f" % (distance) + " mm")
+            dlg.lbl_resistance.SetLabelText("%.4f" % resistance + " Ohm")
         else:
-            message = "Distance between pads is " + "%.4f" % (distance/25.4) + " in" \
-                    + "\nResistance between pads is " + "%.4f" % resistance + " Ohm"
-        dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
+            dlg.lbl_length.SetLabelText("%.4f" % (distance/25.4) + " in")
+            dlg.lbl_resistance.SetLabelText("%.4f" % resistance + " Ohm")
+
+        dlg.Show()
+
 
 class StreamToLogger(object):
     """

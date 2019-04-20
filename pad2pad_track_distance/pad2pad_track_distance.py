@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  pad2pad_track_distance.py
 #
 # Copyright (C) 2018 Mitja Nemec
