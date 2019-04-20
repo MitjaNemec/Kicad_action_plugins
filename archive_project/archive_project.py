@@ -84,7 +84,7 @@ def extract_subsheets(filename):
             if line.startswith('F1 '):
                 subsheet_path = line.split("\"")[1]
                 subsheet_line = file_lines.split("\n").index(line)
- 
+
                 if not os.path.isabs(subsheet_path):
                     # check if path is encoded with variables
                     if "${" in subsheet_path:
@@ -112,7 +112,7 @@ def extract_subsheets(filename):
 
 def find_all_sch_files(filename, list_of_files):
     list_of_files.append(filename)
-                
+
     for sheet, line_nr in extract_subsheets(filename):
         logger.info("found subsheet:\n\t" + sheet +
                     "\n\t in:\n\t" + filename + ", line: " + str(line_nr))
@@ -449,7 +449,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             # check if there is no path (model is local to project
             elif model_path == os.path.basename(model_path):
                 model_path = os.path.normpath(proj_path + "//" + model_path)
-                clean_model_path =  model_path
+                clean_model_path = model_path
             # check if model is given with absolute path
             elif os.path.exists(model_path):
                 clean_model_path = model_path
@@ -458,48 +458,18 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 logger.info("Can not find model:\n" + model_path)
 
             # copy model
-            copied_at_least_one = False
             model_without_extension = clean_model_path.rsplit('.', 1)[0]
-            try:
-                filepath = model_without_extension + ".wrl"
-                shutil.copy2(filepath, model_folder_path)
-                copied_at_least_one = True
-            # src and dest are the same
-            except shutil.Error:
-                copied_at_least_one = True
-            # file not found
-            except (OSError, IOError):
-                pass
-            try:
-                filepath = model_without_extension + ".step"
-                shutil.copy2(filepath, model_folder_path)
-                copied_at_least_one = True
-            # src and dest are the same
-            except shutil.Error:
-                copied_at_least_one = True
-            # file not found
-            except (OSError, IOError):
-                pass
-            try:
-                filepath = model_without_extension + ".stp"
-                shutil.copy2(filepath, model_folder_path)
-                copied_at_least_one = True
-            # src and dest are the same
-            except shutil.Error:
-                copied_at_least_one = True
-            # file not found
-            except (OSError, IOError):
-                pass
-            try:
-                filepath = model_without_extension + ".igs"
-                shutil.copy2(filepath, model_folder_path)
-                copied_at_least_one = True
-            # src and dest are the same
-            except shutil.Error:
-                copied_at_least_one = True
-            # file not found
-            except (OSError, IOError):
-                pass
+            copied_at_least_one = False
+            for ext in ['.wrl', '.stp', '.step', '.igs']:
+                try:
+                    shutil.copy2(model_without_extension + ext, model_folder_path)
+                    copied_at_least_one = True
+                # src and dest are the same
+                except shutil.Error:
+                    copied_at_least_one = True
+                # file not found
+                except (OSError, IOError):
+                    pass
 
             if not copied_at_least_one:
                 logger.debug("Did not copy: " + model.m_Filename)
@@ -507,7 +477,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
             if copied_at_least_one or allow_missing_models:
                 logger.debug("Remapping: " + model.m_Filename)
-                filename = os.path.basename(model_without_extension + ".wrl")
+                filename = os.path.basename(clean_model_path)
                 new_path = "${KIPRJMOD}/shapes3D/" + filename
                 model.m_Filename = new_path
 
@@ -516,11 +486,9 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
     if not_copied:
         if not allow_missing_models:
-            not_copied_pretty = []
-            for x in not_copied:
-                not_copied_pretty.append(os.path.normpath(x))
-            logger.info("Did not suceed to copy 3D models!")
-            raise IOError("Did not suceed to copy 3D models!\n"
+            not_copied_pretty = [os.path.normpath(x) for x in not_copied]
+            logger.info("Did not succeed to copy 3D models!")
+            raise IOError("Did not succeed to copy 3D models!\n"
                           "Did not find:\n" + "\n".join(not_copied_pretty))
 
 
