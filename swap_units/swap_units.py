@@ -192,8 +192,8 @@ def swap(board, pad_1, pad_2):
                 # if there is no multiple hierarchy, get the unit location
                 # it is easy to check for reference
                 if not AR_lines:
-                    logger.info("Unit 1 is not on multiple hierarchy sheet")
                     if L_line.split()[2] == footprint_reference:
+                        logger.info("Unit 1 is not on multiple hierarchy sheet")
                         if unit_1 in data[2].split()[1]:
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
@@ -205,9 +205,9 @@ def swap(board, pad_1, pad_2):
                             break
                 # if there is multiple hierarchy, test is somewhat more complex
                 else:
-                    logger.info("Unit 1 is on multiple hierarchy sheet")
                     check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
                     if check:
+                        logger.info("Unit 1 is on multiple hierarchy sheet")
                         if unit_1 in data[2].split()[1]:
                             # replace unit number in  U line
                             # +2 +1 account for splits
@@ -233,10 +233,10 @@ def swap(board, pad_1, pad_2):
                 raise LookupError("Did not find unit: %s in file %s" % (unit_1, page_1))
 
             # swap the unit
-            logger.info("Swapping unit 1 U field")
+            logger.info("Swapping unit %s U field" % unit_1)
             unit_1_sch_file = current_sch_file[:unit_1_loc] + unit_2 + current_sch_file[unit_1_loc + len(unit_1):]
             for ar_loc in unit_1ar_loc:
-                logger.info("Swapping unit 1 AR fields")
+                logger.info("Swapping unit %s AR fields" % unit_1)
                 unit_1_sch_file = unit_1_sch_file[:ar_loc] + unit_2 + unit_1_sch_file[ar_loc + len(unit_1):]
 
     # if page_1 == page_2 do not swap again
@@ -256,8 +256,8 @@ def swap(board, pad_1, pad_2):
                 # if there is no multiple hierarchy, get the unit location
                 # it is easy to check for reference
                 if not AR_lines:
-                    logger.info("Unit 2 is not on multiple hierarchy sheet")
                     if L_line.split()[2] == footprint_reference:
+                        logger.info("Unit 2 is not on multiple hierarchy sheet")
                         if unit_2 in data[2].split()[1]:
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
@@ -269,9 +269,9 @@ def swap(board, pad_1, pad_2):
                             break
                 # if there is multiple hierarchy, test is somewhat more complex
                 else:
-                    logger.info("Unit 2 is on multiple hierarchy sheet")
                     check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
                     if check:
+                        logger.info("Unit 2 is on multiple hierarchy sheet")
                         if unit_2 in data[2].split()[1]:
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
@@ -297,18 +297,20 @@ def swap(board, pad_1, pad_2):
 
             # swap the unit
             if page_2 == page_1:
-                logger.info("Swapping unit 1 U field")
+                logger.info("Swapping second unit on the same page")
+                logger.info("Swapping unit %s U field" % unit_2)
                 unit_2_sch_file = unit_1_sch_file[:unit_2_loc] + unit_1 + unit_1_sch_file[unit_2_loc + len(unit_2):]
                 # data = current_sch_file[comp[0]:comp[1]].split('\n')
                 for ar_loc in unit_2ar_loc:
-                    logger.info("Swapping unit 1 AR fields")
+                    logger.info("Swapping unit %s AR fields" % unit_2)
                     unit_2_sch_file = unit_1_sch_file[:ar_loc] + unit_1 + unit_1_sch_file[ar_loc + len(unit_2):]
             else:
-                logger.info("Swapping unit 1 U field")
+                logger.info("Swapping second unit on different page")
+                logger.info("Swapping unit %s U field" % unit_2)
                 unit_2_sch_file = current_sch_file[:unit_2_loc] + unit_1 + current_sch_file[unit_2_loc + len(unit_2):]
                 # data = current_sch_file[comp[0]:comp[1]].split('\n')
                 for ar_loc in unit_2ar_loc:
-                    logger.info("Swapping unit 1 AR fields")
+                    logger.info("Swapping unit %s AR fields" % unit_2)
                     unit_2_sch_file = unit_2_sch_file[:ar_loc] + unit_1 + unit_2_sch_file[ar_loc + len(unit_2):]
 
     # before saving the schematics, swap the pins in layout
