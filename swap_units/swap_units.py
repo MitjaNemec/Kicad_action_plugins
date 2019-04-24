@@ -303,7 +303,7 @@ def swap(board, pad_1, pad_2):
                 # data = current_sch_file[comp[0]:comp[1]].split('\n')
                 for ar_loc in unit_2ar_loc:
                     logger.info("Swapping unit %s AR fields" % unit_2)
-                    unit_2_sch_file = unit_1_sch_file[:ar_loc] + unit_1 + unit_1_sch_file[ar_loc + len(unit_2):]
+                    unit_2_sch_file = unit_2_sch_file[:ar_loc] + unit_1 + unit_2_sch_file[ar_loc + len(unit_2):]
             else:
                 logger.info("Swapping second unit on different page")
                 logger.info("Swapping unit %s U field" % unit_2)
@@ -447,7 +447,7 @@ def main():
     import compare_projects
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "swap_units_test_project"))
     test_list = ['same_sheet', 'different_sheets', 'different_sheets_different_hierarchy', 'same_sheet_different_hierarchy']
-    # test_list = ['same_sheet']
+    # test_list = ['same_sheet_different_hierarchy']
     # same_sheet, different_sheets
     for test in test_list:
         if test == 'same_sheet':
