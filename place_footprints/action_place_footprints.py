@@ -467,6 +467,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 if mod.sheet_id in sheets_to_place:
                     mod_references.append(mod.ref)
 
+            logger.info("Modules to place: " + repr(mod_references))
             # sort by reference number
             sorted_modules = natural_sort(mod_references)
 
