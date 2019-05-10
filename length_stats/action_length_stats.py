@@ -115,6 +115,31 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             self.refresh_time = 0.05
         self.lbl_refresh_time.SetLabelText(u"Refresh time: %.2f s" % delta_time)
 
+    def delete_items(self, event):
+        pass
+        # test if delete key was pressed
+        if event.GetKeyCode() == wx.WXK_DELETE:
+            # find selected items
+            selected_items = []
+            for index in range(self.net_list.GetItemCount()):
+                if self.net_list.IsSelected(index):
+                    selected_items.append( (index, self.netname[index]) )
+
+            selected_items.sort(key=lambda tup: tup[0], reverse=True)
+
+            # remove selected items from the back
+            for item in selected_items:
+                self.net_list.DeleteItem(item[0])
+                del self.netname[item[0]]
+
+            caption = 'Length stats'
+            message = "remaining nets:\n" + repr(self.netname)
+            dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+        event.Skip()
+
 class LengthStats(pcbnew.ActionPlugin):
     """
     A plugin to show track lenght of all selected nets
@@ -165,7 +190,7 @@ class LengthStats(pcbnew.ActionPlugin):
         for mod in modules:
             pads = mod.Pads()
             nets.update([pad.GetNetname() for pad in pads if pad.IsSelected()])
-    
+
         dlg = LenghtStatsDialog(_pcbnew_frame, board, list(nets))
 
         dlg.Show()

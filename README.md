@@ -173,8 +173,8 @@ Within the plugin folder only the *.py files are required for operation.
 This plugin displays lenght of all tracks on selected nets. This can be used for lenght matching.
 
 Workflow:
-1. Select tracks or pads on nets you want the lenght displayed
-2. Run the plugin
+1. Select tracks or pads on nets you want the lenght displayed. You can also select a footprint(s)
+2. Run the plugin. You can remove redundant nets
 3. Lay the tracks
 4. Close the track lenght window
 
