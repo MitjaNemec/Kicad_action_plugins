@@ -604,11 +604,11 @@ class Replicator():
                 # place current module - only if current module is not also the anchor
                 if mod.ref != anchor_mod.ref:
                     mod.mod.SetPosition(pcbnew.wxPoint(*newposition))
-                    mod.mod.SetOrientationDegrees(new_orientation)
 
                     pivot_mod_flipped = mod_to_clone.mod.IsFlipped()
                     if (mod.mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.mod.IsFlipped()):
                         mod.mod.Flip(mod.mod.GetPosition())
+                    mod.mod.SetOrientationDegrees(new_orientation)
 
                     # Copy local settings.
                     mod.mod.SetLocalClearance(mod_to_clone.mod.GetLocalClearance())
