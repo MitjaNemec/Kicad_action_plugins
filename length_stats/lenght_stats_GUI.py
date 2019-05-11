@@ -62,6 +62,7 @@ class LenghtStatsGUI ( wx.Dialog ):
 		self.Centre( wx.BOTH )
 		
 		# Connect Events
+		self.net_list.Bind( wx.EVT_LIST_ITEM_SELECTED, self.item_selected )
 		self.net_list.Bind( wx.EVT_LIST_KEY_DOWN, self.delete_items )
 		self.chk_cont.Bind( wx.EVT_CHECKBOX, self.cont_refresh_toggle )
 		self.btn_refresh.Bind( wx.EVT_BUTTON, self.on_btn_refresh )
@@ -72,6 +73,9 @@ class LenghtStatsGUI ( wx.Dialog ):
 	
 	
 	# Virtual event handlers, overide them in your derived class
+	def item_selected( self, event ):
+		event.Skip()
+	
 	def delete_items( self, event ):
 		event.Skip()
 	

@@ -123,7 +123,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             selected_items = []
             for index in range(self.net_list.GetItemCount()):
                 if self.net_list.IsSelected(index):
-                    selected_items.append( (index, self.netname[index]) )
+                    selected_items.append( (index, self.netname[index]))
 
             selected_items.sort(key=lambda tup: tup[0], reverse=True)
 
@@ -132,11 +132,45 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
                 self.net_list.DeleteItem(item[0])
                 del self.netname[item[0]]
 
-            caption = 'Length stats'
-            message = "remaining nets:\n" + repr(self.netname)
-            dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
+        event.Skip()
+
+    def item_selected(self, event):
+        # get all tracks which we are interested in
+        all_tracks = self.board.GetTracks()
+        list_tracks = []
+        for track in all_tracks:
+            if track.GetNetname() in self.netname:
+                list_tracks.append(track)
+        # get all pads which we are interested in
+        # TODO
+
+        # remove highlight on all tracks
+        for track in list_tracks:
+            # track.ClearHighlighted()
+            # track.ClearBrightened()
+            track.ClearSelected()
+
+        # remove highlight on all pads
+        # TODO
+
+        # find selected tracks
+        selected_items = []
+        for index in range(self.net_list.GetItemCount()):
+            if self.net_list.IsSelected(index):
+                selected_items.append(self.netname[index])        
+
+        for track in selected_items:
+            # track.SetHighlighted()
+            # track.SetBrightened()
+            track.SetSelected()
+
+        pcbnew.Refresh()
+
+        # find selected pads
+        # TODO
+
+        # highlight selected pads
+        # TODO
 
         event.Skip()
 
