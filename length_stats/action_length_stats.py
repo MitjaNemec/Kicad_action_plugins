@@ -81,6 +81,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         event.Skip()
 
     def on_btn_ok(self, event):
+        self.Close()
         event.Skip()
 
     def on_update(self, event):
@@ -147,12 +148,12 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         # remove highlight on all tracks
         for track in list_tracks:
             # track.ClearHighlighted()
-            # track.ClearBrightened()
-            track.ClearSelected()
+            track.ClearBrightened()
+            # track.ClearSelected()
 
         # remove highlight on all pads
         # TODO
-
+        pcbnew.Refresh()
         # find selected tracks
         selected_items = []
         for index in range(self.net_list.GetItemCount()):
@@ -161,8 +162,8 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
         for track in selected_items:
             # track.SetHighlighted()
-            # track.SetBrightened()
-            track.SetSelected()
+            track.SetBrightened()
+            # track.SetSelected()
 
         pcbnew.Refresh()
 
@@ -226,7 +227,6 @@ class LengthStats(pcbnew.ActionPlugin):
             nets.update([pad.GetNetname() for pad in pads if pad.IsSelected()])
 
         dlg = LenghtStatsDialog(_pcbnew_frame, board, list(nets))
-
         dlg.Show()
 
 
