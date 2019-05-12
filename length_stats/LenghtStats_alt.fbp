@@ -181,7 +181,7 @@
                         <event name="OnListItemFocused"></event>
                         <event name="OnListItemMiddleClick"></event>
                         <event name="OnListItemRightClick"></event>
-                        <event name="OnListItemSelected"></event>
+                        <event name="OnListItemSelected">item_selected</event>
                         <event name="OnListKeyDown">delete_items</event>
                         <event name="OnMiddleDClick"></event>
                         <event name="OnMiddleDown"></event>
