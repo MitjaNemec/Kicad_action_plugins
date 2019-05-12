@@ -73,6 +73,7 @@ class LenghtStatsGUI ( wx.Frame ):
 		
 		# Connect Events
 		self.net_list.Bind( wx.EVT_LIST_COL_CLICK, self.sort_items )
+		self.net_list.Bind( wx.EVT_LIST_ITEM_DESELECTED, self.item_selected )
 		self.net_list.Bind( wx.EVT_LIST_ITEM_SELECTED, self.item_selected )
 		self.net_list.Bind( wx.EVT_LIST_KEY_DOWN, self.delete_items )
 		self.chk_cont.Bind( wx.EVT_CHECKBOX, self.cont_refresh_toggle )
@@ -89,6 +90,7 @@ class LenghtStatsGUI ( wx.Frame ):
 	
 	def item_selected( self, event ):
 		event.Skip()
+	
 	
 	def delete_items( self, event ):
 		event.Skip()

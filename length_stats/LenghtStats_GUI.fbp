@@ -260,7 +260,7 @@
                                     <event name="OnListEndLabelEdit"></event>
                                     <event name="OnListInsertItem"></event>
                                     <event name="OnListItemActivated"></event>
-                                    <event name="OnListItemDeselected"></event>
+                                    <event name="OnListItemDeselected">item_selected</event>
                                     <event name="OnListItemFocused"></event>
                                     <event name="OnListItemMiddleClick"></event>
                                     <event name="OnListItemRightClick"></event>
