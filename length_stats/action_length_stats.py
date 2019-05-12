@@ -56,6 +56,8 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         self.net_list.InsertColumn(0, 'Net', width=100) 
         self.net_list.InsertColumn(1, 'Length')
 
+        netname.sort()
+
         for net in netname:
             index_net = netname.index(net)
             index = self.net_list.InsertStringItem(index_net, net)
