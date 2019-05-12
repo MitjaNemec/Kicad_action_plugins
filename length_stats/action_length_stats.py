@@ -71,6 +71,10 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
         self.all_tracks = self.board.GetTracks()
 
+        self.column_sorted = 0
+        self.column_0_dir = 0
+        self.column_1_dir = 0
+
         self.timer = wx.Timer(self, 1)
         self.refresh_time = 0.1
 
@@ -177,23 +181,42 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         event.Skip()
 
     def sort_items(self, event):
-        caption = 'Length stats'
-        message = "column clicked:\n" + repr(event)
-        dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
+        # find which columnt to sort
+        self.column_sorted = event.m_col
 
-        # sort self.net_data
+        # sort column 0
+        if self.column_sorted == 0:
+            # ascending
+            if self.column_0_dir == 0:
+                self.column_0_dir = 1
+                self.net_data.sort(key=lambda tup: tup[0], reverse=True)
+            # descending
+            else:
+                self.column_0_dir = 0
+                self.net_data.sort(key=lambda tup: tup[0], reverse=False)
+        # sort column 1
+        else:
+            # ascending
+            if self.column_1_dir == 0:
+                self.column_1_dir = 1
+                self.net_data.sort(key=lambda tup: tup[1], reverse=True)
+            # descending
+            else:
+                self.column_1_dir = 0
+                self.net_data.sort(key=lambda tup: tup[1], reverse=False)
+                # sort
 
+        self.netname = [x[0] for x in self.net_data]
 
-        # sort self.netname
+        # clear and repopulate the list ctrl
+        self.net_list.DeleteAllItems()
+        for net in self.net_data:
+            index_net = self.net_data.index(net)
+            index = self.net_list.InsertStringItem(index_net, net[0])
+            self.net_list.SetStringItem(index, 1, "%.2f" % net[1])
 
-        # sort self.net_list
         event.Skip()
 
-    # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
-    def GetListCtrl(self):
-        return self.net_list
 
 class LengthStats(pcbnew.ActionPlugin):
     """
