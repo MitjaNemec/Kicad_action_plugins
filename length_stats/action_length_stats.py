@@ -26,6 +26,7 @@ import os
 import logging
 import sys
 import timeit
+import locale
 
 if __name__ == '__main__':
     import lenght_stats_GUI
@@ -56,15 +57,19 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         self.net_list.InsertColumn(0, 'Net', width=100) 
         self.net_list.InsertColumn(1, 'Length')
 
-        netname.sort()
+        self.net_data = []
 
+        netname.sort()
         for net in netname:
             index_net = netname.index(net)
             index = self.net_list.InsertStringItem(index_net, net)
             self.net_list.SetStringItem(index, 1, "0.0")
+            self.net_data.append( (net, 0.0) )
 
         self.board = board
         self.netname = netname
+
+        self.all_tracks = self.board.GetTracks()
 
         self.timer = wx.Timer(self, 1)
         self.refresh_time = 0.1
@@ -83,6 +88,12 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         event.Skip()
 
     def on_btn_ok(self, event):
+        # remove higlightning from tracks
+        for track in self.all_tracks:
+            track.ClearBrightened()
+
+        pcbnew.Refresh()
+
         self.Close()
         event.Skip()
 
@@ -108,6 +119,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
                 length = length + t.GetLength()/SCALE
 
             index_net = self.netname.index(net)
+            self.net_data[index_net] = (net, length)
             self.net_list.SetStringItem(index_net, 1, "%.2f" % length)
 
         stop_time = timeit.default_timer()
@@ -134,27 +146,21 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             for item in selected_items:
                 self.net_list.DeleteItem(item[0])
                 del self.netname[item[0]]
+                del self.net_data[item[0]]
 
         event.Skip()
 
     def item_selected(self, event):
         # get all tracks which we are interested in
-        all_tracks = self.board.GetTracks()
         list_tracks = []
-        for track in all_tracks:
+        for track in self.all_tracks:
             if track.GetNetname() in self.netname:
                 list_tracks.append(track)
-        # get all pads which we are interested in
-        # TODO
 
         # remove highlight on all tracks
         for track in list_tracks:
-            # track.ClearHighlighted()
             track.ClearBrightened()
-            # track.ClearSelected()
 
-        # remove highlight on all pads
-        # TODO
         pcbnew.Refresh()
         # find selected tracks
         selected_items = []
@@ -162,20 +168,32 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             if self.net_list.IsSelected(index):
                 selected_items.append(self.netname[index])        
 
-        for track in selected_items:
-            # track.SetHighlighted()
-            track.SetBrightened()
-            # track.SetSelected()
+        for track in list_tracks:
+            if track.GetNetname() in selected_items:
+                track.SetBrightened()
 
         pcbnew.Refresh()
 
-        # find selected pads
-        # TODO
-
-        # highlight selected pads
-        # TODO
-
         event.Skip()
+
+    def sort_items(self, event):
+        caption = 'Length stats'
+        message = "column clicked:\n" + repr(event)
+        dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_INFORMATION)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+        # sort self.net_data
+
+
+        # sort self.netname
+
+        # sort self.net_list
+        event.Skip()
+
+    # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
+    def GetListCtrl(self):
+        return self.net_list
 
 class LengthStats(pcbnew.ActionPlugin):
     """
