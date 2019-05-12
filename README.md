@@ -2,6 +2,23 @@
 
 This repository contains KiCad pcbnew Action Plugins()
 
+All plugins have been tested on Kicad 5.1-1 on Windows7. You need to have KICAD_SCRIPTING_WXPYTHON enabled. They should also work on GNU/Linux distributions and MacOS even with Python3.
+
+The plugins have been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
+
+To install teplugin copy relevant folder into 'scripting/plugins' subfolde of the KiCad configuration folder:
+on Windows:
+    `%APPDATA%\scritping\plugins` (which most commonly translates to `C:\Users\username\AppData\Roaming\kicad\scripting\plugins`)
+
+on GNU/linux: 
+    `~/.kicad/scripting/plugins` or
+    `~/.kicad_plugins`
+
+on MacOS:
+    `~/Library/Application Support/kicad/scripting/plugins` or on newer versions
+    `~/Library/Preferences/kicad/scripting/plugins`
+
+
 ## Replicate layout
 
 The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets.
@@ -23,12 +40,6 @@ Additionally you can choose whether you want to also replicate zones, text and/o
 Example replication of a complex hierarchical project. Replicating inner sheet first, then outer.
 
 ![Replication](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/replicate.gif)
-
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
 
 ## Place footprints
 
@@ -63,12 +74,6 @@ Example of place by reference number
 Example of place by sheet ID
 ![Place by sheet ID ](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_sheet.gif)
 
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
-
 ## Delete Selected
 
 This plugin deletes selected items. Items can be: zones and/or tracks and/or footprints. The main intention is to delete selected tracks in order to redo parts of the layout.
@@ -80,12 +85,6 @@ To run the plugin:
 4. Hit OK
 
 ![Delete selected tracks and zones](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Delete_selected_anim.gif)
-
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
 
 ## pad2pad track distance
 
@@ -102,21 +101,9 @@ To run the plugin:
 
 ![Measure pad to pad distance](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/pad2pad_animation.gif)
 
-This plugin has been tested with KiCad 5.1 nightly from commit b426b9e7 onward on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
-
 ## net2net min distance
 
 This plugin calculates the shortest distance between two tracks on different nets. To use, select one pad on first net and one pad on second net and run the plugin.
-
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
 
 ## Archive project
 
@@ -133,12 +120,6 @@ The plugin is run from pcbnew. When the plugin is run, eeschema has to be closed
 
 If the project is modified later it should be archived again in order to stay portable. If a symbol of a unit has to be replaced, all units with the same symbol have to be deleted.
 
-This plugin has been tested with KiCad 5.1-1 on Windows 7. It does not work with older versions. You need to have KICAD_SCRIPTING_WXPYTHON enabled. 
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
-
 ## Swap pins
 
 This plugin swaps two pads (in layout) and their corresponding pins (in schematics). The pins in the schematics have to be connected to a local or global label or hierarchical label either directly or through a short wire segment. The plugin also works across multi-unit parts and/or across different hierarchical levels.
@@ -148,12 +129,6 @@ Only one pin can be connected. Currently "no connection" flags are not supported
 Example of pin swapping
 ![swapping of pins on local labels](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_pins_animation.gif)
 
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
-
 ## Swap units
 
 This plugin swaps two units (in layout) and r units (in schematics). Eeschema has to be closed when the plugin is executed in pcbnew. Unit swapping work across hierarchical pages.  Note that using undo will only undo the change in the layout, but not the change in the schematics. To reverse the operation, you can run the plugin again.
@@ -161,12 +136,6 @@ This plugin swaps two units (in layout) and r units (in schematics). Eeschema ha
 Example of unit swapping
 
 ![swapping units in different hierarchical pages](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_units_animation.gif)
-
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
 
 ## Length stats
 
@@ -180,12 +149,6 @@ Workflow:
 
 Example:
 ![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/length_stats_ff.gif)
-
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
 
 ## Save/Restore Layout
 
@@ -206,8 +169,3 @@ Workflow:
 Example:
 ![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/save_restore.gif)
 
-This plugin has been tested with KiCad 5.1-1 on Windows 7. You need to have KICAD_SCRIPTING_WXPYTHON enabled.
-
-This plugin has been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
-
-Within the plugin folder only the *.py files are required for operation.
