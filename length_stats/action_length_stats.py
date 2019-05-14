@@ -51,7 +51,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             # wxPython 4
             super(LenghtStatsDialog, self).SetSizeHints(sz1, sz2)
 
-    def __init__(self,  parent, board, netname):
+    def __init__(self,  parent, board, nets, logger):
         lenght_stats_GUI.LenghtStatsGUI.__init__(self, parent)
 
         self.net_list.InsertColumn(0, 'Net', width=100) 
@@ -59,17 +59,16 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
         self.net_data = []
 
-        netname.sort()
-        for net in netname:
-            index_net = netname.index(net)
+        nets.sort()
+        for net in nets:
+            index_net = nets.index(net)
             index = self.net_list.InsertStringItem(index_net, net)
             self.net_list.SetStringItem(index, 1, "0.0")
             self.net_data.append( (net, 0.0) )
 
         self.board = board
-        self.netname = netname
-
-        self.all_tracks = self.board.GetTracks()
+        self.nets = nets
+        self.logger = logger
 
         self.column_sorted = 0
         self.column_0_dir = 0
@@ -80,38 +79,49 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
         self.Bind(wx.EVT_TIMER, self.on_update, self.timer)
 
+        self.logger.info("Lenght stats gui initialized")
+        self.logger.info("Nets for stats are;\n" + repr(self.nets))
+
     def cont_refresh_toggle(self, event):
         if self.chk_cont.IsChecked():
+            self.logger.info("Automatic refresh turned on")
             self.timer.Start(self.refresh_time * 10 * 1000)
         else:
+            self.logger.info("Automatic refresh turned off")
             self.timer.Stop()
         event.Skip()
 
     def on_btn_refresh(self, event):
+        self.logger.info("Refreshing manually")
         self.refresh()
         event.Skip()
 
     def on_btn_ok(self, event):
         # remove higlightning from tracks
-        for track in self.all_tracks:
+        tracks = self.board.GetTracks()
+        for track in tracks:
             track.ClearBrightened()
 
         pcbnew.Refresh()
+
+        self.logger.info("Closing GUI")
 
         self.Close()
         event.Skip()
 
     def on_update(self, event):
+        self.logger.info("Autimatic refresh")
         self.refresh()
         event.Skip()
 
     def refresh(self):
+        self.logger.info("Refreshing net lengths")
         start_time = timeit.default_timer()
         # get all tracks
         tracks = self.board.GetTracks()
 
         # find only tracks on this net
-        for net in self.netname:
+        for net in self.nets:
             tracks_on_net = []
             for t in tracks:
                 if t.GetNetname() == net:
@@ -122,7 +132,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             for t in tracks_on_net:
                 length = length + t.GetLength()/SCALE
 
-            index_net = self.netname.index(net)
+            index_net = self.nets.index(net)
             self.net_data[index_net] = (net, length)
             self.net_list.SetStringItem(index_net, 1, "%.2f" % length)
 
@@ -135,33 +145,35 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         self.lbl_refresh_time.SetLabelText(u"Refresh time: %.2f s" % delta_time)
 
     def delete_items(self, event):
-        pass
+        self.logger.info("Deleting nets")
         # test if delete key was pressed
         if event.GetKeyCode() == wx.WXK_DELETE:
             # find selected items
             selected_items = []
             for index in range(self.net_list.GetItemCount()):
                 if self.net_list.IsSelected(index):
-                    selected_items.append( (index, self.netname[index]))
+                    selected_items.append( (index, self.nets[index]))
 
             selected_items.sort(key=lambda tup: tup[0], reverse=True)
 
             # remove selected items from the back
             for item in selected_items:
                 self.net_list.DeleteItem(item[0])
-                del self.netname[item[0]]
+                del self.nets[item[0]]
                 del self.net_data[item[0]]
 
         event.Skip()
 
     def item_selected(self, event):
+        tracks = self.board.GetTracks()
         # get all tracks which we are interested in
         list_tracks = []
-        for track in self.all_tracks:
-            if track.GetNetname() in self.netname:
+        for track in tracks:
+            if track.GetNetname() in self.nets:
                 list_tracks.append(track)
 
         # remove highlight on all tracks
+        self.logger.info("Removing highlights for nets:\n" + repr(self.nets))
         for track in list_tracks:
             track.ClearBrightened()
 
@@ -170,17 +182,18 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         selected_items = []
         for index in range(self.net_list.GetItemCount()):
             if self.net_list.IsSelected(index):
-                selected_items.append(self.netname[index])        
+                selected_items.append(self.nets[index])        
 
+        self.logger.info("Adding highlights for nets:\n" + repr(selected_items))
         for track in list_tracks:
             if track.GetNetname() in selected_items:
                 track.SetBrightened()
 
         pcbnew.Refresh()
-
         event.Skip()
 
     def sort_items(self, event):
+        self.logger.info("Sorting list")
         # find which columnt to sort
         self.column_sorted = event.m_col
 
@@ -206,7 +219,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
                 self.net_data.sort(key=lambda tup: tup[1], reverse=False)
                 # sort
 
-        self.netname = [x[0] for x in self.net_data]
+        self.nets = [x[0] for x in self.net_data]
 
         # clear and repopulate the list ctrl
         self.net_list.DeleteAllItems()
@@ -269,7 +282,7 @@ class LengthStats(pcbnew.ActionPlugin):
             pads = mod.Pads()
             nets.update([pad.GetNetname() for pad in pads if pad.IsSelected()])
 
-        dlg = LenghtStatsDialog(_pcbnew_frame, board, list(nets))
+        dlg = LenghtStatsDialog(_pcbnew_frame, board, list(nets), logger)
         dlg.Show()
 
 
