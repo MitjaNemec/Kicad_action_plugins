@@ -26,7 +26,6 @@ import os
 import logging
 import sys
 import timeit
-import locale
 
 if __name__ == '__main__':
     import lenght_stats_GUI
