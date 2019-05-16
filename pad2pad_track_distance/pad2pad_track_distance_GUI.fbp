@@ -44,7 +44,7 @@
             <property name="minimum_size"></property>
             <property name="name">Pad2PadTrackDistanceGUI</property>
             <property name="pos"></property>
-            <property name="size">269,135</property>
+            <property name="size">274,139</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; forward_declare</property>
             <property name="title">Pad2pad track distance</property>
@@ -390,7 +390,7 @@
                                 <property name="gripper">0</property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">0.0 mΩ</property>
+                                <property name="label">0.0 mOhm</property>
                                 <property name="max_size"></property>
                                 <property name="maximize_button">0</property>
                                 <property name="maximum_size"></property>
@@ -602,7 +602,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style"></property>
-                                <event name="OnButtonClick"></event>
+                                <event name="OnButtonClick">on_btn_ok</event>
                                 <event name="OnChar"></event>
                                 <event name="OnEnterWindow"></event>
                                 <event name="OnEraseBackground"></event>

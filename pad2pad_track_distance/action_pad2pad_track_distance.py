@@ -52,19 +52,26 @@ class Pad2PadTrackDistanceDialog(pad2pad_track_distance_GUI.Pad2PadTrackDistance
             # wxPython 4
             super(Pad2PadTrackDistanceDialog, self).SetSizeHints(sz1, sz2)
 
-    def __init__(self, parent, all_tracks, selected_tracks):
+    def __init__(self, parent, all_tracks, selected_tracks, logger):
         pad2pad_track_distance_GUI.Pad2PadTrackDistanceGUI.__init__(self, parent)
         self.Fit()
         self.all_tracks = all_tracks
         self.selected_tracks = selected_tracks
+        self.logger = logger
 
     def highlight_tracks(self, event):
-        for track in self.all_tracks:
-            if track not in self.selected_tracks:
-                track.ClearBrightened()
-            else:
-                track.SetBrightened()
+        self.logger.info("Highligting tracks")
+        for track in self.selected_tracks:
+            track.SetBrightened()
         pcbnew.Refresh()
+        event.Skip()
+
+    def on_btn_ok(self, event):
+        self.logger.info("Removing highligting")
+        for track in self.selected_tracks:
+            track.ClearBrightened()
+        pcbnew.Refresh()
+        event.Skip()
 
 
 class Pad2PadTrackDistance(pcbnew.ActionPlugin):
@@ -177,7 +184,8 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         # deselect all tracks except used ones
         all_tracks = board.GetTracks()
 
-        dlg = Pad2PadTrackDistanceDialog(_pcbnew_frame, all_tracks, measure_distance.track_list)
+        logger.info("Showing GUI")
+        dlg = Pad2PadTrackDistanceDialog(_pcbnew_frame, all_tracks, measure_distance.track_list[0][1:-1], logger)
 
         if user_units == 'mm':
             dlg.lbl_length.SetLabelText("%.3f" % (distance) + " mm")

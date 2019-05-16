@@ -17,7 +17,7 @@ import wx.xrc
 class Pad2PadTrackDistanceGUI ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Pad2pad track distance", pos = wx.DefaultPosition, size = wx.Size( 269,135 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Pad2pad track distance", pos = wx.DefaultPosition, size = wx.Size( 274,139 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 		
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 		
@@ -39,7 +39,7 @@ class Pad2PadTrackDistanceGUI ( wx.Dialog ):
 		self.m_staticText3.Wrap( -1 )
 		fgSizer1.Add( self.m_staticText3, 0, wx.ALL, 5 )
 		
-		self.lbl_resistance = wx.StaticText( self, wx.ID_ANY, u"0.0 mΩ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.lbl_resistance = wx.StaticText( self, wx.ID_ANY, u"0.0 mOhm", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.lbl_resistance.Wrap( -1 )
 		fgSizer1.Add( self.lbl_resistance, 0, wx.ALL, 5 )
 		
@@ -65,6 +65,7 @@ class Pad2PadTrackDistanceGUI ( wx.Dialog ):
 		
 		# Connect Events
 		self.btn_highlight.Bind( wx.EVT_BUTTON, self.highlight_tracks )
+		self.btn_ok.Bind( wx.EVT_BUTTON, self.on_btn_ok )
 	
 	def __del__( self ):
 		pass
@@ -72,6 +73,9 @@ class Pad2PadTrackDistanceGUI ( wx.Dialog ):
 	
 	# Virtual event handlers, overide them in your derived class
 	def highlight_tracks( self, event ):
+		event.Skip()
+	
+	def on_btn_ok( self, event ):
 		event.Skip()
 	
 
