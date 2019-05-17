@@ -1,4 +1,4 @@
-(kicad_pcb (version 20171130) (host pcbnew "(5.0.2)-1")
+(kicad_pcb (version 20171130) (host pcbnew "(5.1.0-rc2-4-g73f0b3087)")
 
   (general
     (thickness 1.6)
@@ -39,8 +39,6 @@
     (zone_clearance 0.508)
     (zone_45_only no)
     (trace_min 0.2)
-    (segment_width 0.2)
-    (edge_width 0.15)
     (via_size 0.8)
     (via_drill 0.4)
     (via_min_size 0.4)
@@ -50,6 +48,8 @@
     (uvias_allowed no)
     (uvia_min_size 0.2)
     (uvia_min_drill 0.1)
+    (edge_width 0.15)
+    (segment_width 0.2)
     (pcb_text_width 0.3)
     (pcb_text_size 1.5 1.5)
     (mod_edge_width 0.15)
@@ -610,7 +610,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C697780)
-    (at 58.815 29.21)
+    (at 86.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F732/5C66F7B3)
@@ -898,7 +898,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C6976F8)
-    (at 43.815 29.21)
+    (at 71.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F70D/5C66F7B3)
@@ -1186,7 +1186,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C697670)
-    (at 48.815 29.21)
+    (at 76.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F723/5C66F7B3)
@@ -1474,7 +1474,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C6975E8)
-    (at 53.815 29.21)
+    (at 81.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F730/5C66F7B3)
@@ -1762,7 +1762,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C697560)
-    (at 78.815 29.21)
+    (at 106.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F759/5C66F7B3)
@@ -2050,7 +2050,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C6974D8)
-    (at 63.815 29.21)
+    (at 91.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F753/5C66F7B3)
@@ -2338,7 +2338,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C697450)
-    (at 68.815 29.21)
+    (at 96.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F755/5C66F7B3)
@@ -2626,7 +2626,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C6973C8)
-    (at 73.815 29.21)
+    (at 101.28 29.845)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F757/5C66F7B3)

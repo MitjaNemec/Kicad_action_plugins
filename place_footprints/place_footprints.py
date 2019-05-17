@@ -310,62 +310,70 @@ class Placer():
         pos_x = (right+left)/2
         return (pos_x, pos_y)
 
-    def place_circular(self, modules_to_place, radius, delta_angle, by_sheet):
+    def place_circular(self, modules_to_place, reference_footprint, radius, delta_angle, by_sheet):
         logger.info("Starting placing with circular layout")
         # get proper module_list
         modules = []
         for mod_ref in modules_to_place:
             modules.append(self.get_mod_by_ref(mod_ref))
 
+        reference_module = self.get_mod_by_ref(reference_footprint)
+
         # get first module position
-        first_module = modules[0]
-        first_module_pos = first_module.mod.GetPosition()
+        reference_module_pos = reference_module.mod.GetPosition()
+        reference_index = modules.index(reference_module)
+
         # get bounding_box_center
         if by_sheet:
-            modules_on_sheet = self.get_modules_on_sheet(first_module.sheet_id)
+            modules_on_sheet = self.get_modules_on_sheet(reference_module.sheet_id)
             bbox_center = self.get_modules_bounding_box_center(modules_on_sheet)
             height, _ = self.get_modules_bounding_box(modules_on_sheet)
         else:
-            bbox_center = self.get_modules_bounding_box_center([first_module])
-            height, _ = self.get_modules_bounding_box([first_module])
+            bbox_center = self.get_modules_bounding_box_center([reference_module])
+            height, _ = self.get_modules_bounding_box([reference_module])
 
         # point of rotation is below bounding box
         point_of_rotation = (bbox_center[0], bbox_center[1] + (height/2 + radius) * SCALE)
-        for mod in modules[1:]:
+        for mod in modules:
             index = modules.index(mod)
-            new_position = rotate_around_pivot_point(first_module_pos, point_of_rotation, index*delta_angle)
+            delta_index = index - reference_index
+            new_position = rotate_around_pivot_point(reference_module_pos, point_of_rotation, delta_index*delta_angle)
             new_position = [int(x) for x in new_position]
             mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
 
-            mod.mod.SetOrientationDegrees(first_module.mod.GetOrientationDegrees()-index*delta_angle)
+            mod.mod.SetOrientationDegrees(reference_module.mod.GetOrientationDegrees()-delta_index*delta_angle)
 
-            first_mod_flipped = first_module.mod.IsFlipped()
+            first_mod_flipped = reference_module.mod.IsFlipped()
             if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
                 mod.mod.Flip(mod.mod.GetPosition())
 
-    def place_linear(self, modules_to_place, step_x, step_y):
+    def place_linear(self, modules_to_place, reference_footprint, step_x, step_y):
         logger.info("Starting placing with linear layout")
         # get proper module_list
         modules = []
         for mod_ref in modules_to_place:
             modules.append(self.get_mod_by_ref(mod_ref))
 
-        # get first module position
-        first_module = modules[0]
-        first_module_pos = first_module.mod.GetPosition()
-        for mod in modules[1:]:
+        reference_module = self.get_mod_by_ref(reference_footprint)
+
+        # get reference module position
+        reference_module_pos = reference_module.mod.GetPosition()
+        reference_index = modules.index(reference_module)
+
+        for mod in modules:
             index = modules.index(mod)
-            new_position = (first_module_pos.x + index*step_x*SCALE, first_module_pos.y + index*step_y * SCALE)
+            delta_index = index-reference_index
+            new_position = (reference_module_pos.x + delta_index*step_x*SCALE, reference_module_pos.y + delta_index*step_y * SCALE)
             new_position = [int(x) for x in new_position]
             mod.mod.SetPosition(pcbnew.wxPoint(*new_position))
 
-            mod.mod.SetOrientationDegrees(first_module.mod.GetOrientationDegrees())
+            mod.mod.SetOrientationDegrees(reference_module.mod.GetOrientationDegrees())
 
-            first_mod_flipped = first_module.mod.IsFlipped()
+            first_mod_flipped = reference_module.mod.IsFlipped()
             if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
                 mod.mod.Flip(mod.mod.GetPosition())
 
-    def place_matrix(self, modules_to_place, step_x, step_y, nr_columns):
+    def place_matrix(self, modules_to_place, reference_footprint, step_x, step_y, nr_columns):
         logger.info("Starting placing with matrix layout")
         # get proper module_list
         modules = []
@@ -435,15 +443,17 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
             modules.append(mod.ref)
         sorted_modules = natural_sort(modules)
 
+    reference_module = pivot_module_reference
+
     if layout == 'circular':
         if mode == 'by sheet':
-            placer.place_circular(sorted_modules, 10.0, 30.0, by_sheet=True)
+            placer.place_circular(sorted_modules, reference_module, 10.0, 30.0, by_sheet=True)
         else:
-            placer.place_circular(sorted_modules, 10.0, 30.0, by_sheet=False)
+            placer.place_circular(sorted_modules, reference_module, 10.0, 30.0, by_sheet=False)
     if layout == 'linear':
-        placer.place_linear(sorted_modules, 5.0, 0.0)
+        placer.place_linear(sorted_modules, reference_module, 5.0, 0.0)
     if layout == 'matrix':
-        placer.place_matrix(sorted_modules, 5.0, 5.0, 3)
+        placer.place_matrix(sorted_modules, reference_module, 5.0, 5.0, 3)
 
     saved = pcbnew.SaveBoard(out_file, board)
     test_file = out_file.replace("temp", "test")
@@ -454,7 +464,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "place_footprints"))
     input_file = 'place_footprints.kicad_pcb'
-    pivot_module_reference = 'R201'
+    pivot_module_reference = 'R203'
 
     output_file = input_file.split('.')[0]+"_temp_ref_circular"+".kicad_pcb"
     err = test(input_file, output_file, pivot_module_reference, 'by ref', 'circular')
@@ -468,6 +478,7 @@ def main():
     err = test(input_file, output_file, pivot_module_reference, 'by ref', 'matrix')
     assert (err == 0), "by reference matrix failed"
 
+    pivot_module_reference = 'R401'
     output_file = input_file.split('.')[0]+"_temp_sheet_circular"+".kicad_pcb"
     err = test(input_file, output_file, pivot_module_reference, 'by sheet', 'circular')
     assert (err == 0), "by sheet circular failed"
