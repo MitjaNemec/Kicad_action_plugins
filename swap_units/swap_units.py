@@ -181,6 +181,7 @@ def swap(board, pad_1, pad_2):
             unit_1_loc = None
             unit_1ar_loc = []
             current_sch_file = f.read()
+            current_sch_file_by_lines = current_sch_file.split("\n")
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
             comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
@@ -195,6 +196,7 @@ def swap(board, pad_1, pad_2):
                     if L_line.split()[2] == footprint_reference:
                         logger.info("Unit 1 is not on multiple hierarchy sheet")
                         if unit_1 in data[2].split()[1]:
+                            logger.info("Unit 1 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
                                        + comp[0]\
@@ -209,6 +211,7 @@ def swap(board, pad_1, pad_2):
                     if check:
                         logger.info("Unit 1 is on multiple hierarchy sheet")
                         if unit_1 in data[2].split()[1]:
+                            logger.info("Unit 1 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # replace unit number in  U line
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
@@ -245,6 +248,7 @@ def swap(board, pad_1, pad_2):
             unit_2_loc = None
             unit_2ar_loc = []
             current_sch_file = f.read()
+            current_sch_file_by_lines = current_sch_file.split("\n")
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
             comp_ends = [m.start() for m in re.finditer('\$EndComp', current_sch_file)]
@@ -259,6 +263,7 @@ def swap(board, pad_1, pad_2):
                     if L_line.split()[2] == footprint_reference:
                         logger.info("Unit 2 is not on multiple hierarchy sheet")
                         if unit_2 in data[2].split()[1]:
+                            logger.info("Unit 2 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
                                        + comp[0]\
@@ -273,6 +278,7 @@ def swap(board, pad_1, pad_2):
                     if check:
                         logger.info("Unit 2 is on multiple hierarchy sheet")
                         if unit_2 in data[2].split()[1]:
+                            logger.info("Unit 2 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
                                        + comp[0]\
