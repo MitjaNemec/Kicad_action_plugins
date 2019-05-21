@@ -65,7 +65,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
 
         # set up logger
         logging.basicConfig(level=logging.DEBUG,
-                            filename="net2et distance.log",
+                            filename="net2et_distance.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
@@ -107,8 +107,16 @@ class Net2NedDistance(pcbnew.ActionPlugin):
             dis, loc = net2net_distance.get_min_distance(board, list(nets))
         except Exception:
             logger.exception("Fatal error when replicating")
-            raise
-
+            caption = 'Net2Net Track Distance'
+            message = "Fatal error when replicating.\n"\
+                    + "You can raise an issue on GiHub page.\n" \
+                    + "Please attach the net2et_distance.log which you should find in the project folder."
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            return
+            
         caption = 'Net2Net Track Distance'
         if user_units == 'mm':
             message = "Minimum distance between net segments is " + "%.3f" % (dis/SCALE) + " mm"
@@ -117,6 +125,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
         dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
+        logging.shutdown()
 
 
 class StreamToLogger(object):

@@ -572,8 +572,8 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     logger.info("Placing complete")
                     logging.shutdown()
                 except Exception:
-                    logger.exception("Fatal error when executing place footprints")
                     caption = 'Place footprints'
+                    logger.exception("Fatal error when executing place footprints")
                     message = "Fatal error when executing place footprints.\n"\
                             + "You can raise an issue on GiHub page.\n" \
                             + "Please attach the place_footprints.log which you should find in the project folder."

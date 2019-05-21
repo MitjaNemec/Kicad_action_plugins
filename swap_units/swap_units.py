@@ -321,6 +321,7 @@ def swap(board, pad_1, pad_2):
 
     # before saving the schematics, swap the pins in layout
     # swap pins in layout
+    # TODO might want to add also swapping pins in coresponding units in case of multiple schematics
     logger.info("Swapping pins in layout")
     module = pad_1.GetParent()
     module_pads = module.PadsList()

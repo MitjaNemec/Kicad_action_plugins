@@ -104,7 +104,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         pcbnew.Refresh()
 
         self.logger.info("Closing GUI")
-
+        logging.shutdown()
         self.Close()
         event.Skip()
 

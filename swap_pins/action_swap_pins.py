@@ -91,6 +91,7 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logger.info("Action plugin canceled as eeschema was not closed")
+            logging.shutdown()
             return
 
         # check if there are precisely two pads selected
@@ -102,6 +103,7 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logger.info("Action plugin canceled. More or less than 2 pads selected.")
+            logging.shutdown()
             return
 
         # are they on the same module
@@ -114,11 +116,13 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logger.info("Action plugin canceled. Selected pads don't belong to the same footprint.")
+            logging.shutdown()
             return
 
         # swap pins
         try:
             swap_pins.swap(board, pad1, pad2)
+            logging.shutdown()
         except (ValueError, LookupError) as error:
             caption = 'Swap pins'
             message = str(error)
@@ -126,9 +130,19 @@ class SwapPins(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logger.exception("Gracefully handled error while running")
+            logging.shutdown()
         except Exception:
-            logger.exception("Fatal error when swapping units")
-            raise
+            logger.exception("Fatal error when swapping pins")
+            caption = 'Swap pins'
+            message = "Fatal error when swapping pins.\n"\
+                    + "You can raise an issue on GiHub page.\n" \
+                    + "Please attach the swap_pins.log which you should find in the project folder."
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            logging.shutdown()
+            return
 
 
 class StreamToLogger(object):

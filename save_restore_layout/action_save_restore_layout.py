@@ -63,7 +63,7 @@ class SaveDialog(save_layout_dialog_GUI.SaveLayoutDialogGUI):
 
     def __init__(self, parent, levels):
         save_layout_dialog_GUI.SaveLayoutDialogGUI.__init__(self, parent)
-        
+
         # clear levels
         self.list_levels.Clear()
         self.list_levels.AppendItems(levels)
@@ -126,6 +126,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
 
         # this it the reference footprint
@@ -151,6 +152,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
+                logging.shutdown()
                 return
 
             # find out the available hierarchical levels
@@ -161,6 +163,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             level_dialog = SaveDialog(_pcbnew_frame, levels)
             res = level_dialog.ShowModal()
             if res != wx.ID_OK:
+                logging.shutdown()
                 return
             index = level_dialog.list_levels.GetSelection()
             level_dialog.Destroy()
@@ -171,6 +174,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
+                logging.shutdown()
                 return
 
             # Once user selects a level ask the user top specify file
@@ -178,6 +182,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             dlg = wx.FileDialog(_pcbnew_frame, "Select a file", os.getcwd(), "", wildcard, wx.SAVE)
             res = dlg.ShowModal()
             if res != wx.ID_OK:
+                logging.shutdown()
                 return
             layout_file = dlg.GetPath()
             dlg.Destroy()
@@ -193,6 +198,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
+                logging.shutdown()
                 return
 
         # restore layout
@@ -204,6 +210,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             dlg = wx.FileDialog(_pcbnew_frame, "Choose a file", os.getcwd(), "", wildcard, wx.OPEN)
             res = dlg.ShowModal()
             if res != wx.ID_OK:
+                logging.shutdown()
                 return
             layout_file = dlg.GetPath()
             dlg.Destroy()
@@ -220,6 +227,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
+                logging.shutdown()
                 return
 
             pivot_mod = restore_layout.get_mod_by_ref(pivot_module_reference)
@@ -235,6 +243,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()
+                logging.shutdown()
                 return
 
 

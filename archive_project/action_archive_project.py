@@ -112,6 +112,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logger.info("Exiting as eeschema is opened")
+            logging.shutdown()
             return
 
         # show dialog
@@ -131,6 +132,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
         # exit the plugin
         else:
             logger.info("Action plugin canceled on first dialog")
+            logging.shutdown()
             return
 
         if main_dialog.chkbox_sch.GetValue():
@@ -156,16 +158,26 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     logger.info("Retrying schematics archiving")
                     archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
                 else:
+                    logging.shutdown()
                     return
             except Exception:
                 logger.exception("Fatal error when archiveing schematics")
-                raise
+                caption = 'Archive project'
+                message = "Fatal error when archiveing schematics.\n"\
+                        + "You can raise an issue on GiHub page.\n" \
+                        + "Please attach the net2et_distance.log which you should find in the project folder."
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                logging.shutdown()
+                return
 
             caption = 'Archive project'
             message = "Schematics archived sucessfuly!"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
 
         if main_dialog.chkbox_3D.GetValue():
             try:
@@ -182,6 +194,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                     logger.info("Retrying 3D model archiving")
                     archive_project.archive_3D_models(board, allow_missing_models=True, alt_files=False)
                 else:
+                    logging.shutdown()
                     return
 
             caption = 'Archive project'
@@ -190,6 +203,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             main_dialog.Destroy()
+            logging.shutdown()
 
 
 class StreamToLogger(object):

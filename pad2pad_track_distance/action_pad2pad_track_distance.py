@@ -71,6 +71,7 @@ class Pad2PadTrackDistanceDialog(pad2pad_track_distance_GUI.Pad2PadTrackDistance
         for track in self.selected_tracks:
             track.ClearBrightened()
         pcbnew.Refresh()
+        logging.shutdown()
         event.Skip()
 
 
@@ -149,6 +150,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
 
         # and if they are on different nest
@@ -158,6 +160,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
 
         try:
@@ -170,10 +173,19 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logger.info(message)
+            logging.shutdown()
             return
         except Exception:
             logger.exception("Fatal error when measuring")
-            raise
+            caption = 'Pad2Pad Track Distance'
+            message = "Fatal error when measuring.\n"\
+                    + "You can raise an issue on GiHub page.\n" \
+                    + "Please attach the pad2pad_track_distance.log which you should find in the project folder."
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            return
 
         # trying to show in layout which tracks are taken into account - so far it does not work
         # as the selection is automatically cleared when exiting action plugin
@@ -213,4 +225,3 @@ class StreamToLogger(object):
     def flush(self, *args, **kwargs):
         """No-op for wrapper"""
         pass
-
