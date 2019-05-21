@@ -423,7 +423,21 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     radius = float(dlg.val_x_mag.GetValue())
                 else:
                     radius = float(dlg.val_x_mag.GetValue())/25.4
-                placer.place_circular(modules_to_place, radius, delta_angle, False)
+                try:
+                    placer.place_circular(modules_to_place, pivot_module_reference, radius, delta_angle, False)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n"\
+                            + "You can raise an issue on GiHub page.\n" \
+                            + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    return
 
             if dlg.com_arr.GetStringSelection() == u'Linear':
                 if user_units == 'mm':
@@ -432,7 +446,21 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 else:
                     step_x = float(dlg.val_x_mag.GetValue())/25.4
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
-                placer.place_linear(modules_to_place, step_x, step_y)
+                try:
+                    placer.place_linear(modules_to_place, pivot_module_reference, step_x, step_y)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n"\
+                            + "You can raise an issue on GiHub page.\n" \
+                            + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    return
 
             if dlg.com_arr.GetStringSelection() == u'Matrix':
                 if user_units == 'mm':
@@ -442,7 +470,21 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     step_x = float(dlg.val_x_mag.GetValue())/25.4
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
-                placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
+                try:
+                    placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n"\
+                            + "You can raise an issue on GiHub page.\n" \
+                            + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    return
 
         # by sheet
         else:
@@ -478,7 +520,21 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     radius = float(dlg.val_x_mag.GetValue())
                 else:
                     radius = float(dlg.val_x_mag.GetValue())/25.4
-                placer.place_circular(sorted_modules, radius, delta_angle, True)
+                try:
+                    placer.place_circular(sorted_modules, pivot_module_reference, radius, delta_angle, True)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n"\
+                            + "You can raise an issue on GiHub page.\n" \
+                            + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    return
 
             if dlg.com_arr.GetStringSelection() == u'Linear':
                 if user_units == 'mm':
@@ -487,7 +543,21 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 else:
                     step_x = float(dlg.val_x_mag.GetValue())/25.4
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
-                placer.place_linear(sorted_modules, step_x, step_y)
+                try:
+                    placer.place_linear(sorted_modules, pivot_module_reference, step_x, step_y)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n"\
+                            + "You can raise an issue on GiHub page.\n" \
+                            + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    return
 
             if dlg.com_arr.GetStringSelection() == u'Matrix':
                 if user_units == 'mm':
@@ -497,7 +567,21 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     step_x = float(dlg.val_x_mag.GetValue())/25.4
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
-                placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
+                try:
+                    placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n"\
+                            + "You can raise an issue on GiHub page.\n" \
+                            + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    return
 
 class StreamToLogger(object):
     """
