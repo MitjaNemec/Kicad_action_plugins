@@ -143,6 +143,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
         # if exactly one module is selected
         # this is a pivot module
@@ -159,6 +160,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
         except Exception:
             logger.exception("Fatal error when making an instance of replicator")
@@ -169,6 +171,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
         pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
@@ -186,6 +189,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
 
         # show dialog
@@ -208,6 +212,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             rep_drawings = dlg.chkbox_drawings.GetValue()
         else:
             logger.info("User canceled the dialog")
+            logging.shutdown()
             return
 
         # failsafe somtimes on my machine wx does not generate a listbox event
@@ -229,6 +234,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
                                         drawings=rep_drawings)
             logger.info("Replication complete")
             pcbnew.Refresh()
+            logging.shutdown()
         except Exception:
             logger.exception("Fatal error when making an instance of replicator")
             caption = 'Replicate Layout'
@@ -238,7 +244,10 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
+            logging.shutdown()
             return
+
+        
 
 
 class StreamToLogger(object):
