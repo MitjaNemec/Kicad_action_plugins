@@ -63,6 +63,10 @@ class Net2NedDistance(pcbnew.ActionPlugin):
         # go to the project folder - so that log will be in proper place
         os.chdir(os.path.dirname(os.path.abspath(board.GetFileName())))
 
+        # Remove all handlers associated with the root logger object.
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+
         # set up logger
         logging.basicConfig(level=logging.DEBUG,
                             filename="net2et_distance.log",
