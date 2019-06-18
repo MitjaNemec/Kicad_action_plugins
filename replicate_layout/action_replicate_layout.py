@@ -239,6 +239,14 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             logger.info("Replication complete")
             pcbnew.Refresh()
             logging.shutdown()
+        except LookupError as exception:
+            caption = 'Replicate Layout'
+            message = str(exception)
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            return 
         except Exception:
             logger.exception("Fatal error when running replicator")
             caption = 'Replicate Layout'
@@ -250,8 +258,6 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg.Destroy()
             logging.shutdown()
             return
-
-        
 
 
 class StreamToLogger(object):
