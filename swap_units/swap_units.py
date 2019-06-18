@@ -26,7 +26,8 @@ import logging
 import sys
 from distutils.dir_util import copy_tree
 
-logger = logging.getLogger(__name__)
+if __name__ != "__main__":
+    logger = logging.getLogger(__name__)
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
@@ -41,6 +42,7 @@ def swap(board, pad_1, pad_2):
     pcb_file = os.path.abspath(str(board.GetFileName()))
     sch_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", ".sch"))
     cache_file = os.path.abspath(str(board.GetFileName()).replace(".kicad_pcb", "-cache.lib"))
+    project_folder = os.path.dirname(cache_file)
 
     logger.info("main sch file is: " + sch_file)
     logger.info("main pcb file is: " + pcb_file)
@@ -49,6 +51,7 @@ def swap(board, pad_1, pad_2):
     # get pad numbers
     pad_nr_1 = pad_1.GetPadName()
     pad_nr_2 = pad_2.GetPadName()
+    logger.info("Swapping pins: " + pad_nr_1 + "," + pad_nr_2)
 
     # get module reference
     footprint_reference = pad_2.GetParent().GetReference()
@@ -76,6 +79,7 @@ def swap(board, pad_1, pad_2):
         contents = f.read()
         components = contents.split('$Comp')
         for component in components:
+            # TODO matching with in is not precise enough (e.g. C401 is in IC401 also)
             if footprint_reference in component:
                 symbol_name = component.split()[1]
                 break
@@ -194,8 +198,9 @@ def swap(board, pad_1, pad_2):
                 # it is easy to check for reference
                 if not AR_lines:
                     if L_line.split()[2] == footprint_reference:
-                        logger.info("Unit 1 is not on multiple hierarchy sheet")
                         if unit_1 in data[2].split()[1]:
+                            logger.info("Unit 1 is not on multiple hierarchy sheet")
+                            logger.info("\n".join(data))
                             logger.info("Unit 1 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
@@ -209,8 +214,9 @@ def swap(board, pad_1, pad_2):
                 else:
                     check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
                     if check:
-                        logger.info("Unit 1 is on multiple hierarchy sheet")
                         if unit_1 in data[2].split()[1]:
+                            logger.info("Unit 1 is on multiple hierarchy sheet")
+                            logger.info("\n".join(data))
                             logger.info("Unit 1 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # replace unit number in  U line
                             # +2 +1 account for splits
@@ -261,8 +267,9 @@ def swap(board, pad_1, pad_2):
                 # it is easy to check for reference
                 if not AR_lines:
                     if L_line.split()[2] == footprint_reference:
-                        logger.info("Unit 2 is not on multiple hierarchy sheet")
                         if unit_2 in data[2].split()[1]:
+                            logger.info("Unit 2 is not on multiple hierarchy sheet")
+                            logger.info("\n".join(data))
                             logger.info("Unit 2 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
@@ -276,8 +283,9 @@ def swap(board, pad_1, pad_2):
                 else:
                     check = filter(lambda x: x.split()[2].split("\"")[1] == footprint_reference, AR_lines)
                     if check:
-                        logger.info("Unit 2 is on multiple hierarchy sheet")
                         if unit_2 in data[2].split()[1]:
+                            logger.info("Unit 2 is on multiple hierarchy sheet")
+                            logger.info("\n".join(data))
                             logger.info("Unit 2 description is around lines: " + str(current_sch_file_by_lines.index(L_line)))
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
@@ -363,9 +371,9 @@ def swap(board, pad_1, pad_2):
     # if files are the same, then merge two strings
     if page_1 == page_2:
         if __name__ == "__main__":
-            dirname = os.path.dirname(page_1)
             filename = os.path.basename(page_1)
-            new_name = os.path.join(dirname + "_temp", filename)
+            subfolder = os.path.relpath(os.path.dirname(page_1))
+            new_name = os.path.join(os.path.join(project_folder + "_temp", subfolder), filename)
             with open(new_name, 'w') as f:
                 f.write(unit_2_sch_file)
         else:
@@ -374,16 +382,16 @@ def swap(board, pad_1, pad_2):
     # if files are different, then there is no problem, write both of them and be done with it
     else:
         if __name__ == "__main__":
-            dirname = os.path.dirname(page_1)
             filename = os.path.basename(page_1)
-            new_name = os.path.join(dirname + "_temp", filename)
+            subfolder = os.path.relpath(os.path.dirname(page_1))
+            new_name = os.path.join(os.path.join(project_folder + "_temp", subfolder), filename)
             if page_1 is not None:
                 with open(new_name, 'w') as f:
                     f.write(unit_1_sch_file)
             if page_2 is not None:
-                dirname = os.path.dirname(page_2)
                 filename = os.path.basename(page_2)
-                new_name = os.path.join(dirname + "_temp", filename)
+                subfolder = os.path.relpath(os.path.dirname(page_2))
+                new_name = os.path.join(os.path.join(project_folder + "_temp", subfolder), filename)
                 with open(new_name, 'w') as f:
                     f.write(unit_2_sch_file)
         else:
@@ -453,9 +461,13 @@ def find_all_sch_files(filename, list_of_files):
 def main():
     import compare_projects
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "swap_units_test_project"))
-    test_list = ['same_sheet', 'different_sheets', 'different_sheets_different_hierarchy', 'same_sheet_different_hierarchy']
-    # test_list = ['same_sheet_different_hierarchy']
-    # same_sheet, different_sheets
+    test_list = ['same_sheet',
+                 'different_sheets',
+                 'different_sheets_different_hierarchy',
+                 'same_sheet_different_hierarchy',
+                 'test_issue']
+    test_list = ['test_issue']
+    # same_sheet, different_sheets, test_issue
     for test in test_list:
         if test == 'same_sheet':
             # copy fresh project to _temp folder to overwrite previous changes
@@ -525,26 +537,43 @@ def main():
             err = compare_projects.compare_projects(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_same_sheet_different_hierarchy\\swap_units_test.pro'),
                                                     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_temp\\swap_units_test.pro'))
             assert (err == 0), "same_sheet_different_hierarchy failed"
-
+        if test == 'test_issue':
+            os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_issue"))
+            # copy fresh project to _temp folder to overwrite previous changes
+            copy_tree(os.getcwd(), os.getcwd() + "_temp")
+            # load board and find reference module and select proper pads
+            board = pcbnew.LoadBoard('test.kicad_pcb')
+            mod = board.FindModuleByReference('IC201')
+            pads = mod.Pads()
+            for pad in pads:
+                if pad.GetPadName() == u'1':
+                    pad1 = pad
+                if pad.GetPadName() == u'7':
+                    pad2 = pad
+            swap(board, pad1, pad2)
+            # compare schematics
+            #err = compare_projects.compare_projects(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_same_sheet_different_hierarchy\\swap_units_test.pro'),
+            #                                        os.path.join(os.path.dirname(os.path.realpath(__file__)), 'swap_units_test_project_temp\\swap_units_test.pro'))
 
 # for testing purposes only
 if __name__ == "__main__":
     # if debugging outside of this folder change the folder
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    file_handler = logging.FileHandler(filename='swap_units.log', mode='w')
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    handlers = [file_handler, stdout_handler]
-    # handlers = [file_handler]
+    # create standalone logger which will log to file and stdout stream
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
 
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                        datefmt='%m-%d %H:%M:%S',
-                        handlers=handlers
-                        )
+    logFormatter = logging.Formatter("%(asctime)s %(name)s %(lineno)d:%(message)s'", datefmt='%m-%d %H:%M:%S')
 
-    logger = logging.getLogger(__name__)
+    fileHandler = logging.FileHandler(filename="swap_units.log", mode='w')
+    fileHandler.setFormatter(logFormatter)
+    logger.addHandler(fileHandler)
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
+
     logger.info("Swap units plugin version: " + VERSION + " started in standalone mode")
-
 
     main()
