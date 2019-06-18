@@ -623,6 +623,10 @@ class Replicator():
                 # get module text
                 pivot_mod_text_items = get_module_text_items(mod_to_clone)
                 mod_text_items = get_module_text_items(mod)
+                # check if both modules (pivot and the one for replication) have the same number of text items
+                if len(pivot_mod_text_items) != len(mod_text_items):
+                    raise LookupError("Pivot module: " + mod_to_clone.ref + " has different number of text items (" + repr(len(pivot_mod_text_items)) 
+                                      + ")\nthan module for replication: " + mod.ref + " (" + repr(len(mod_text_items)) + ")")
                 # replicate each text item
                 for pivot_text in pivot_mod_text_items:
                     index = pivot_mod_text_items.index(pivot_text)

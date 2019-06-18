@@ -240,9 +240,9 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             pcbnew.Refresh()
             logging.shutdown()
         except Exception:
-            logger.exception("Fatal error when making an instance of replicator")
+            logger.exception("Fatal error when running replicator")
             caption = 'Replicate Layout'
-            message = "Fatal error when making an instance of replicator.\n"\
+            message = "Fatal error when running replicator.\n"\
                     + "You can raise an issue on GiHub page.\n" \
                     + "Please attach the replicate_layout.log which you should find in the project folder."
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
