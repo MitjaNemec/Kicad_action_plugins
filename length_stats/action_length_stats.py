@@ -243,7 +243,9 @@ class LengthStats(pcbnew.ActionPlugin):
         self.name = "Length stats"
         self.category = "Get tracks lenght"
         self.description = "Obtains and refreshes lenght of all tracks on selected nets"
-
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'ps_diff_pair_tune_length-length_stats.svg.png')
+                
     def Run(self):
         # load board
         board = pcbnew.GetBoard()
