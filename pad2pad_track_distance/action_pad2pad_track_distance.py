@@ -88,6 +88,8 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         self.name = "Pad2Pad distance"
         self.category = "Measure distance"
         self.description = "Measure distance between two selected pads"
+        self.icon_file_name = os.path.join(
+                os.path.dirname(__file__), 'ps_tune_length-pad2pad_track_distance.svg.png')
 
     def Run(self):
         # load board
