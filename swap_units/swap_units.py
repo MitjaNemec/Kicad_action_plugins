@@ -201,7 +201,7 @@ def swap(board, pad_1, pad_2):
                         if unit_1 in data[2].split()[1]:
                             logger.info("Unit 1 is not on multiple hierarchy sheet")
                             logger.info("\n".join(data))
-                            logger.info("Unit 1 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n"))+1)
+                            logger.info("Unit 1 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n")+1))
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
                                        + comp[0]\
@@ -219,7 +219,7 @@ def swap(board, pad_1, pad_2):
                         if unit_1 in data[2].split()[1]:
                             logger.info("Unit 1 is on multiple hierarchy sheet")
                             logger.info("\n".join(data))
-                            logger.info("Unit 1 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n"))+1)
+                            logger.info("Unit 1 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n")+1))
                             # replace unit number in  U line
                             # +2 +1 account for splits
                             unit_1_loc = data[2].split()[1].find(unit_1)\
@@ -272,7 +272,7 @@ def swap(board, pad_1, pad_2):
                         if unit_2 in data[2].split()[1]:
                             logger.info("Unit 2 is not on multiple hierarchy sheet")
                             logger.info("\n".join(data))
-                            logger.info("Unit 2 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n"))+1)
+                            logger.info("Unit 2 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n")+1))
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
                                        + comp[0]\
@@ -290,7 +290,7 @@ def swap(board, pad_1, pad_2):
                         if unit_2 in data[2].split()[1]:
                             logger.info("Unit 2 is on multiple hierarchy sheet")
                             logger.info("\n".join(data))
-                            logger.info("Unit 2 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n"))+1)
+                            logger.info("Unit 2 description is around lines: " + str(current_sch_file[:current_sch_file.find("\n".join(data))].count("\n")+1))
                             # +2 +1 account for splits
                             unit_2_loc = data[2].split()[1].find(unit_2)\
                                        + comp[0]\
