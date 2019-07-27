@@ -438,7 +438,7 @@
                                 <event name="OnLeftDClick"></event>
                                 <event name="OnLeftDown"></event>
                                 <event name="OnLeftUp"></event>
-                                <event name="OnListBox"></event>
+                                <event name="OnListBox">on_selected</event>
                                 <event name="OnListBoxDClick"></event>
                                 <event name="OnMiddleDClick"></event>
                                 <event name="OnMiddleDown"></event>

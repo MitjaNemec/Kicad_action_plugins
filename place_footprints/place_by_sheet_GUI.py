@@ -118,6 +118,7 @@ class PlaceBySheetGUI ( wx.Dialog ):
 		
 		# Connect Events
 		self.list_levels.Bind( wx.EVT_LISTBOX, self.level_changed )
+		self.list_sheets.Bind( wx.EVT_LISTBOX, self.on_selected )
 		self.com_arr.Bind( wx.EVT_COMBOBOX, self.arr_changed )
 	
 	def __del__( self ):
@@ -126,6 +127,9 @@ class PlaceBySheetGUI ( wx.Dialog ):
 	
 	# Virtual event handlers, overide them in your derived class
 	def level_changed( self, event ):
+		event.Skip()
+	
+	def on_selected( self, event ):
 		event.Skip()
 	
 	def arr_changed( self, event ):

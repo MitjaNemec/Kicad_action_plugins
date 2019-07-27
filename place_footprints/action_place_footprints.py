@@ -45,6 +45,25 @@ def natural_sort(l):
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
     return sorted(l, key=alphanum_key)
 
+
+def set_highlight_on_module(module):
+    pads_list = module.Pads()
+    for pad in pads_list:
+        pad.SetBrightened()
+    drawings = module.GraphicalItemsList()
+    for item in drawings:
+        item.SetBrightened()
+
+
+def clear_highlight_on_module(module):
+    pads_list = module.Pads()
+    for pad in pads_list:
+        pad.ClearBrightened()
+    drawings = module.GraphicalItemsList()
+    for item in drawings:
+        item.ClearBrightened()   
+
+
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
 with open(version_filename) as f:
@@ -64,18 +83,25 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
 
         self.list_sheetsChoices = self.placer.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
 
+        # clear highlights
+        for ref in self.ref_list:
+            module = self.placer.get_mod_by_ref(ref)
+            clear_highlight_on_module(module.mod)
+        pcbnew.Refresh()
+
         # get anchor modules
         anchor_modules = self.placer.get_list_of_modules_with_same_id(self.pivot_mod.mod_id)
+
         # find matching anchors to maching sheets
-        ref_list = []
+        self.ref_list = []
         for sheet in self.list_sheetsChoices:
             for mod in anchor_modules:
                 if "/".join(sheet) in "/".join(mod.sheet_id):
-                    ref_list.append(mod.ref)
+                    self.ref_list.append(mod.ref)
                     break
 
-        sheets_for_list = [('/').join(x[0]) + " (" + x[1] + ")" for x in zip(self.list_sheetsChoices, ref_list)]
-        # clear levels
+        sheets_for_list = [('/').join(x[0]) + " (" + x[1] + ")" for x in zip(self.list_sheetsChoices, self.ref_list)]
+
         self.list_sheets.Clear()
         self.list_sheets.AppendItems(sheets_for_list)
 
@@ -83,6 +109,12 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
         number_of_items = self.list_sheets.GetCount()
         for i in range(number_of_items):
             self.list_sheets.Select(i)
+
+        # highlight all modules
+        for ref in self.ref_list:
+            module = self.placer.get_mod_by_ref(ref)
+            set_highlight_on_module(module.mod)
+        pcbnew.Refresh()        
 
         if self.com_arr.GetStringSelection() == u"Linear":
             if self.user_units == 'mm':
@@ -110,7 +142,6 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
                 self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
-        # circular layout
         if self.com_arr.GetStringSelection() == u"Circular":
             number_of_all_sheets = len(self.list_sheets.GetSelections())
             circumference = number_of_all_sheets * self.width
@@ -192,10 +223,23 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
         self.placer = placer
         self.user_units = user_units
         self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
+        self.ref_list = []
 
         modules = self.placer.get_modules_on_sheet(self.pivot_mod.sheet_id)
         self.height, self.width = self.placer.get_modules_bounding_box(modules)
 
+    def on_selected(self, event):
+        # go throught the list and set/clear higliht acordingly
+        nr_items = self.list_sheets.GetCount()
+        for i in range(nr_items):
+            mod_ref = self.ref_list[i]
+            module = self.placer.get_mod_by_ref(mod_ref)
+            mod = module.mod
+            if self.list_sheets.IsSelected(i):
+                set_highlight_on_module(mod)
+            else:
+                clear_highlight_on_module(mod)
+        pcbnew.Refresh()
 
 class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
@@ -281,6 +325,19 @@ class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
             self.val_x_mag.SetValue("%.3f" % (self.width/25.4))
             self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
 
+    def on_selected(self, event):
+        # go throught the list and set/clear higliht acordingly
+        nr_items = self.list_modules.GetCount()
+        for i in range(nr_items):
+            mod_ref = self.list_modules.GetString(i)
+            module = self.placer.get_mod_by_ref(mod_ref)
+            mod = module.mod
+            if self.list_modules.IsSelected(i):
+                set_highlight_on_module(mod)
+            else:
+                clear_highlight_on_module(mod)
+        pcbnew.Refresh()
+
 
 class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
@@ -364,7 +421,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         # this it the reference footprint
         pivot_module_reference = selected_names[0]
 
-        # ask user which way to select other footprints (by increasing reference number or by ID
+        # ask user which way to select other footprints (by increasing reference number or by ID)
         dlg = InitialDialog(_pcbnew_frame)
         res = dlg.ShowModal()
 
@@ -382,7 +439,9 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
             sorted_list = natural_sort(list_of_all_modules_with_same_designator)
 
+            # find only consequtive modules
             list_of_consecutive_modules=[]
+            # go through the list in positive direction
             start_index = sorted_list.index(pivot_module_reference)
             count_start = module_reference_number
             for mod in sorted_list[start_index:]:
@@ -392,6 +451,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 else:
                     break
 
+            # go through the list in negative direction
             count_start = module_reference_number
             reversed_list = list(reversed(sorted_list))
             start_index = reversed_list.index(pivot_module_reference)
@@ -408,6 +468,12 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference, user_units)
             dlg.list_modules.AppendItems(sorted_modules)
 
+            # highlight all modules by default
+            for mod in sorted_modules:
+                module = board.FindModuleByReference(mod)
+                set_highlight_on_module(module)
+            pcbnew.Refresh()
+
             # by default select all sheets
             number_of_items = dlg.list_modules.GetCount()
             for i in range(number_of_items):
@@ -415,6 +481,11 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             res = dlg.ShowModal()
 
             if res == wx.ID_CANCEL:
+                # clear highlight all modules by default
+                for mod in sorted_modules:
+                    module = board.FindModuleByReference(mod)
+                    clear_highlight_on_module(module)
+                pcbnew.Refresh()
                 return
 
             # get list of modules to place
@@ -441,6 +512,11 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     dlg.ShowModal()
                     dlg.Destroy()
                     logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
                     return
 
             if dlg.com_arr.GetStringSelection() == u'Linear':
@@ -464,6 +540,11 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     dlg.ShowModal()
                     dlg.Destroy()
                     logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
                     return
 
             if dlg.com_arr.GetStringSelection() == u'Matrix':
@@ -488,8 +569,17 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     dlg.ShowModal()
                     dlg.Destroy()
                     logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
                     return
-
+            # clear highlight all modules by default
+            for mod in sorted_modules:
+                module = board.FindModuleByReference(mod)
+                clear_highlight_on_module(module)
+            pcbnew.Refresh()
         # by sheet
         else:
             # get list of all modules with same ID
@@ -502,6 +592,11 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             res = dlg.ShowModal()
 
             if res == wx.ID_CANCEL:
+                # clear highlight all modules by default
+                # get the list from the GUI elements
+                for module in list_of_modules:
+                    clear_highlight_on_module(module.mod)
+                pcbnew.Refresh()
                 return
 
             # based on the sheet list, find all the modules with same ID
@@ -538,6 +633,12 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     dlg.ShowModal()
                     dlg.Destroy()
                     logging.shutdown()
+
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
                     return
 
             if dlg.com_arr.GetStringSelection() == u'Linear':
@@ -550,6 +651,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 try:
                     placer.place_linear(sorted_modules, pivot_module_reference, step_x, step_y)
                     logger.info("Placing complete")
+                    logger.info("Sorted_modules: " + repr(sorted_modules))
                     logging.shutdown()
                 except Exception:
                     logger.exception("Fatal error when executing place footprints")
@@ -561,6 +663,11 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     dlg.ShowModal()
                     dlg.Destroy()
                     logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
                     return
 
             if dlg.com_arr.GetStringSelection() == u'Matrix':
@@ -585,7 +692,18 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     dlg.ShowModal()
                     dlg.Destroy()
                     logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
                     return
+
+            # clear highlight all modules by default
+            for mod in sorted_modules:
+                module = board.FindModuleByReference(mod)
+                clear_highlight_on_module(module)
+            pcbnew.Refresh()
 
 class StreamToLogger(object):
     """
