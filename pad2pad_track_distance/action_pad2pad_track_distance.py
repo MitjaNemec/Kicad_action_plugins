@@ -147,7 +147,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         # check the nets on all the pads
         nets = []
         for pad in selected_pads:
-                nets.append(pad.GetNetname())
+            nets.append(pad.GetNetname())
 
         # if more or less than two pads are selected
         if len(selected_pads) != 2:
