@@ -1,4 +1,5 @@
 EESchema Schematic File Version 4
+LIBS:archive_test_project-cache
 EELAYER 29 0
 EELAYER END
 $Descr A4 11693 8268
@@ -20,7 +21,7 @@ P 5450 3800
 F 0 "C2" H 5565 3846 50  0000 L CNN
 F 1 "C" H 5565 3755 50  0000 L CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 5488 3650 50  0001 C CNN
-F 3 "~" H 5450 3800 50  0001 C CNN
+F 3 "${KIPRJMOD}\\slva959a.pdf" H 5450 3800 50  0001 C CNN
 	1    5450 3800
 	1    0    0    -1  
 $EndComp
@@ -31,7 +32,7 @@ P 5200 3600
 F 0 "R1" V 4993 3600 50  0000 C CNN
 F 1 "R" V 5084 3600 50  0000 C CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 5130 3600 50  0001 C CNN
-F 3 "~" H 5200 3600 50  0001 C CNN
+F 3 "D:\\Mitja\\Plate\\Kicad_libs\\action_plugins\\archive_project\\archived_test_project\\123f11_Lec4.pdf" H 5200 3600 50  0001 C CNN
 	1    5200 3600
 	0    1    1    0   
 $EndComp
