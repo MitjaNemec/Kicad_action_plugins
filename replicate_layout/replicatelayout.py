@@ -222,7 +222,7 @@ class Replicator():
         return list_of_modules
 
     def get_sheets_to_replicate(self, mod, level):
-        # TODO - tukaj nekje tici htosc
+        # TODO - tukaj nekje tici hrosc
         sheet_id = mod.sheet_id
         sheet_file = mod.filename
         # poisci level_id

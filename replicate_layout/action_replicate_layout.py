@@ -39,6 +39,24 @@ with open(version_filename) as f:
     VERSION = f.readline().strip()
 
 
+def set_highlight_on_module(module):
+    pads_list = module.Pads()
+    for pad in pads_list:
+        pad.SetBrightened()
+    drawings = module.GraphicalItemsList()
+    for item in drawings:
+        item.SetBrightened()
+
+
+def clear_highlight_on_module(module):
+    pads_list = module.Pads()
+    for pad in pads_list:
+        pad.ClearBrightened()
+    drawings = module.GraphicalItemsList()
+    for item in drawings:
+        item.ClearBrightened()
+
+
 class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
@@ -60,10 +78,17 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         self.list_levels.Clear()
         self.list_levels.AppendItems(self.levels)
 
-    def level_changed(self, event):
-        index = self.list_levels.GetSelection()
+        self.pivot_modules = []
 
+    def level_changed(self, event):
+
+        index = self.list_levels.GetSelection()
         list_sheetsChoices = self.replicator.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
+
+        # clear highlight on all modules on selected level
+        for mod in self.pivot_modules:
+            clear_highlight_on_module(mod)
+        pcbnew.Refresh()
 
         # get anchor modules
         anchor_modules = self.replicator.get_list_of_modules_with_same_id(self.pivot_mod.mod_id)
@@ -84,6 +109,15 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         number_of_items = self.list_sheets.GetCount()
         for i in range(number_of_items):
             self.list_sheets.Select(i)
+
+        # get all pivot modules on selected level
+        pivot_modules = self.replicator.get_modules_on_sheet(self.pivot_mod.sheet_id[:index+1])
+        self.pivot_modules = [x.mod for x in pivot_modules]
+
+        # highlight all modules on selected level
+        for mod in self.pivot_modules:
+            set_highlight_on_module(mod)
+        pcbnew.Refresh()
 
         event.Skip()
 
@@ -200,6 +234,11 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         logger.info("Showing dialog")
         dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference)
         res = dlg.ShowModal()
+
+        # clear highlight on all modules on selected level
+        for mod in dlg.pivot_modules:
+            clear_highlight_on_module(mod)
+        pcbnew.Refresh()
 
         if res == wx.ID_OK:
 
