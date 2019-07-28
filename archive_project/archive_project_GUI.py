@@ -36,7 +36,7 @@ class ArchiveProjectGUI ( wx.Dialog ):
 		
 		bSizer3.Add( ( 20, 0), 0, wx.EXPAND, 5 )
 		
-		self.chkbox_pdf = wx.CheckBox( self, wx.ID_ANY, u"Archive documentation", wx.DefaultPosition, wx.DefaultSize, wx.CHK_3STATE )
+		self.chkbox_pdf = wx.CheckBox( self, wx.ID_ANY, u"Archive documentation", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer3.Add( self.chkbox_pdf, 0, wx.ALL, 5 )
 		
 		

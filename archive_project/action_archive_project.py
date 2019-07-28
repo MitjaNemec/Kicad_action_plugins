@@ -59,9 +59,9 @@ class ArchiveProjectDialog (archive_project_GUI.ArchiveProjectGUI):
 
     def schematics_toggle(self, event):
         if self.chkbox_sch.GetValue():
-            self.chkbox_pdf.Set3StateValue(wx.CHK_UNCHECKED)
+            self.chkbox_pdf.Enable()
         else:
-            self.chkbox_pdf.Set3StateValue(wx.CHK_UNDETERMINED)
+            self.chkbox_pdf.Disable()
 
         event.Skip()
 
@@ -151,7 +151,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
             # archive schematics
             try:
                 logger.info("Starting schematics archiving")
-                if main_dialog.chkbox_pdf.Get3StateValue() == wx.CHK_CHECKED:
+                if main_dialog.chkbox_pdf.GetValue():
                     archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=True)
                 else:
                     archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False)
@@ -171,7 +171,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 logger.info(message)
                 if res == wx.ID_YES:
                     logger.info("Retrying schematics archiving")
-                    if main_dialog.chkbox_pdf.Get3StateValue() == wx.CHK_CHECKED:
+                    if main_dialog.chkbox_pdf.GetValue():
                         archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False, archive_documentation=True)
                     else:
                         archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False, archive_documentation=False)
