@@ -17,7 +17,7 @@ import wx.xrc
 class ArchiveProjectGUI ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Archive project", pos = wx.DefaultPosition, size = wx.Size( 224,159 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Archive project", pos = wx.DefaultPosition, size = wx.Size( 264,192 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 		
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 		
@@ -30,6 +30,17 @@ class ArchiveProjectGUI ( wx.Dialog ):
 		self.chkbox_sch = wx.CheckBox( self, wx.ID_ANY, u"Archive Schematics", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.chkbox_sch.SetValue(True) 
 		bSizer4.Add( self.chkbox_sch, 0, wx.ALL, 5 )
+		
+		bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		
+		bSizer3.Add( ( 20, 0), 0, wx.EXPAND, 5 )
+		
+		self.chkbox_pdf = wx.CheckBox( self, wx.ID_ANY, u"Archive documentation", wx.DefaultPosition, wx.DefaultSize, wx.CHK_3STATE )
+		bSizer3.Add( self.chkbox_pdf, 0, wx.ALL, 5 )
+		
+		
+		bSizer4.Add( bSizer3, 0, wx.EXPAND, 5 )
 		
 		self.chkbox_3D = wx.CheckBox( self, wx.ID_ANY, u"Archive 3D models", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.chkbox_3D.SetValue(True) 
@@ -51,8 +62,16 @@ class ArchiveProjectGUI ( wx.Dialog ):
 		self.Layout()
 		
 		self.Centre( wx.BOTH )
+		
+		# Connect Events
+		self.chkbox_sch.Bind( wx.EVT_CHECKBOX, self.schematics_toggle )
 	
 	def __del__( self ):
 		pass
+	
+	
+	# Virtual event handlers, overide them in your derived class
+	def schematics_toggle( self, event ):
+		event.Skip()
 	
 

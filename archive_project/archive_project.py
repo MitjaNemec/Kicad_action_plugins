@@ -7,7 +7,11 @@ import sys
 import logging
 import re
 import hashlib
+import re
 from shutil import copyfile
+import urllib2
+import urllib
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +19,18 @@ logger = logging.getLogger(__name__)
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
 with open(version_filename) as f:
     VERSION = f.readline().strip()
+
+
+def file_exists(url):
+    request = urllib2.Request(url)
+    request.get_method = lambda : 'HEAD'
+    
+    response = urllib2.urlopen(request)
+    try:
+        response = urllib2.urlopen(request)
+        return True
+    except:
+        return False
 
 
 def balanced_braces(args):
@@ -121,7 +137,7 @@ def find_all_sch_files(filename, list_of_files):
     return list_of_files
 
 
-def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
+def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False):
     global __name__
     logger.info("Starting to archive symbols")
     # get project name
@@ -131,6 +147,9 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
     archive_lib_name = project_name + "-archive.lib"
 
     logger.info("Pcb filename:" + pcb_filename)
+
+    # list of failed documentation file accesses
+    documentation_failed = []
 
     # load system symbol library table
     if __name__ != "__main__":
@@ -327,12 +346,11 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
 
             line_contents = line.split()
             # if line is within the componend description and line denotes a symbol label
-            line_in_component_decription = False
             for sym_loc in symbol_locations:
                 if (sym_loc[0] < index) and (index < sym_loc[1]):
-                    line_in_component_decription = True
                     break
-            if line_in_component_decription and line_contents[0] == "L":
+            # if line begins with L it is the library reference                    
+            if line_contents[0] == "L":
                 libraryname = line_contents[1].split(":")[0]
                 symbolname = line_contents[1].split(":")[1]
                 # replace colon with underscore
@@ -356,6 +374,85 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False):
                 # symbol is not from the library present on the system markit for the potential errormessage
                 if libraryname not in nicknames:
                     symbols_form_missing_libraries.add(symbolname)
+            # if it begins with F3 it might be a data sheet entry
+            elif line_contents[0] == "F" and line_contents[1] == "3" and archive_documentation is True:
+                link = line_contents[2]
+                if len(link) > 10:
+                    logger.info("Trying to archive documentation file: " + link)
+                    # if it starts with http then it is url
+                    if link.startswith("http") or link.startswith("\"http"):
+                        logger.info("File is encoded with URL")
+                        if link.startswith("\""):
+                            link = link.strip("\"")
+                        # try to get the file
+                        doc_filename = os.path.basename(link)
+                        destination_dir = os.path.join(proj_path, "documentation")
+                        destination_path = os.path.join(destination_dir, doc_filename)
+                        # check if folder exists
+                        if not os.path.exists(destination_dir):
+                            os.mkdir(destination_dir)
+
+                        try:
+                            # download file
+                            logger.info("Downloading file")
+                            urllib.urlretrieve(link, destination_path)
+                            # remap the entry
+                            logger.info("Remapping documenation entry")
+                            line_contents[2] = "\"" + "${KIPRJMOD}/documentation/" + doc_filename + "\""
+                            new_line = ' '.join(line_contents)
+                            sch_file_out.append(new_line + "\n")
+                        except:
+                            logger.info("Failed to download file")
+                            documentation_failed.append(link)
+                            sch_file_out.append(line)
+                            pass
+
+                    # otherwise it is a filepath
+                    else:
+                        logger.info("File is encoded with filepath")
+                        clean_model_path = os.path.normpath(link.strip("\""))
+                        # check if it can be expanded via accessible environment variables
+                        if "${" in clean_model_path or "$(" in clean_model_path:
+                            start_index = clean_model_path.find("${")+2 or clean_model_path.find("$(")+2
+                            end_index = clean_model_path.find("}") or clean_model_path.find(")")
+                            env_var = clean_model_path[start_index:end_index]
+                            if env_var == "KIPRJMOD":
+                                path = proj_path
+                            else:
+                                path = os.getenv(env_var)
+                            # if variable is defined, find proper model path
+                            if path is not None:
+                                logger.info("File had enviroment variable")
+                                clean_model_path = os.path.normpath(path+clean_model_path[end_index+1:])
+                            # if variable is not defined, we can not find the model. Thus don't put it on the list
+                            else:
+                                logger.info("Can not find documentation defined with enviroment variable:\n" + link)
+
+                        try:
+                            # copy the file localy
+                            logger.info("Trying to copy the file")
+                            doc_filename = os.path.basename(clean_model_path)
+                            destination_dir = os.path.join(proj_path, "documentation")
+                            destination_path = os.path.join(destination_dir, doc_filename)
+                            shutil.copy2(clean_model_path, destination_path)
+                            # and remap the entry
+                            logger.info("Remapping documenation entry")
+                            line_contents[2] = "\"" + "${KIPRJMOD}/documentation/" + doc_filename + "\""
+                            new_line = ' '.join(line_contents)
+                            sch_file_out.append(new_line + "\n")
+                        # src and dest are the same
+                        except shutil.Error:
+                            logger.info("File has already been archived")
+                            documentation_failed.append(link)
+                            sch_file_out.append(line)
+                        # file not found
+                        except (OSError, IOError) as e:
+                            logger.info("Failed to copy file")
+                            documentation_failed.append(link)
+                            sch_file_out.append(line)
+                else:
+                    sch_file_out.append(line)
+            # othrerwise, just copy the line
             else:
                 sch_file_out.append(line)
         # prepare for writing
@@ -496,7 +593,7 @@ def main():
     # board = pcbnew.LoadBoard('fresh_test_project/archive_test_project.kicad_pcb')
     board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
     try:
-        archive_symbols(board, allow_missing_libraries=True, alt_files=True)
+        archive_symbols(board, allow_missing_libraries=True, alt_files=True, archive_documentation=True)
     except (ValueError, IOError, LookupError) as error:
         print(str(error))
     except NameError as error:

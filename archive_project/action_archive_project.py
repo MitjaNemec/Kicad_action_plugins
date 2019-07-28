@@ -57,6 +57,14 @@ class ArchiveProjectDialog (archive_project_GUI.ArchiveProjectGUI):
         archive_project_GUI.ArchiveProjectGUI.__init__(self, parent)
         self.Fit()
 
+    def schematics_toggle(self, event):
+        if self.chkbox_sch.GetValue():
+            self.chkbox_pdf.Set3StateValue(wx.CHK_UNCHECKED)
+        else:
+            self.chkbox_pdf.Set3StateValue(wx.CHK_UNDETERMINED)
+
+        event.Skip()
+
 
 class ArchiveProject(pcbnew.ActionPlugin):
     """
@@ -143,7 +151,10 @@ class ArchiveProject(pcbnew.ActionPlugin):
             # archive schematics
             try:
                 logger.info("Starting schematics archiving")
-                archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False)
+                if main_dialog.chkbox_pdf.Get3StateValue() == wx.CHK_CHECKED:
+                    archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=True)
+                else:
+                    archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False)
             except (ValueError, IOError, LookupError) as error:
                 caption = 'Archive project'
                 message = str(error)
@@ -160,7 +171,10 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 logger.info(message)
                 if res == wx.ID_YES:
                     logger.info("Retrying schematics archiving")
-                    archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False)
+                    if main_dialog.chkbox_pdf.Get3StateValue() == wx.CHK_CHECKED:
+                        archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False, archive_documentation=True)
+                    else:
+                        archive_project.archive_symbols(board, allow_missing_libraries=True, alt_files=False, archive_documentation=False)
                 else:
                     logging.shutdown()
                     return
