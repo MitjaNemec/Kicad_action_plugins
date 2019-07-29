@@ -336,7 +336,7 @@ def swap(board, pad_1, pad_2):
     # TODO might want to add also swapping pins in coresponding units in case of multiple schematics
     logger.info("Swapping pins in layout")
     module = pad_1.GetParent()
-    module_pads = module.PadsList()
+    module_pads = module.Pads()
     pins_of_unit_1 = pins_by_unit[int(unit_1) - 1]
     pins_of_unit_2 = pins_by_unit[int(unit_2) - 1]
     # generate pretier list of pins, where all the pin data is joined together and serves as a hash for comparison

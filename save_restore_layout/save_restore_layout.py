@@ -255,7 +255,7 @@ class PcbData():
         nets = []
         for mod in modules:
             # get their pads
-            pads = mod.mod.PadsList()
+            pads = mod.mod.Pads()
             # get net
             for pad in pads:
                 nets.append(pad.GetNetname())
@@ -428,8 +428,8 @@ class RestoreLayout():
         for pair in mod_pairs:
             index = mod_pairs.index(pair)
             # get all footprint pads
-            p_mod_pads = pair[0].PadsList()
-            s_mod_pads = pair[1].PadsList()
+            p_mod_pads = pair[0].Pads()
+            s_mod_pads = pair[1].Pads()
             # create a list of padsnames and pads
             p_pads = []
             s_pads = []

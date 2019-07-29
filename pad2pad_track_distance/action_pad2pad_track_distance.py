@@ -133,7 +133,7 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         pads = []
         for mod in modules:
             # get their pads
-            module_pads = mod.PadsList()
+            module_pads = mod.Pads()
             # get net
             for pad in module_pads:
                 pads.append(pad)
