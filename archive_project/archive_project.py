@@ -7,10 +7,11 @@ import sys
 import logging
 import re
 import hashlib
-import re
 from shutil import copyfile
-import urllib2
-import urllib
+try:
+    from urllib import urlretrieve
+except:
+    from urllib.request import urlretrieve
 
 
 logger = logging.getLogger(__name__)
@@ -19,18 +20,6 @@ logger = logging.getLogger(__name__)
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
 with open(version_filename) as f:
     VERSION = f.readline().strip()
-
-
-def file_exists(url):
-    request = urllib2.Request(url)
-    request.get_method = lambda : 'HEAD'
-    
-    response = urllib2.urlopen(request)
-    try:
-        response = urllib2.urlopen(request)
-        return True
-    except:
-        return False
 
 
 def balanced_braces(args):
@@ -395,7 +384,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                         try:
                             # download file
                             logger.info("Downloading file")
-                            urllib.urlretrieve(link, destination_path)
+                            urlretrieve(link, destination_path)
                             # remap the entry
                             logger.info("Remapping documenation entry")
                             line_contents[2] = "\"" + "${KIPRJMOD}/documentation/" + doc_filename + "\""
