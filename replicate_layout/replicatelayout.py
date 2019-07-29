@@ -762,14 +762,17 @@ class Replicator():
             logger.info("Replicating zones on sheet " + repr(sheet))
 
             # get anchor module
-            anchor_mod = self.get_sheet_anchor_module(sheet)
+            mod2 = self.get_sheet_anchor_module(sheet)
             # get anchor angle with respect to pivot module
-            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            mod2_angle = mod2.mod.GetOrientation()
             # get exact anchor position
-            anchor_pos = anchor_mod.mod.GetPosition()
+            mod2_pos = mod2.mod.GetPosition()
 
-            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
-            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+            mod1_angle = self.pivot_anchor_mod.mod.GetOrientation()
+            mod1_pos = self.pivot_anchor_mod.mod.GetPosition()
+
+            move_vector = mod2_pos - mod1_pos
+            delta_orientation = mod2_angle - mod1_angle
 
             net_pairs, net_dict = self.get_net_pairs(sheet)
             # go through all the zones
@@ -789,7 +792,7 @@ class Replicator():
                         tup = [('', '')]
                     # do not clone
                     else:
-                        logger.info('Skipping replication of a zone')
+                        logger.info('Skipping replication of a zone on copper layer without a net')
                         continue
 
                 # start the clone
@@ -799,61 +802,12 @@ class Replicator():
                 else:
                     to_net = net_dict[to_net_name].GetNet()
 
-                # now I can finally make a copy of a zone
-                # this came partially from Miles Mccoo.
-                # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-                coords = get_coordinate_points_of_shape_poly_set(zone.Outline())
-
-                # get module to clone position
-                pivot_zone_pos = (coords[0][0], coords[0][1])
-                # get relative position with respect to pivot anchor
-                pivot_anchor_pos = (self.pivot_anchor_mod.mod.GetPosition().x, self.pivot_anchor_mod.mod.GetPosition().y)
-                pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
-
-                # new orientation is simple
-                old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
-                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-
-                newposition = [int(x) for x in newposition]
-                newzone = self.board.InsertArea(to_net,
-                                                0,
-                                                zone.GetLayer(),
-                                                newposition[0],
-                                                newposition[1],
-                                                pcbnew.ZONE_CONTAINER.DIAGONAL_EDGE)
-                newoutline = newzone.Outline()
-                for pt in coords[1:]:
-                    pivot_zone_pos = (pt[0], pt[1])
-                    # get relative position with respect to pivot anchor
-                    pivot_anchor_pos = (self.pivot_anchor_mod.mod.GetPosition().x, self.pivot_anchor_mod.mod.GetPosition().y)
-                    pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
-
-                    # new orientation is simple
-                    old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
-                    newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-
-                    newposition = [int(x) for x in newposition]
-                    newoutline.Append(newposition[0], newposition[1])
-
-                # copy zone settings
-                newzone.SetPriority(zone.GetPriority())
-                newzone.SetLayerSet(zone.GetLayerSet())
-                newzone.SetFillMode(zone.GetFillMode())
-                newzone.SetThermalReliefGap(zone.GetThermalReliefGap())
-                newzone.SetThermalReliefCopperBridge(zone.GetThermalReliefCopperBridge())
-                newzone.SetIsFilled(zone.IsFilled())
-                newzone.SetZoneClearance(zone.GetZoneClearance())
-                newzone.SetPadConnection(zone.GetPadConnection())
-                newzone.SetMinThickness(zone.GetMinThickness())
-
-                # Copy the keepout properties.
-                if zone.GetIsKeepout():
-                    newzone.SetIsKeepout(True)
-                    newzone.SetLayerSet(zone.GetLayerSet())
-                    newzone.SetDoNotAllowCopperPour(zone.GetDoNotAllowCopperPour())
-                    newzone.SetDoNotAllowTracks(zone.GetDoNotAllowTracks())
-                    newzone.SetDoNotAllowVias(zone.GetDoNotAllowVias())
-                pass
+                # make a duplicate, move it, rotate it, select proper net and add it to the board
+                new_zone = zone.Duplicate()
+                new_zone.Rotate(mod1_pos, delta_orientation)
+                new_zone.Move(move_vector)
+                new_zone.SetNetCode(to_net)
+                self.board.Add(new_zone)
 
     def replicate_text(self):
         logger.info("Replicating text")
