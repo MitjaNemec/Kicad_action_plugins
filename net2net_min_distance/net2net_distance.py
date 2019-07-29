@@ -112,7 +112,11 @@ def get_min_distance(board, nets):
         if track.GetNetname() == net2:
             tracks_2.append(track)
 
+    logger.info("Found " + str(len(tracks_1)+1) + " tracks on " + str(net1) " and " + str(len(tracks_2)+1) + "tracks on " + str(net2))
+    # TODO maybe I have to raise an exception if there ar no tracks on either net
+
     min_distance = None
+    location = None
     for track1 in tracks_1:
         w1 = track1.GetWidth()
         x11 = track1.GetStart().x
@@ -133,6 +137,11 @@ def get_min_distance(board, nets):
             if min_distance > dis:
                 min_distance = dis
                 location = tuple(loc)
+
+    # if location was not set we assume there are zero tracks on either net
+    if location is None:
+        min_distance = float('Nan')
+        location = (float('Nan'), float('Nan'), float('Nan'), float('Nan'))
 
     return min_distance, location
 

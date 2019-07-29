@@ -69,7 +69,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
 
         # set up logger
         logging.basicConfig(level=logging.DEBUG,
-                            filename="net2et_distance.log",
+                            filename="net2net_distance.log",
                             filemode='w',
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
@@ -110,7 +110,7 @@ class Net2NedDistance(pcbnew.ActionPlugin):
         try:
             dis, loc = net2net_distance.get_min_distance(board, list(nets))
         except Exception:
-            logger.exception("Fatal error when replicating")
+            logger.exception("Fatal error running net2net_min_distance")
             caption = 'Net2Net Track Distance'
             message = "Fatal error when replicating.\n"\
                     + "You can raise an issue on GiHub page.\n" \
