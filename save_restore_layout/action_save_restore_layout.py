@@ -105,6 +105,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
+        logger.info("Plugin executed with python version: " + repr(sys.version))
         logger.info("Save/Restore Layout plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')

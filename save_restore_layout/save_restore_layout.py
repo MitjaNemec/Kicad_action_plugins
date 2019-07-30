@@ -70,16 +70,6 @@ def get_module_text_items(module):
     return list_of_items
 
 
-# this function was made by Miles Mccoo
-# https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-def get_coordinate_points_of_shape_poly_set(ps):
-    string = ps.Format()
-    lines = string.split('\n')
-    numpts = int(lines[2])
-    pts = [[int(n) for n in x.split(" ")] for x in lines[3:-2]]  # -1 because of the extra two \n
-    return pts
-
-
 class Footprint():
     def __init__(self, ref, mod, mod_id, sheet_id, sheetname=None, filename=None):
         self.ref = ref
@@ -675,13 +665,18 @@ class RestoreLayout():
         """ method which replicates zones"""
         logger.info("Replicating zones")
 
+        # get anchor module
+        mod2 = anchor_mod
         # get anchor angle with respect to pivot module
-        anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+        mod2_angle = mod2.mod.GetOrientation()
         # get exact anchor position
-        anchor_pos = anchor_mod.mod.GetPosition()
+        mod2_pos = mod2.mod.GetPosition()
 
-        anchor_delta_angle = pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
-        anchor_delta_pos = anchor_pos - pivot_anchor_mod.mod.GetPosition()
+        mod1_angle = pivot_anchor_mod.mod.GetOrientation()
+        mod1_pos = pivot_anchor_mod.mod.GetPosition()
+
+        move_vector = mod2_pos - mod1_pos
+        delta_orientation = mod2_angle - mod1_angle
 
         net_pairs, net_dict = net_pairs
         # go through all the zones
@@ -709,63 +704,16 @@ class RestoreLayout():
             if to_net_name == u'':
                 to_net = 0
             else:
-                to_net = net_dict[to_net_name].GetNet()
+                to_net_code = net_dict[to_net_name].GetNet()
+                to_net_item = net_dict[to_net_name]
 
-            # now I can finally make a copy of a zone
-            # this came partially from Miles Mccoo.
-            # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-            coords = get_coordinate_points_of_shape_poly_set(zone.Outline())
-
-            # get module to clone position
-            pivot_zone_pos = (coords[0][0], coords[0][1])
-            # get relative position with respect to pivot anchor
-            pivot_anchor_pos = (pivot_anchor_mod.mod.GetPosition().x, pivot_anchor_mod.mod.GetPosition().y)
-            pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
-
-            # new orientation is simple
-            old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
-            newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-
-            newposition = [int(x) for x in newposition]
-            newzone = self.board.InsertArea(to_net,
-                                            0,
-                                            zone.GetLayer(),
-                                            newposition[0],
-                                            newposition[1],
-                                            pcbnew.ZONE_CONTAINER.DIAGONAL_EDGE)
-            newoutline = newzone.Outline()
-            for pt in coords[1:]:
-                pivot_zone_pos = (pt[0], pt[1])
-                # get relative position with respect to pivot anchor
-                pivot_anchor_pos = (pivot_anchor_mod.mod.GetPosition().x, pivot_anchor_mod.mod.GetPosition().y)
-                pivot_mod_delta_pos = (pivot_zone_pos[0] - pivot_anchor_pos[0], pivot_zone_pos[1] - pivot_anchor_pos[1])
-
-                # new orientation is simple
-                old_position = (pivot_mod_delta_pos[0] + anchor_pos[0], pivot_mod_delta_pos[1] + anchor_pos[1])
-                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-
-                newposition = [int(x) for x in newposition]
-                newoutline.Append(newposition[0], newposition[1])
-
-            # copy zone settings
-            newzone.SetPriority(zone.GetPriority())
-            newzone.SetLayerSet(zone.GetLayerSet())
-            newzone.SetFillMode(zone.GetFillMode())
-            newzone.SetThermalReliefGap(zone.GetThermalReliefGap())
-            newzone.SetThermalReliefCopperBridge(zone.GetThermalReliefCopperBridge())
-            newzone.SetIsFilled(zone.IsFilled())
-            newzone.SetZoneClearance(zone.GetZoneClearance())
-            newzone.SetPadConnection(zone.GetPadConnection())
-            newzone.SetMinThickness(zone.GetMinThickness())
-
-            # Copy the keepout properties.
-            if zone.GetIsKeepout():
-                newzone.SetIsKeepout(True)
-                newzone.SetLayerSet(zone.GetLayerSet())
-                newzone.SetDoNotAllowCopperPour(zone.GetDoNotAllowCopperPour())
-                newzone.SetDoNotAllowTracks(zone.GetDoNotAllowTracks())
-                newzone.SetDoNotAllowVias(zone.GetDoNotAllowVias())
-            pass
+            # make a duplicate, move it, rotate it, select proper net and add it to the board
+            new_zone = zone.Duplicate()
+            new_zone.Rotate(mod1_pos, delta_orientation)
+            new_zone.Move(move_vector)
+            new_zone.SetNetCode(to_net_code)
+            new_zone.SetNet(to_net_item)
+            self.board.Add(new_zone)
 
     def replicate_text(self, pivot_anchor_mod, pivot_text, anchor_mod):
         logger.info("Replicating text")
@@ -1079,6 +1027,7 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
+    logger.info("Plugin executed with python version: " + repr(sys.version))
     logger.info("Save/Restore Layout plugin started in standalone mode")
 
     main()
