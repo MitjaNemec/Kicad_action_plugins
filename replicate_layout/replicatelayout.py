@@ -651,15 +651,19 @@ class Replicator():
         logger.info("Replicating tracks")
         for sheet in self.sheets_for_replication:
             logger.info("Replicating tracks on sheet " + repr(sheet))
-            # get anchor module
-            anchor_mod = self.get_sheet_anchor_module(sheet)
-            # get anchor angle with respect to pivot module
-            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
-            # get exact anchor position
-            anchor_pos = anchor_mod.mod.GetPosition()
 
-            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
-            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+            # get anchor module
+            mod2 = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to pivot module
+            mod2_angle = mod2.mod.GetOrientation()
+            # get exact anchor position
+            mod2_pos = mod2.mod.GetPosition()
+
+            mod1_angle = self.pivot_anchor_mod.mod.GetOrientation()
+            mod1_pos = self.pivot_anchor_mod.mod.GetPosition()
+
+            move_vector = mod2_pos - mod1_pos
+            delta_orientation = mod2_angle - mod1_angle
 
             net_pairs, net_dict = self.get_net_pairs(sheet)
 
@@ -674,75 +678,16 @@ class Replicator():
                     pass
                 else:
                     to_net_name = tup[0][1]
-                    to_net = net_dict[to_net_name]
+                    to_net_code = net_dict[to_net_name].GetNet()
+                    to_net_item = net_dict[to_net_name]
 
-                    # finally make a copy
-                    # this came partially from Miles Mccoo
-                    # https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-                    if track.GetClass() == "VIA":
-                        newvia = pcbnew.VIA(self.board)
-                        # need to add before SetNet will work, so just doing it first
-                        self.board.Add(newvia)
-                        toplayer = -1
-                        bottomlayer = pcbnew.PCB_LAYER_ID_COUNT
-                        for l in range(pcbnew.PCB_LAYER_ID_COUNT):
-                            if not track.IsOnLayer(l):
-                                continue
-                            toplayer = max(toplayer, l)
-                            bottomlayer = min(bottomlayer, l)
-                        newvia.SetLayerPair(toplayer, bottomlayer)
-
-                        # get module to clone position
-                        pivot_track_pos = track.GetPosition()
-                        # get relative position with respect to pivot anchor
-                        pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
-                        pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
-
-                        # new orientation is simple
-                        old_position = pivot_mod_delta_pos + anchor_pos
-                        newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-
-                        # convert to tuple of integers
-                        newposition = [int(x) for x in newposition]
-
-                        newvia.SetPosition(pcbnew.wxPoint(*newposition))
-
-                        newvia.SetViaType(track.GetViaType())
-                        newvia.SetWidth(track.GetWidth())
-                        newvia.SetDrill(track.GetDrill())
-                        newvia.SetNet(to_net)
-                    else:
-                        newtrack = pcbnew.TRACK(self.board)
-                        # need to add before SetNet will work, so just doing it first
-                        self.board.Add(newtrack)
-
-                        # get module to clone position
-                        pivot_track_pos = track.GetStart()
-                        # get relative position with respect to pivot anchor
-                        pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
-                        pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
-
-                        # new orientation is simple
-                        old_position = pivot_mod_delta_pos + anchor_pos
-                        newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-                        newposition = [int(x) for x in newposition]
-                        newtrack.SetStart(pcbnew.wxPoint(*newposition))
-
-                        pivot_track_pos = track.GetEnd()
-                        # get relative position with respect to pivot anchor
-                        pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
-                        pivot_mod_delta_pos = pivot_track_pos - pivot_anchor_pos
-
-                        # new orientation is simple
-                        old_position = pivot_mod_delta_pos + anchor_pos
-                        newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
-                        newposition = [int(x) for x in newposition]
-                        newtrack.SetEnd(pcbnew.wxPoint(*newposition))
-
-                        newtrack.SetWidth(track.GetWidth())
-                        newtrack.SetLayer(track.GetLayer())
-
-                        newtrack.SetNet(to_net)
+                    # make a duplicate, move it, rotate it, select proper net and add it to the board
+                    new_track = track.Duplicate()
+                    new_track.Rotate(mod1_pos, delta_orientation)
+                    new_track.Move(move_vector)
+                    new_track.SetNetCode(to_net_code)
+                    new_track.SetNet(to_net_item)
+                    self.board.Add(new_track)
 
     def replicate_zones(self):
         """ method which replicates zones"""
@@ -790,13 +735,15 @@ class Replicator():
                 if to_net_name == u'':
                     to_net = 0
                 else:
-                    to_net = net_dict[to_net_name].GetNet()
+                    to_net_code = net_dict[to_net_name].GetNet()
+                    to_net_item = net_dict[to_net_name]
 
                 # make a duplicate, move it, rotate it, select proper net and add it to the board
                 new_zone = zone.Duplicate()
                 new_zone.Rotate(mod1_pos, delta_orientation)
                 new_zone.Move(move_vector)
-                new_zone.SetNetCode(to_net)
+                new_zone.SetNetCode(to_net_code)
+                new_zone.SetNet(to_net_item)
                 self.board.Add(new_zone)
 
     def replicate_text(self):
