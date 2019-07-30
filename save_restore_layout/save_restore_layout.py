@@ -63,7 +63,7 @@ def get_module_text_items(module):
     """ get all text item belonging to a modules """
     list_of_items = [module.mod.Reference(), module.mod.Value()]
 
-    module_items = module.mod.GraphicalItemsList()
+    module_items = module.mod.GraphicalItems()
     for item in module_items:
         if type(item) is pcbnew.TEXTE_MODULE:
             list_of_items.append(item)

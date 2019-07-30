@@ -50,7 +50,7 @@ def set_highlight_on_module(module):
     pads_list = module.Pads()
     for pad in pads_list:
         pad.SetBrightened()
-    drawings = module.GraphicalItemsList()
+    drawings = module.GraphicalItems()
     for item in drawings:
         item.SetBrightened()
 
@@ -59,7 +59,7 @@ def clear_highlight_on_module(module):
     pads_list = module.Pads()
     for pad in pads_list:
         pad.ClearBrightened()
-    drawings = module.GraphicalItemsList()
+    drawings = module.GraphicalItems()
     for item in drawings:
         item.ClearBrightened()   
 
