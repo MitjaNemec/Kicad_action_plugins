@@ -82,16 +82,6 @@ def get_module_text_items(module):
     return list_of_items
 
 
-# this function was made by Miles Mccoo
-# https://github.com/mmccoo/kicad_mmccoo/blob/master/replicatelayout/replicatelayout.py
-def get_coordinate_points_of_shape_poly_set(ps):
-    string = ps.Format()
-    lines = string.split('\n')
-    numpts = int(lines[2])
-    pts = [[int(n) for n in x.split(" ")] for x in lines[3:-2]]  # -1 because of the extra two \n
-    return pts
-
-
 class Replicator():
     @staticmethod
     def extract_subsheets(filename):
