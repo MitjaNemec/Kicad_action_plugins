@@ -30,9 +30,9 @@ class NoWxpython(pcbnew.ActionPlugin):
     Notify user of missing wxpython
     """
     def defaults(self):
-        self.name = "Copy Layout"
+        self.name = "Save/Restore Layout"
         self.category = "Modify Drawing PCB"
-        self.description = "Save/restore layout"
+        self.description = "A plugin to save/restore layout"
 
     def Run(self):
         def messagebox_task():

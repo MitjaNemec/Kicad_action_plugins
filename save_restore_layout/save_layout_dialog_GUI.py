@@ -52,8 +52,16 @@ class SaveLayoutDialogGUI ( wx.Dialog ):
 		self.Layout()
 		
 		self.Centre( wx.BOTH )
+		
+		# Connect Events
+		self.list_levels.Bind( wx.EVT_LISTBOX, self.level_changed )
 	
 	def __del__( self ):
 		pass
+	
+	
+	# Virtual event handlers, overide them in your derived class
+	def level_changed( self, event ):
+		event.Skip()
 	
 

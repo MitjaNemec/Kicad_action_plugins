@@ -43,6 +43,25 @@ with open(version_filename) as f:
     VERSION = f.readline().strip()
 
 
+def set_highlight_on_module(module):
+    logging.info("highlighting module: " + repr(module.GetReference()))
+    pads_list = module.Pads()
+    for pad in pads_list:
+        pad.SetBrightened()
+    drawings = module.GraphicalItems()
+    for item in drawings:
+        item.SetBrightened()
+
+
+def clear_highlight_on_module(module):
+    pads_list = module.Pads()
+    for pad in pads_list:
+        pad.ClearBrightened()
+    drawings = module.GraphicalItems()
+    for item in drawings:
+        item.ClearBrightened()
+
+
 class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
@@ -61,13 +80,40 @@ class SaveDialog(save_layout_dialog_GUI.SaveLayoutDialogGUI):
         # DO NOTHING
         pass
 
-    def __init__(self, parent, levels):
+    def __init__(self, parent, levels, layout_saver, pivot_mod, board):
         save_layout_dialog_GUI.SaveLayoutDialogGUI.__init__(self, parent)
 
         # clear levels
+        self.board = board
+        self.board_modules = self.board.GetModules()
+        self.pivot_mod = pivot_mod
+        self.save_layout = layout_saver
+        self.pivot_modules = []
         self.list_levels.Clear()
         self.list_levels.AppendItems(levels)
 
+    def level_changed(self, event):
+        # clear highlight on all modules on selected level
+        for mod in self.pivot_modules:
+            clear_highlight_on_module(mod)
+        pcbnew.Refresh()
+
+        # get all pivot modules on selected level
+        index = self.list_levels.GetSelection()
+
+        pivot_modules = self.save_layout.layout.get_modules_on_sheet(self.pivot_mod.sheetname[:index+1])
+        references = [x.ref for x in pivot_modules]
+        self.pivot_modules = []
+        for mod in self.board_modules:
+            if mod.GetReference() in references:
+                self.pivot_modules.append(mod)
+
+        # highlight all modules on selected level
+        for mod in self.pivot_modules:
+            set_highlight_on_module(mod)
+        pcbnew.Refresh()
+
+        event.Skip()
 
 class SaveRestoreLayout(pcbnew.ActionPlugin):
     """
@@ -165,8 +211,13 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
             levels = pivot_mod.filename
 
             # and show the GUI
-            level_dialog = SaveDialog(_pcbnew_frame, levels)
+            level_dialog = SaveDialog(_pcbnew_frame, levels, save_layout, pivot_mod, board)
             res = level_dialog.ShowModal()
+
+            # clear highlight on all modules on selected level
+            for mod in level_dialog.pivot_modules:
+                clear_highlight_on_module(mod)
+            pcbnew.Refresh()
             if res != wx.ID_OK:
                 logging.shutdown()
                 return
