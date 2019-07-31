@@ -1,4 +1,4 @@
-(kicad_pcb (version 20171130) (host pcbnew "(5.1.0)-1")
+(kicad_pcb (version 20171130) (host pcbnew "(5.1.2)-1")
 
   (general
     (thickness 1.6)
@@ -710,7 +710,7 @@
   )
 
   (module Module:28379D_launchpad (layer F.Cu) (tedit 5C503553) (tstamp 5CB2F8E0)
-    (at 54.838 71.284)
+    (at -6.985 77.47)
     (descr "28379D launchpad")
     (tags DEV)
     (path /5CA30270)
@@ -1835,7 +1835,7 @@
   )
 
   (module Discretes:TO-220 (layer F.Cu) (tedit 59E9DD4A) (tstamp 5CB2F63A)
-    (at 172.738 47.224)
+    (at 104.775 45.72)
     (descr "TO-220-3, Vertical, RM 2.54mm")
     (tags "TO-220-3 Vertical RM 2.54mm")
     (path /5CADA6B4/5B767FF2/5B768070)
