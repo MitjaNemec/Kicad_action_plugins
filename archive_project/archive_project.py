@@ -594,6 +594,7 @@ def main():
         print(str(error))
     saved = pcbnew.SaveBoard(board.GetFileName().replace(".kicad_pcb", "_temp.kicad_pcb"), board)
 
+
 # for testing purposes only
 if __name__ == "__main__":
     # if debugging outside of this folder change the folder

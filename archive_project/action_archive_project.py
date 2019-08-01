@@ -150,10 +150,11 @@ class ArchiveProject(pcbnew.ActionPlugin):
         if main_dialog.chkbox_sch.GetValue():
             # archive schematics
             try:
-                logger.info("Starting schematics archiving")
                 if main_dialog.chkbox_pdf.GetValue():
+                    logger.info("Starting archiving schematics and documentation files")
                     archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=True)
                 else:
+                    logger.info("Starting archiving only schematics")
                     archive_project.archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False)
             except (ValueError, IOError, LookupError) as error:
                 caption = 'Archive project'
@@ -195,7 +196,6 @@ class ArchiveProject(pcbnew.ActionPlugin):
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
             dlg.ShowModal()
             dlg.Destroy()
-            logging.shutdown()
 
         if main_dialog.chkbox_3D.GetValue():
             try:
