@@ -100,7 +100,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
                     self.ref_list.append(mod.ref)
                     break
 
-        sheets_for_list = [('/').join(x[0]) + " (" + x[1] + ")" for x in zip(self.list_sheetsChoices, self.ref_list)]
+        sheets_for_list = ['/'.join(x[0]) + " (" + x[1] + ")" for x in zip(self.list_sheetsChoices, self.ref_list)]
 
         self.list_sheets.Clear()
         self.list_sheets.AppendItems(sheets_for_list)
@@ -142,6 +142,10 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
                 self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
+
+            self.val_columns.Clear()
+            self.val_columns.SetValue(str(int(round(math.sqrt(len(self.list_sheets.GetSelections()))))))
+
         if self.com_arr.GetStringSelection() == u"Circular":
             number_of_all_sheets = len(self.list_sheets.GetSelections())
             circumference = number_of_all_sheets * self.width
@@ -185,6 +189,11 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
                 self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
+            # presume square arrangement,
+            # thus the number of columns should be equal to number of rows
+            self.val_columns.Clear()
+            self.val_columns.SetValue(str(int(round(math.sqrt(len(self.list_sheets.GetSelections()))))))
+
         # circular layout
         if self.com_arr.GetStringSelection() == u"Circular":
             number_of_all_sheets = len(self.list_sheets.GetSelections())
@@ -224,6 +233,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
         self.user_units = user_units
         self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
         self.ref_list = []
+        self.list_sheetsChoices = None
 
         modules = self.placer.get_modules_on_sheet(self.pivot_mod.sheet_id)
         self.height, self.width = self.placer.get_modules_bounding_box(modules)
@@ -240,6 +250,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
             else:
                 clear_highlight_on_module(mod)
         pcbnew.Refresh()
+
 
 class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
@@ -264,7 +275,7 @@ class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
                 self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Hide()
             self.val_columns.Hide()
-        #Matrix
+        # Matrix
         if self.com_arr.GetStringSelection() == u"Matrix":
             if self.user_units == 'mm':
                 self.lbl_x_mag.SetLabelText(u"step x (mm):")
@@ -278,6 +289,9 @@ class PlaceByReference(place_by_reference_GUI.PlaceByReferenceGUI):
                 self.val_y_angle.SetValue("%.3f" % (self.height/25.4))
             self.lbl_columns.Show()
             self.val_columns.Show()
+
+            self.val_columns.Clear()
+            self.val_columns.SetValue(str(int(round(math.sqrt(len(self.list_modules.GetSelections()))))))
         # circular layout
         if self.com_arr.GetStringSelection() == u"Circular":
             number_of_all_modules = len(self.list_modules.GetSelections())
@@ -556,7 +570,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
                 try:
-                    placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
+                    placer.place_matrix(sorted_modules, pivot_module_reference, step_x, step_y, nr_columns)
                     logger.info("Placing complete")
                     logging.shutdown()
                 except Exception:
@@ -575,6 +589,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                         clear_highlight_on_module(module)
                     pcbnew.Refresh()
                     return
+            
             # clear highlight all modules by default
             for mod in sorted_modules:
                 module = board.FindModuleByReference(mod)
@@ -679,12 +694,12 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
                 try:
-                    placer.place_matrix(sorted_modules, step_x, step_y, nr_columns)
+                    placer.place_matrix(sorted_modules, pivot_module_reference, step_x, step_y, nr_columns)
                     logger.info("Placing complete")
                     logging.shutdown()
                 except Exception:
-                    caption = 'Place footprints'
                     logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
                     message = "Fatal error when executing place footprints.\n"\
                             + "You can raise an issue on GiHub page.\n" \
                             + "Please attach the place_footprints.log which you should find in the project folder."
@@ -704,6 +719,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 module = board.FindModuleByReference(mod)
                 clear_highlight_on_module(module)
             pcbnew.Refresh()
+
 
 class StreamToLogger(object):
     """

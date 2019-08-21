@@ -78,6 +78,7 @@ def get_index_of_tuple(list_of_tuples, index, value):
         if t[index] == value:
             return pos
 
+
 class Placer():
     @staticmethod
     def extract_subsheets(filename):
