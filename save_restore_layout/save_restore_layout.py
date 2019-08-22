@@ -156,19 +156,20 @@ class SchData():
             path = self.dict_of_sheets[x][1]
             self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
 
-    @staticmethod
-    def get_sch_hash(sch_file, md5hash):
+    def get_sch_hash(self, sch_file, md5hash):
         # load sch file
         with open(sch_file) as f:
             sch_lines = f.readlines()
 
-        # remove all lines containing references (L, U, AR)
+        # remove all lines containing references (L, U, AR) and other stuff
         sch_file_without_reference = [line for line in sch_lines if (not line.startswith("L ")
                                                                      and not line.startswith("F0 ")
                                                                      and not line.startswith("F 0")
                                                                      and not line.startswith("AR ")
                                                                      and not line.startswith("Sheet")
-                                                                     and not line.startswith("LIBS:"))]
+                                                                     and not line.startswith("LIBS:")
+                                                                     and not line.startswith("EELAYER"))]
+
         # caluclate the hash
         for line in sch_file_without_reference:
             md5hash.update(line)
@@ -519,11 +520,12 @@ class RestoreLayout():
             # place current module - only if current module is not also the anchor
             if mod.ref != anchor_mod.ref:
                 mod.mod.SetPosition(pcbnew.wxPoint(*newposition))
-                mod.mod.SetOrientationDegrees(new_orientation)
 
                 pivot_mod_flipped = mod_to_clone.mod.IsFlipped()
                 if (mod.mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.mod.IsFlipped()):
                     mod.mod.Flip(mod.mod.GetPosition())
+
+                mod.mod.SetOrientationDegrees(new_orientation)
 
                 # Copy local settings.
                 mod.mod.SetLocalClearance(mod_to_clone.mod.GetLocalClearance())
@@ -632,7 +634,7 @@ class RestoreLayout():
             from_net_name = zone.GetNetname()
             # if zone is not on copper layer it does not matter on which net it is
             if not zone.IsOnCopperLayer():
-                tup = [('', '')]
+                tup = [(u'', u'')]
             else:
                 tup = [item for item in net_pairs if item[0] == from_net_name]
 
@@ -640,7 +642,7 @@ class RestoreLayout():
             if not tup:
                 # Allow keepout zones to be cloned.
                 if zone.GetIsKeepout():
-                    tup = [('', '')]
+                    tup = [(u'', u'')]
                 # do not clone
                 else:
                     logger.info('Skipping replication of a zone')
@@ -649,7 +651,8 @@ class RestoreLayout():
             # start the clone
             to_net_name = tup[0][1]
             if to_net_name == u'':
-                to_net = 0
+                to_net_item = self.board.FindNet(to_net_name)
+                to_net_code = to_net_item.GetNet()
             else:
                 to_net_code = net_dict[to_net_name].GetNet()
                 to_net_item = net_dict[to_net_name]
@@ -704,12 +707,25 @@ class RestoreLayout():
         with open(layout_file, 'rb') as f:
             data_saved = pickle.load(f)
 
-        level_filename = data_saved.level_filename
+        # get saved hierarchy
+        source_level_filename = data_saved.level_filename
+        logger.info("Source levels is:" + repr(source_level_filename))
 
-        level = [anchor_mod.sheetname[anchor_mod.filename.index(x)] for x in level_filename]
+        # find the corresponding hierarchy in the target layout
+        # this is tricky as target design might be shallower or deeper than source design
+
+        # so one takes the last source level only
+        last_level = source_level_filename[-1]
+        indx = anchor_mod.filename.index(last_level)
+        level = anchor_mod.sheetname[0:indx+1]
+
+        destination_level_filename = anchor_mod.filename[0:indx+1]
+        logger.info("Destination levels is:" + repr(destination_level_filename))
 
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
-        list_of_sheet_files = anchor_mod.filename[len(level_filename)-1:]
+        list_of_sheet_files = anchor_mod.filename[len(destination_level_filename)-1:]
+
+        logger.info("All sch files required are: " + repr(list_of_sheet_files))
 
         logger.info("Getting current schematics hash")
         md5hash = hashlib.md5()
@@ -720,6 +736,9 @@ class RestoreLayout():
 
         # check the hash
         saved_hash = data_saved.hash
+
+        logger.info("Source hash is:" + repr(saved_hash))
+        logger.info("Destination hash is: " + repr(hex_hash))
 
         if not saved_hash == hex_hash:
             raise ValueError("Source and destination schematics don't match!")
@@ -869,6 +888,8 @@ class SaveLayout(RestoreLayout):
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = pivot_anchor_mod.filename[len(level)-1:]
 
+        logger.info("Saving hash for files: " + repr(list_of_sheet_files))
+
         md5hash = hashlib.md5()
         for sch_file in list_of_sheet_files:
             md5hash = self.schematics.get_sch_hash(sch_file, md5hash)
@@ -937,7 +958,7 @@ def main():
 
     levels = pivot_mod.filename
     # get the level index from user
-    index = levels.index(levels[0])
+    index = levels.index(levels[1])
 
     data_file = 'source_layout_test.pckl'
     save_layout.save_layout(pivot_mod, pivot_mod.sheetname[0:index + 1], data_file)
