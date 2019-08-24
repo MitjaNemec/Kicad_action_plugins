@@ -222,7 +222,6 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 logging.shutdown()
                 return
             index = level_dialog.list_levels.GetSelection()
-            level_dialog.Destroy()
             # if user did not select any level available cancel
             if index < 0:
                 caption = 'Save/Restore Layout'
@@ -231,11 +230,16 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
                 dlg.ShowModal()
                 dlg.Destroy()
                 logging.shutdown()
+                level_dialog.Destroy()
                 return
+
+            # get hierarchy filename to serve as default saved layout filename
+            filename = level_dialog.list_levels.GetString(index)
+            level_dialog.Destroy()
 
             # Once user selects a level ask the user top specify file
             wildcard = "Saved Layout Files (*.pckl)|*.pckl"
-            dlg = wx.FileDialog(_pcbnew_frame, "Select a file", os.getcwd(), "", wildcard, wx.SAVE)
+            dlg = wx.FileDialog(_pcbnew_frame, "Select a file", os.getcwd(), filename.strip(".sch"), wildcard, wx.SAVE)
             res = dlg.ShowModal()
             if res != wx.ID_OK:
                 logging.shutdown()
