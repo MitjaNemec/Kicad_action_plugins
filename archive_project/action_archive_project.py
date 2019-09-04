@@ -191,6 +191,9 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 logging.shutdown()
                 return
 
+            # try archiving the worksheet file
+            archive_project.archive_worksheet(board)
+            
             caption = 'Archive project'
             message = "Schematics archived sucessfuly!"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
