@@ -138,22 +138,20 @@ def archive_worksheet(board):
 
     # find worksheet entry
     worksheet_path = None
-    for line in project_file:
+    for line_index in range(len(project_file)):
+        line = project_file[line_index]
         if line.startswith("PageLayoutDescrFile="):
             worksheet_path = os.path.abspath(line.lstrip("PageLayoutDescrFile=").rstrip())
             worksheet_filename = os.path.basename(worksheet_path)
             line_index = project_file.index(line)
-            break
 
-    # copy worksheet to local path
-    if worksheet_path:
-        destination_path = os.path.join(project_dir, worksheet_filename)
-        shutil.copy2(worksheet_path, os.path.join(project_dir, destination_path))
+            # copy worksheet to local path
+            destination_path = os.path.join(project_dir, worksheet_filename)
+            shutil.copy2(worksheet_path, os.path.join(project_dir, destination_path))
 
-    # try writing the project file
-    original_line = project_file[line_index]
-    new_line = "PageLayoutDescrFile=" + worksheet_filename + "\n"
-    project_file[line_index] = new_line
+            # try writing the project file
+            new_line = "PageLayoutDescrFile=" + worksheet_filename + "\n"
+            project_file[line_index] = new_line
 
     with open(project_name, "w") as f:
         f.writelines(project_file)
