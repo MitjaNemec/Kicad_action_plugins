@@ -111,10 +111,14 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
                 os.path.dirname(__file__), 'ps_tune_length-pad2pad_track_distance.svg.png')
 
     def update_progress(self, percentage):
-        delta_time = time.time() - self.start_time
-        i = int(percentage*100)
-        logging.info("updating GUI with: " + repr(i))
-        wx.CallAfter(self.dlg.Update, i, repr(delta_time))
+        current_time = time.time()
+        # update GUI onle every 100 ms
+        if (current_time - self.last_time) > 0.1:
+            self.last_time = current_time
+            delta_time = self.last_time - self.start_time
+            i = int(percentage*100)
+            logging.info("updating GUI with: " + repr(i))
+            self.dlg.Update(i, repr(delta_time))
 
     def Run(self):
         # load board
@@ -198,16 +202,13 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1], self.update_progress)
 
             self.start_time = time.time()
+            self.last_time = self.start_time
             self.dlg = wx.ProgressDialog("title", "0", maximum=100)
             self.dlg.Show()
             self.dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
-            que = Queue.Queue()
-            # t = Thread(target=lambda q, arg1: q.put(pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])), args=(que, (board, selected_pads[0], selected_pads[1])))
-            t = Thread(target=lambda q, arg1: q.put(measure_distance.get_length()), args=(que, ()))
-            t.start()
-            t.join()
+            distance, resistance = measure_distance.get_length()
             self.dlg.Destroy()
-            distance, resistance = que.get()
+
         except LookupError as error:
             caption = 'Pad2Pad Track Distance'
             message = str(error) 
