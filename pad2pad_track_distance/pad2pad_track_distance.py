@@ -20,7 +20,7 @@
 #
 #
 
-
+from __future__ import division
 import pcbnew
 import os
 import sys
@@ -37,9 +37,10 @@ with open(version_filename) as f:
 
 
 class Distance:
-    def __init__(self, board, pad1, pad2):
+    def __init__(self, board, pad1, pad2, update_progress):
 
         self.board = board
+        self.updated_progress = update_progress
 
         self.track_list = []
 
@@ -58,6 +59,9 @@ class Distance:
             track_net_name = track.GetNetname()
             if track_net_name == net:
                 self.tracks_on_net.append(track)
+
+        self.nr_tracks = len(self.tracks_on_net)
+        logger.info("Nr of tracks on net: " + repr(self.nr_tracks))
 
         # starting point and layer
         self.start_point = selected_pads[0].GetPosition()
@@ -175,8 +179,13 @@ class Distance:
                 else:
                     new_point = None
                     new_layer = None
-            # ce se nismo na koncu, potem grem naprej
+
+            # # ce se nismo na koncu, potem grem naprej
             if new_point is not None:
+                # update progress dialog
+                self.updated_progress(len(new_track_list)/self.nr_tracks)
+                logger.info("Percentage done: " + repr(len(new_track_list)/self.nr_tracks))
+
                 delta_len = self.get_new_endpoints(new_point, new_layer, new_track_length, new_track_list, level + 1, tr_list)
                 if any(delta_len):
                     ret_len[index:index] = delta_len

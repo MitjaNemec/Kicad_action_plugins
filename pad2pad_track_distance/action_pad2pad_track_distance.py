@@ -25,6 +25,9 @@ import pcbnew
 import os
 import logging
 import sys
+import Queue
+import time
+from threading import Thread
 
 if __name__ == '__main__':
     import pad2pad_track_distance
@@ -40,7 +43,23 @@ version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ve
 with open(version_filename) as f:
     VERSION = f.readline().strip()
 
-    
+
+class ThreadWithReturnValue(Thread):
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs={}, Verbose=None):
+        Thread.__init__(self, group, target, name, args, kwargs, Verbose)
+        self._return = None
+
+    def run(self):
+        if self._Thread__target is not None:
+            self._return = self._Thread__target(*self._Thread__args,
+                                                **self._Thread__kwargs)
+
+    def join(self):
+        Thread.join(self)
+        return self._return
+
+
 class Pad2PadTrackDistanceDialog(pad2pad_track_distance_GUI.Pad2PadTrackDistanceGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
@@ -90,6 +109,12 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
         self.description = "Measure distance between two selected pads"
         self.icon_file_name = os.path.join(
                 os.path.dirname(__file__), 'ps_tune_length-pad2pad_track_distance.svg.png')
+
+    def update_progress(self, percentage):
+        delta_time = time.time() - self.start_time
+        i = int(percentage*100)
+        logging.info("updating GUI with: " + repr(i))
+        wx.CallAfter(self.dlg.Update, i, repr(delta_time))
 
     def Run(self):
         # load board
@@ -170,8 +195,19 @@ class Pad2PadTrackDistance(pcbnew.ActionPlugin):
             return
 
         try:
-            measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])
-            distance, resistance = measure_distance.get_length()
+            measure_distance = pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1], self.update_progress)
+
+            self.start_time = time.time()
+            self.dlg = wx.ProgressDialog("title", "0", maximum=100)
+            self.dlg.Show()
+            self.dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+            que = Queue.Queue()
+            # t = Thread(target=lambda q, arg1: q.put(pad2pad_track_distance.Distance(board, selected_pads[0], selected_pads[1])), args=(que, (board, selected_pads[0], selected_pads[1])))
+            t = Thread(target=lambda q, arg1: q.put(measure_distance.get_length()), args=(que, ()))
+            t.start()
+            t.join()
+            self.dlg.Destroy()
+            distance, resistance = que.get()
         except LookupError as error:
             caption = 'Pad2Pad Track Distance'
             message = str(error) 
