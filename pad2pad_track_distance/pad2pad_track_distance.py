@@ -183,7 +183,8 @@ class Distance:
             # # ce se nismo na koncu, potem grem naprej
             if new_point is not None:
                 # update progress dialog
-                self.updated_progress(len(new_track_list)/self.nr_tracks)
+                if self.updated_progress is not None:
+                    self.updated_progress(len(new_track_list)/self.nr_tracks)
                 logger.info("Percentage done: " + repr(len(new_track_list)/self.nr_tracks))
 
                 delta_len = self.get_new_endpoints(new_point, new_layer, new_track_length, new_track_list, level + 1, tr_list)
@@ -194,7 +195,7 @@ class Distance:
 
 
 def test(board, pad1, pad2):
-    measure_distance = Distance(board, pad1, pad2)
+    measure_distance = Distance(board, pad1, pad2, None)
     distance, resistance = measure_distance.get_length()
 
     return distance, resistance
