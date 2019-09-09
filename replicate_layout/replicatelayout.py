@@ -169,8 +169,10 @@ class Replicator():
                 return m
         return None
 
-    def __init__(self, board):
+    def __init__(self, board, update_progress):
         self.board = board
+        self.update_progress = update_progress
+
         self.pcb_filename = os.path.abspath(board.GetFileName())
         self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".sch")
         self.project_folder = os.path.dirname(self.pcb_filename)
@@ -888,28 +890,42 @@ class Replicator():
         # get pivot(anchor) module details
         self.pivot_mod_orientation = self.pivot_anchor_mod.mod.GetOrientationDegrees()
         self.pivot_mod_position = self.pivot_anchor_mod.mod.GetPosition()
+        self.update_progress(0.0, "Preparing for replication")
         self.prepare_for_replication(level, containing)
         if remove:
             logger.info("Removing tracks and zones, before module placement")
+            self.update_progress(0.0, "Removing zones and tracks")
             self.remove_zones_tracks(containing)
+        self.update_progress(0.0, "Replicating footprints")
         self.replicate_modules()
         if remove:
             logger.info("Removing tracks and zones, after module placement")
+            self.update_progress(0.0, "Removing zones and tracks")
             self.remove_zones_tracks(containing)
         if tracks:
+            self.update_progress(0.0, "Replicating tracks")
             self.replicate_tracks()
         if zones:
+            self.update_progress(0.0, "Replicating zones")
             self.replicate_zones()
         if text:
+            self.update_progress(0.0, "Replicating text")
             self.replicate_text()
         if drawings:
+            self.update_progress(0.0, "Replicating drawings")
             self.replicate_drawings()
+
+
+def update_progress(percentage, message=None):
+    if message is not None:
+        print(message)
+    print(percentage)
 
 
 def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containing, remove):
     board = pcbnew.LoadBoard(in_filename)
     # get board information
-    replicator = Replicator(board)
+    replicator = Replicator(board, update_progress)
     # get pivot module info
     pivot_mod = replicator.get_mod_by_ref(pivot_mod_ref)
     # have the user select replication level
@@ -928,8 +944,6 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
             if mod.sheet_id == sheet:
                 ref_list.append(mod.ref)
                 break
-
-    alt_list = [('/').join(x[0]) + " ("+ x[1] + ")" for x in zip(sheet_list, ref_list)]
 
     # get the list selection from user
     sheets_for_replication = [sheet_list[i] for i in sheets]
