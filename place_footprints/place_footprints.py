@@ -169,7 +169,10 @@ class Placer():
     def get_modules_with_reference_designator(self, ref_des):
         list_of_modules = []
         for m in self.modules:
-            m_des = ''.join(i for i in m.ref if not i.isdigit())
+            for i in range(len(m.ref)):
+                if not m.ref[i].isdigit():
+                    index = i+1
+            m_des = m.ref[:index]
             if m_des == ref_des:
                 list_of_modules.append(m.ref)
         return list_of_modules

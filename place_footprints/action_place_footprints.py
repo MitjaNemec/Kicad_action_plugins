@@ -446,37 +446,44 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         # by reference number
         if res == wx.ID_OK:
             # by ref
-            module_reference_designator = ''.join(i for i in pivot_module_reference if not i.isdigit())
-            module_reference_number = int(''.join(i for i in pivot_module_reference if i.isdigit()))
+            for i in range(len(pivot_module_reference)):
+                if not pivot_module_reference[i].isdigit():
+                    index = i+1
+            module_reference_designator = pivot_module_reference[:index]
+            module_reference_number = pivot_module_reference[index:]
+            logger.info("Reference designator is: " + module_reference_designator)
+            logger.info("Rerefence number is: " + module_reference_number)
 
             # get list of all modules with same reference designator
             list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
-            sorted_list = natural_sort(list_of_all_modules_with_same_designator)
+
+            sorted_list = sorted_data=sorted(list_of_all_modules_with_same_designator, key=lambda x : int(x[index:]))
 
             # find only consequtive modules
-            list_of_consecutive_modules=[]
+            list_of_consecutive_modules = []
             # go through the list in positive direction
             start_index = sorted_list.index(pivot_module_reference)
-            count_start = module_reference_number
+            count_start = int(module_reference_number)
             for mod in sorted_list[start_index:]:
-                if int(''.join(i for i in mod if i.isdigit())) == count_start:
+                if int(mod[index:]) == count_start:
                     count_start = count_start + 1
                     list_of_consecutive_modules.append(mod)
                 else:
                     break
 
             # go through the list in negative direction
-            count_start = module_reference_number
             reversed_list = list(reversed(sorted_list))
             start_index = reversed_list.index(pivot_module_reference)
+            count_start = int(module_reference_number)
             for mod in reversed_list[start_index:]:
-                if int(''.join(i for i in mod if i.isdigit())) == count_start:
-                    count_start = count_start -1
+                if int(mod[index:]) == count_start:
+                    count_start = count_start - 1
                     list_of_consecutive_modules.append(mod)
                 else:
                     break
 
             sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
+            logger.info('Sorted and filtered list:\n' + repr(sorted_modules))
 
             # display dialog
             dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference, user_units)
