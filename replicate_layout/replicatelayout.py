@@ -733,7 +733,8 @@ class Replicator():
                 # start the clone
                 to_net_name = tup[0][1]
                 if to_net_name == u'':
-                    to_net = 0
+                    to_net_code = 0
+                    to_net_item = self.board.FindNet(0)
                 else:
                     to_net_code = net_dict[to_net_name].GetNet()
                     to_net_item = net_dict[to_net_name]
