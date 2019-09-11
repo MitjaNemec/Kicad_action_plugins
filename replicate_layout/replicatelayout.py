@@ -934,6 +934,16 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     # get the list selection from user
     sheets_for_replication = [sheet_list[i] for i in sheets]
 
+    # first get all the anchor footprints
+    all_sheet_footprints = []
+    for sheet in sheets_for_replication:
+        all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet))
+    anchor_fp = [x for x in all_sheet_footprints if x.mod_id == pivot_mod.mod_id]
+    if all(fp.mod.IsFlipped() == pivot_mod.mod.IsFlipped() for fp in anchor_fp):
+        a = 2
+    else:
+        assert(2==3), "footprint positions do not match"
+
     # now we are ready for replication
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
                                  containing=containing, remove=remove, tracks=True, zones=True, text=True, drawings=True)

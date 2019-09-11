@@ -264,6 +264,22 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         sheets_on_a_level = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[level])
         sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
 
+        # check if all the anchor footprints are on the same layer as pivot footprint
+        # first get all the anchor footprints
+        all_sheet_footprints = []
+        for sheet in sheets_for_replication:
+            all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet))
+        anchor_fp = [x for x in all_sheet_footprints if x.mod_id == pivot_mod.mod_id]
+        # then check if all of them are on the same layer
+        if not all(fp.mod.IsFlipped() == pivot_mod.mod.IsFlipped() for fp in anchor_fp):
+            caption = 'Replicate Layout'
+            message = "Anchor footprints must be on the same layer as pivot footprint!"
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            return
+
         # replicate now
         logger.info("Replicating layout")
 
