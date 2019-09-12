@@ -43,7 +43,7 @@ if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipL
     # create new method with the same signature as in V5.1.x versions
     def old_flip(self, aCentre):
         """ monkeypatched method to have the same signature as in V5.1.x versions """
-        pcbnew.MODULE.Flip_new(self, aCentre, True)
+        pcbnew.MODULE.Flip_new(self, aCentre, False)
 
     from types import MethodType
     pcbnew.MODULE.Flip = MethodType(old_flip, None, pcbnew.MODULE)
