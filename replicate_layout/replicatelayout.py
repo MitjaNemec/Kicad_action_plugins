@@ -35,6 +35,19 @@ if __name__ == '__main__' or parent_module.__name__ == '__main__':
 else:
     from . import compare_boards
 
+# V5.99 compatibility
+if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
+    # remap the current method to new name
+    pcbnew.MODULE.Flip_new = pcbnew.MODULE.Flip
+
+    # create new method with the same signature as in V5.1.x versions
+    def old_flip(self, aCentre):
+        """ monkeypatched method to have the same signature as in V5.1.x versions """
+        pcbnew.MODULE.Flip_new(self, aCentre, True)
+
+    from types import MethodType
+    pcbnew.MODULE.Flip = MethodType(old_flip, None, pcbnew.MODULE)
+
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
 
