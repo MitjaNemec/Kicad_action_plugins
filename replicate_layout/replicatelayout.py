@@ -171,6 +171,7 @@ class Replicator():
 
     def __init__(self, board, update_progress):
         self.board = board
+        self.stage = 1
         self.update_progress = update_progress
 
         self.pcb_filename = os.path.abspath(board.GetFileName())
@@ -516,32 +517,45 @@ class Replicator():
     def prepare_for_replication(self, level, containing):
         # get a list of modules for replication
         logger.info("Getting the list of pivot footprints")
+        self.update_progress(self.stage, 0/8, None)
         self.pivot_modules = self.get_modules_on_sheet(level)
         # get the rest of the modules
         logger.info("Getting the list of all the remaining footprints")
+        self.update_progress(self.stage, 1/8, None)
         self.other_modules = self.get_modules_not_on_sheet(level)
         # get nets local to pivot modules
         logger.info("Getting nets local to pivot footprints")
+        self.update_progress(self.stage, 2/8, None)
         self.pivot_local_nets = self.get_local_nets(self.pivot_modules, self.other_modules)
         # get pivot bounding box
         logger.info("Getting pivot bounding box")
+        self.update_progress(self.stage, 3/8, None)
         self.pivot_bounding_box = self.get_modules_bounding_box(self.pivot_modules)
         # get pivot tracks
         logger.info("Getting pivot tracks")
+        self.update_progress(self.stage, 4/8, None)
         self.pivot_tracks = self.get_tracks(self.pivot_bounding_box, self.pivot_local_nets, containing)
         # get pivot zones
         logger.info("Getting pivot zones")
+        self.update_progress(self.stage, 5/8, None)
         self.pivot_zones = self.get_zones(self.pivot_bounding_box, containing)
         # get pivot text items
         logger.info("Getting pivot text items")
+        self.update_progress(self.stage, 6/8, None)
         self.pivot_text = self.get_text_items(self.pivot_bounding_box, containing)
         # get pivot drawings
         logger.info("Getting pivot text items")
+        self.update_progress(self.stage, 7/8, None)
         self.pivot_drawings = self.get_drawings(self.pivot_bounding_box, containing)
+        self.update_progress(self.stage, 8/8, None)
 
     def replicate_modules(self):
         logger.info("Replicating footprints")
-        for sheet in self.sheets_for_replication:
+        nr_sheets = len(self.sheets_for_replication)
+        for st_index in range(nr_sheets):
+            sheet = self.sheets_for_replication[st_index]
+            progress = st_index/nr_sheets
+            self.update_progress(self.stage, progress, None)
             logger.info("Replicating footprints on sheet " + repr(sheet))
             # get anchor module
             anchor_mod = self.get_sheet_anchor_module(sheet)
@@ -555,7 +569,12 @@ class Replicator():
 
             # go through all modules
             mod_sheet = self.get_modules_on_sheet(sheet)
-            for mod in mod_sheet:
+            nr_mods = len(mod_sheet)
+            for track_index in range(nr_mods):
+                mod = mod_sheet[track_index]
+                progress = progress + (1/nr_sheets)*(1/nr_mods)
+                self.update_progress(self.stage, progress, None)
+
                 # find proper match in pivot modules
                 mod_to_clone = None
                 list_of_possible_pivot_modules = []
@@ -651,7 +670,11 @@ class Replicator():
 
     def replicate_tracks(self):
         logger.info("Replicating tracks")
-        for sheet in self.sheets_for_replication:
+        nr_sheets = len(self.sheets_for_replication)
+        for st_index in range(nr_sheets):
+            sheet = self.sheets_for_replication[st_index]
+            progress = st_index/nr_sheets
+            self.update_progress(self.stage, progress, None)
             logger.info("Replicating tracks on sheet " + repr(sheet))
 
             # get anchor module
@@ -670,7 +693,11 @@ class Replicator():
             net_pairs, net_dict = self.get_net_pairs(sheet)
 
             # go through all the tracks
-            for track in self.pivot_tracks:
+            nr_tracks = len(self.pivot_tracks)
+            for track_index in range(nr_tracks):
+                track = self.pivot_tracks[track_index]
+                progress = progress + (1/nr_sheets)*(1/nr_tracks)
+                self.update_progress(self.stage, progress, None)
                 # get from which net we are clonning
                 from_net_name = track.GetNetname()
                 # find to net
@@ -695,7 +722,11 @@ class Replicator():
         """ method which replicates zones"""
         logger.info("Replicating zones")
         # start cloning
-        for sheet in self.sheets_for_replication:
+        nr_sheets = len(self.sheets_for_replication)
+        for st_index in range(nr_sheets):
+            sheet = self.sheets_for_replication[st_index]
+            progress = st_index/nr_sheets
+            self.update_progress(self.stage, progress, None)
             logger.info("Replicating zones on sheet " + repr(sheet))
 
             # get anchor module
@@ -713,7 +744,12 @@ class Replicator():
 
             net_pairs, net_dict = self.get_net_pairs(sheet)
             # go through all the zones
-            for zone in self.pivot_zones:
+            nr_zones = len(self.pivot_zones)
+            for zone_index in range(nr_zones):
+                zone = self.pivot_zones[zone_index]
+                progress = progress + (1/nr_sheets)*(1/nr_zones)
+                self.update_progress(self.stage, progress, None)
+
                 # get from which net we are clonning
                 from_net_name = zone.GetNetname()
                 # if zone is not on copper layer it does not matter on which net it is
@@ -735,7 +771,8 @@ class Replicator():
                 # start the clone
                 to_net_name = tup[0][1]
                 if to_net_name == u'':
-                    to_net = 0
+                    to_net_code = 0
+                    to_net_item = self.board.FindNet(0)
                 else:
                     to_net_code = net_dict[to_net_name].GetNet()
                     to_net_item = net_dict[to_net_name]
@@ -751,7 +788,11 @@ class Replicator():
     def replicate_text(self):
         logger.info("Replicating text")
         # start cloning
-        for sheet in self.sheets_for_replication:
+        nr_sheets = len(self.sheets_for_replication)
+        for st_index in range(nr_sheets):
+            sheet = self.sheets_for_replication[st_index]
+            progress = st_index/nr_sheets
+            self.update_progress(self.stage, progress, None)
             logger.info("Replicating text on sheet " + repr(sheet))
             # get anchor module
             anchor_mod = self.get_sheet_anchor_module(sheet)
@@ -763,7 +804,12 @@ class Replicator():
             anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
             anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
 
-            for text in self.pivot_text:
+            nr_text = len(self.pivot_text)
+            for text_index in range(nr_text):
+                text = self.pivot_text[text_index]
+                progress = progress + (1/nr_sheets)*(1/nr_text)
+                self.update_progress(self.stage, progress, None)
+
                 new_text = text.Duplicate()
                 new_text.Move(anchor_delta_pos)
                 new_text.Rotate(anchor_pos, -anchor_delta_angle * 10)
@@ -771,7 +817,11 @@ class Replicator():
 
     def replicate_drawings(self):
         logger.info("Replicating drawings")
-        for sheet in self.sheets_for_replication:
+        nr_sheets = len(self.sheets_for_replication)
+        for st_index in range(nr_sheets):
+            sheet = self.sheets_for_replication[st_index]
+            progress = st_index/nr_sheets
+            self.update_progress(self.stage, progress, None)
             logger.info("Replicating drawings on sheet " + repr(sheet))
             # get anchor module
             anchor_mod = self.get_sheet_anchor_module(sheet)
@@ -784,7 +834,11 @@ class Replicator():
             anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
 
             # go through all the drawings
-            for drawing in self.pivot_drawings:
+            nr_drawings = len(self.pivot_drawings)
+            for dw_index in range(nr_drawings):
+                drawing = self.pivot_drawings[dw_index]
+                progress = progress + (1/nr_sheets)*(1/nr_drawings)
+                self.update_progress(self.stage, progress, None)
 
                 new_drawing = drawing.Duplicate()
                 new_drawing.Move(anchor_delta_pos)
@@ -793,7 +847,9 @@ class Replicator():
                 self.board.Add(new_drawing)
 
     def remove_zones_tracks(self, containing):
-        for sheet in self.sheets_for_replication:
+        for index in range(len(self.sheets_for_replication)):
+            sheet = self.sheets_for_replication[index]
+            self.update_progress(self.stage, index/len(self.sheets_for_replication), None)
             # get modules on a sheet
             mod_sheet = self.get_modules_on_sheet(sheet)
             # get bounding box
@@ -887,36 +943,56 @@ class Replicator():
         self.pivot_anchor_mod = pivot_mod
         self.sheets_for_replication = sheets_for_replication
 
+        if remove:
+            self.max_stages = 2
+        else:
+            self.max_stages = 0
+        if tracks:
+            self.max_stages = self.max_stages + 1
+        if zones:
+            self.max_stages = self.max_stages + 1
+        if text:
+            self.max_stages = self.max_stages + 1
+        if drawings:
+            self.max_stages = self.max_stages + 1
+
         # get pivot(anchor) module details
         self.pivot_mod_orientation = self.pivot_anchor_mod.mod.GetOrientationDegrees()
         self.pivot_mod_position = self.pivot_anchor_mod.mod.GetPosition()
-        self.update_progress(0.0, "Preparing for replication")
+        self.update_progress(self.stage, 0.0, "Preparing for replication")
         self.prepare_for_replication(level, containing)
         if remove:
             logger.info("Removing tracks and zones, before module placement")
-            self.update_progress(0.0, "Removing zones and tracks")
+            self.stage = 2
+            self.update_progress(self.stage, 0.0, "Removing zones and tracks")
             self.remove_zones_tracks(containing)
-        self.update_progress(0.0, "Replicating footprints")
+        self.stage = 3
+        self.update_progress(self.stage, 0.0, "Replicating footprints")
         self.replicate_modules()
         if remove:
             logger.info("Removing tracks and zones, after module placement")
-            self.update_progress(0.0, "Removing zones and tracks")
+            self.stage = 4
+            self.update_progress(self.stage, 0.0, "Removing zones and tracks")
             self.remove_zones_tracks(containing)
         if tracks:
-            self.update_progress(0.0, "Replicating tracks")
+            self.stage = 5
+            self.update_progress(self.stage, 0.0, "Replicating tracks")
             self.replicate_tracks()
         if zones:
-            self.update_progress(0.0, "Replicating zones")
+            self.stage = 6
+            self.update_progress(self.stage, 0.0, "Replicating zones")
             self.replicate_zones()
         if text:
-            self.update_progress(0.0, "Replicating text")
+            self.stage = 7
+            self.update_progress(self.stage, 0.0, "Replicating text")
             self.replicate_text()
         if drawings:
-            self.update_progress(0.0, "Replicating drawings")
+            self.stage = 8
+            self.update_progress(self.stage, 0.0, "Replicating drawings")
             self.replicate_drawings()
 
 
-def update_progress(percentage, message=None):
+def update_progress(stage, percentage, message=None):
     if message is not None:
         print(message)
     print(percentage)
