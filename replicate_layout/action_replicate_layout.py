@@ -25,6 +25,7 @@ import pcbnew
 import os
 import logging
 import sys
+import time
 
 if __name__ == '__main__':
     import replicatelayout
@@ -138,6 +139,19 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         self.icon_file_name = os.path.join(
                 os.path.dirname(__file__), 'duplicate-replicate_layout.svg.png')
 
+    def update_progress(self, stage, percentage, message=None):
+        current_time = time.time()
+        # update GUI onle every 10 ms
+        i = int(percentage*100)
+        if message is not None:
+            logging.info("updating GUI message: " + repr(message))
+            self.dlg.Update(i, message)
+        if (current_time - self.last_time) > 0.01:
+            self.last_time = current_time
+            delta_time = self.last_time - self.start_time
+            logging.info("updating GUI with: " + repr(i))
+            self.dlg.Update(i)
+
     def Run(self):
         # load board
         board = pcbnew.GetBoard()
@@ -191,7 +205,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
 
         try:
-            replicator = replicatelayout.Replicator(board)
+            replicator = replicatelayout.Replicator(board, self.update_progress)
         except LookupError as exception:
             caption = 'Replicate Layout'
             message = str(exception)
@@ -283,6 +297,12 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         # replicate now
         logger.info("Replicating layout")
 
+        self.start_time = time.time()
+        self.last_time = self.start_time
+        self.dlg = wx.ProgressDialog("Preparing for replication", "Starting plugin", maximum=100)
+        self.dlg.Show()
+        self.dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+
         try:
             replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:level+1], sheets_for_replication,
                                         containing=replicate_containing_only,
@@ -294,6 +314,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             logger.info("Replication complete")
             pcbnew.Refresh()
             logging.shutdown()
+            self.dlg.Destroy()
         except LookupError as exception:
             caption = 'Replicate Layout'
             message = str(exception)
@@ -301,6 +322,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logging.shutdown()
+            self.dlg.Destroy()
             return
         except Exception:
             logger.exception("Fatal error when running replicator")
@@ -312,6 +334,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg.ShowModal()
             dlg.Destroy()
             logging.shutdown()
+            self.dlg.Destroy()
             return
 
 
