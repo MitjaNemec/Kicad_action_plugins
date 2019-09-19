@@ -142,15 +142,15 @@ class ReplicateLayout(pcbnew.ActionPlugin):
     def update_progress(self, stage, percentage, message=None):
         current_time = time.time()
         # update GUI onle every 10 ms
+        i = int(percentage*100)
+        if message is not None:
+            logging.info("updating GUI message: " + repr(message))
+            self.dlg.Update(i, message)
         if (current_time - self.last_time) > 0.01:
             self.last_time = current_time
             delta_time = self.last_time - self.start_time
-            i = int(percentage*100)
             logging.info("updating GUI with: " + repr(i))
-            if message is None:
-                self.dlg.Update(i)
-            else:
-                self.dlg.Update(i, message)
+            self.dlg.Update(i)
 
     def Run(self):
         # load board
@@ -283,7 +283,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
         self.start_time = time.time()
         self.last_time = self.start_time
-        self.dlg = wx.ProgressDialog("Preparing for replication", "0", maximum=100)
+        self.dlg = wx.ProgressDialog("Preparing for replication", "Starting plugin", maximum=100)
         self.dlg.Show()
         self.dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
 
