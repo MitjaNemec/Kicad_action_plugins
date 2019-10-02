@@ -89,14 +89,24 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 		self.Centre( wx.BOTH )
 		
 		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.OnCancel )
 		self.list_levels.Bind( wx.EVT_LISTBOX, self.level_changed )
+		self.btn_ok.Bind( wx.EVT_BUTTON, self.OnOk )
+		self.btn_cancel.Bind( wx.EVT_BUTTON, self.OnCancel )
 	
 	def __del__( self ):
 		pass
 	
 	
 	# Virtual event handlers, overide them in your derived class
+	def OnCancel( self, event ):
+		event.Skip()
+	
 	def level_changed( self, event ):
 		event.Skip()
+	
+	def OnOk( self, event ):
+		event.Skip()
+	
 	
 

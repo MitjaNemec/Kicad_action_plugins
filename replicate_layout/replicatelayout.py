@@ -182,10 +182,10 @@ class Replicator():
                 return m
         return None
 
-    def __init__(self, board, update_progress):
+    def __init__(self, board):
         self.board = board
         self.stage = 1
-        self.update_progress = update_progress
+        self.update_progress = None
 
         self.pcb_filename = os.path.abspath(board.GetFileName())
         self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".sch")
@@ -1014,7 +1014,7 @@ def update_progress(stage, percentage, message=None):
 def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containing, remove):
     board = pcbnew.LoadBoard(in_filename)
     # get board information
-    replicator = Replicator(board, update_progress)
+    replicator = Replicator(board)
     # get pivot module info
     pivot_mod = replicator.get_mod_by_ref(pivot_mod_ref)
     # have the user select replication level
@@ -1048,6 +1048,7 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
         assert(2==3), "footprint positions do not match"
 
     # now we are ready for replication
+    replicator.update_progress = update_progress
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
                                  containing=containing, remove=remove, tracks=True, zones=True, text=True, drawings=True)
 

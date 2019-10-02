@@ -65,11 +65,13 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         # DO NOTHING
         pass
 
-    def __init__(self, parent, replicator, mod_ref):
+    def __init__(self, parent, replicator, mod_ref, logger):
         replicate_layout_GUI.ReplicateLayoutGUI.__init__(self, parent)
 
         # Connect Events
         self.Bind(wx.EVT_LISTBOX, self.level_changed, id=26)
+
+        self.logger = logger
 
         self.replicator = replicator
         self.pivot_mod = self.replicator.get_mod_by_ref(mod_ref)
@@ -122,6 +124,134 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
 
         event.Skip()
 
+    def OnOk(self, event):
+        selected_items = self.list_sheets.GetSelections()
+        slected_names = []
+        for sel in selected_items:
+            slected_names.append(self.list_sheets.GetString(sel))
+
+        replicate_containing_only = not self.chkbox_intersecting.GetValue()
+        remove_existing_nets_zones = self.chkbox_remove.GetValue()
+        rep_tracks = self.chkbox_tracks.GetValue()
+        rep_zones = self.chkbox_zones.GetValue()
+        rep_text = self.chkbox_text.GetValue()
+        rep_drawings = self.chkbox_drawings.GetValue()
+
+        # failsafe somtimes on my machine wx does not generate a listbox event
+        level = self.list_levels.GetSelection()
+        selection_indeces = self.list_sheets.GetSelections()
+        sheets_on_a_level = self.replicator.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[level])
+        sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
+
+        # check if all the anchor footprints are on the same layer as pivot footprint
+        # first get all the anchor footprints
+        all_sheet_footprints = []
+        for sheet in sheets_for_replication:
+            all_sheet_footprints.extend(self.replicator.get_modules_on_sheet(sheet))
+        anchor_fp = [x for x in all_sheet_footprints if x.mod_id == self.pivot_mod.mod_id]
+        # then check if all of them are on the same layer
+        if not all(fp.mod.IsFlipped() == self.pivot_mod.mod.IsFlipped() for fp in anchor_fp):
+            # clear highlight on all modules on selected level
+            for mod in self.pivot_modules:
+                clear_highlight_on_module(mod)
+            pcbnew.Refresh()
+
+            caption = 'Replicate Layout'
+            message = "Anchor footprints must be on the same layer as pivot footprint!"
+            dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            self.Destroy()
+            return
+
+        # replicate now
+        self.logger.info("Replicating layout")
+
+        self.start_time = time.time()
+        self.last_time = self.start_time
+        self.progress_dlg = wx.ProgressDialog("Preparing for replication", "Starting plugin", maximum=100)
+        self.progress_dlg.Show()
+        self.progress_dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+
+        try:
+            # update progress dialog 
+            self.replicator.update_progress = self.update_progress
+            self.replicator.replicate_layout(self.pivot_mod, self.pivot_mod.sheet_id[0:level+1], sheets_for_replication,
+                                             containing=replicate_containing_only,
+                                             remove=remove_existing_nets_zones,
+                                             tracks=rep_tracks,
+                                             zones=rep_zones,
+                                             text=rep_text,
+                                             drawings=rep_drawings)
+            self.logger.info("Replication complete")
+            # clear highlight on all modules on selected level
+            for mod in self.pivot_modules:
+                clear_highlight_on_module(mod)
+            pcbnew.Refresh()
+
+            logging.shutdown()
+            self.progress_dlg.Destroy()
+            self.Destroy()
+        except LookupError as exception:
+            # clear highlight on all modules on selected level
+            for mod in self.pivot_modules:
+                clear_highlight_on_module(mod)
+            pcbnew.Refresh()
+
+            caption = 'Replicate Layout'
+            message = str(exception)
+            dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            self.progress_dlg.Destroy()
+            self.Destroy()
+            return
+        except Exception:
+            # clear highlight on all modules on selected level
+            for mod in self.pivot_modules:
+                clear_highlight_on_module(mod)
+            pcbnew.Refresh()
+
+            self.logger.exception("Fatal error when running replicator")
+            caption = 'Replicate Layout'
+            message = "Fatal error when running replicator.\n"\
+                    + "You can raise an issue on GiHub page.\n" \
+                    + "Please attach the replicate_layout.log which you should find in the project folder."
+            dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            self.progress_dlg.Destroy()
+            self.Destroy()
+            return
+
+        event.Skip()
+
+    def OnCancel(self, event):
+        # clear highlight on all modules on selected level
+        for mod in self.pivot_modules:
+            clear_highlight_on_module(mod)
+        pcbnew.Refresh()
+
+        self.logger.info("User canceled the dialog")
+        logging.shutdown()
+        event.Skip()
+
+    def update_progress(self, stage, percentage, message=None):
+        current_time = time.time()
+        # update GUI onle every 10 ms
+        i = int(percentage*100)
+        if message is not None:
+            logging.info("updating GUI message: " + repr(message))
+            self.progress_dlg.Update(i, message)
+        if (current_time - self.last_time) > 0.01:
+            self.last_time = current_time
+            delta_time = self.last_time - self.start_time
+            logging.info("updating GUI with: " + repr(i))
+            self.progress_dlg.Update(i)
+
 
 class ReplicateLayout(pcbnew.ActionPlugin):
     """
@@ -139,18 +269,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         self.icon_file_name = os.path.join(
                 os.path.dirname(__file__), 'duplicate-replicate_layout.svg.png')
 
-    def update_progress(self, stage, percentage, message=None):
-        current_time = time.time()
-        # update GUI onle every 10 ms
-        i = int(percentage*100)
-        if message is not None:
-            logging.info("updating GUI message: " + repr(message))
-            self.dlg.Update(i, message)
-        if (current_time - self.last_time) > 0.01:
-            self.last_time = current_time
-            delta_time = self.last_time - self.start_time
-            logging.info("updating GUI with: " + repr(i))
-            self.dlg.Update(i)
+
 
     def Run(self):
         # load board
@@ -205,7 +324,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
 
         try:
-            replicator = replicatelayout.Replicator(board, self.update_progress)
+            replicator = replicatelayout.Replicator(board)
         except LookupError as exception:
             caption = 'Replicate Layout'
             message = str(exception)
@@ -246,96 +365,13 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
         # show dialog
         logger.info("Showing dialog")
-        dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference)
-        res = dlg.ShowModal()
+        dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference, logger)
+        dlg.Show()
 
         # clear highlight on all modules on selected level
         for mod in dlg.pivot_modules:
             clear_highlight_on_module(mod)
         pcbnew.Refresh()
-
-        if res == wx.ID_OK:
-
-            selected_items = dlg.list_sheets.GetSelections()
-            slected_names = []
-            for sel in selected_items:
-                slected_names.append(dlg.list_sheets.GetString(sel))
-
-            replicate_containing_only = not dlg.chkbox_intersecting.GetValue()
-            remove_existing_nets_zones = dlg.chkbox_remove.GetValue()
-            rep_tracks = dlg.chkbox_tracks.GetValue()
-            rep_zones = dlg.chkbox_zones.GetValue()
-            rep_text = dlg.chkbox_text.GetValue()
-            rep_drawings = dlg.chkbox_drawings.GetValue()
-        else:
-            logger.info("User canceled the dialog")
-            logging.shutdown()
-            return
-
-        # failsafe somtimes on my machine wx does not generate a listbox event
-        level = dlg.list_levels.GetSelection()
-        selection_indeces = dlg.list_sheets.GetSelections()
-        sheets_on_a_level = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[level])
-        sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
-
-        # check if all the anchor footprints are on the same layer as pivot footprint
-        # first get all the anchor footprints
-        all_sheet_footprints = []
-        for sheet in sheets_for_replication:
-            all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet))
-        anchor_fp = [x for x in all_sheet_footprints if x.mod_id == pivot_mod.mod_id]
-        # then check if all of them are on the same layer
-        if not all(fp.mod.IsFlipped() == pivot_mod.mod.IsFlipped() for fp in anchor_fp):
-            caption = 'Replicate Layout'
-            message = "Anchor footprints must be on the same layer as pivot footprint!"
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            logging.shutdown()
-            return
-
-        # replicate now
-        logger.info("Replicating layout")
-
-        self.start_time = time.time()
-        self.last_time = self.start_time
-        self.dlg = wx.ProgressDialog("Preparing for replication", "Starting plugin", maximum=100)
-        self.dlg.Show()
-        self.dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
-
-        try:
-            replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:level+1], sheets_for_replication,
-                                        containing=replicate_containing_only,
-                                        remove=remove_existing_nets_zones,
-                                        tracks=rep_tracks,
-                                        zones=rep_zones,
-                                        text=rep_text,
-                                        drawings=rep_drawings)
-            logger.info("Replication complete")
-            pcbnew.Refresh()
-            logging.shutdown()
-            self.dlg.Destroy()
-        except LookupError as exception:
-            caption = 'Replicate Layout'
-            message = str(exception)
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            logging.shutdown()
-            self.dlg.Destroy()
-            return
-        except Exception:
-            logger.exception("Fatal error when running replicator")
-            caption = 'Replicate Layout'
-            message = "Fatal error when running replicator.\n"\
-                    + "You can raise an issue on GiHub page.\n" \
-                    + "Please attach the replicate_layout.log which you should find in the project folder."
-            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            logging.shutdown()
-            self.dlg.Destroy()
-            return
 
 
 class StreamToLogger(object):
