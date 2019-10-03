@@ -173,6 +173,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         self.progress_dlg = wx.ProgressDialog("Preparing for replication", "Starting plugin", maximum=100)
         self.progress_dlg.Show()
         self.progress_dlg.ToggleWindowStyle(wx.STAY_ON_TOP)
+        self.Hide()
 
         try:
             # update progress dialog 
@@ -366,6 +367,13 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         # show dialog
         logger.info("Showing dialog")
         dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference, logger)
+        # find position of right toolbar
+        toolbar_pos = _pcbnew_frame.FindWindowById(pcbnew.ID_V_TOOLBAR).GetPosition()
+        # find site of dialog
+        size = dlg.GetSize()
+        # calculate the position
+        dialog_position = wx.Point(toolbar_pos[0] - size[0], toolbar_pos[1])
+        dlg.SetPosition(dialog_position)
         dlg.Show()
 
         # clear highlight on all modules on selected level
