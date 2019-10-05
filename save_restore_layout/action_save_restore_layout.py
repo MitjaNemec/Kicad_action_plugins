@@ -239,7 +239,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
 
             # Once user selects a level ask the user top specify file
             wildcard = "Saved Layout Files (*.pckl)|*.pckl"
-            dlg = wx.FileDialog(_pcbnew_frame, "Select a file", os.getcwd(), filename.strip(".sch"), wildcard, wx.SAVE)
+            dlg = wx.FileDialog(_pcbnew_frame, "Select a file", os.getcwd(), filename.strip(".sch"), wildcard, wx.FD_SAVE)
             res = dlg.ShowModal()
             if res != wx.ID_OK:
                 logging.shutdown()
@@ -267,7 +267,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
 
             # ask the user to finde the layout information file
             wildcard = "Saved Layout Files (*.pckl)|*.pckl"
-            dlg = wx.FileDialog(_pcbnew_frame, "Choose a file", os.getcwd(), "", wildcard, wx.OPEN)
+            dlg = wx.FileDialog(_pcbnew_frame, "Choose a file", os.getcwd(), "", wildcard, wx.FD_OPEN)
             res = dlg.ShowModal()
             if res != wx.ID_OK:
                 logging.shutdown()
