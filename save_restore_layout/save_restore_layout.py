@@ -607,6 +607,7 @@ class RestoreLayout():
                 new_track = track.Duplicate()
                 new_track.Rotate(mod1_pos, delta_orientation)
                 new_track.Move(move_vector)
+                logger.info("Setting track net to: " + repr(to_net_code) + ", " + repr(to_net_name))
                 new_track.SetNetCode(to_net_code)
                 new_track.SetNet(to_net_item)
                 self.board.Add(new_track)
