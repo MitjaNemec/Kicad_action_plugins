@@ -162,17 +162,18 @@ class SchData():
             sch_lines = f.readlines()
 
         # remove all lines containing references (L, U, AR) and other stuff
-        sch_file_without_reference = [line for line in sch_lines if (not line.startswith("L ")
-                                                                     and not line.startswith("F0 ")
-                                                                     and not line.startswith("F 0")
-                                                                     and not line.startswith("AR ")
-                                                                     and not line.startswith("Sheet")
-                                                                     and not line.startswith("LIBS:")
-                                                                     and not line.startswith("EELAYER"))]
+        sch_file_without_reference \
+        = [line for line in sch_lines if (not line.startswith("L ")
+                                          and not line.startswith("F0 ")
+                                          and not line.startswith("F 0")
+                                          and not line.startswith("AR ")
+                                          and not line.startswith("Sheet")
+                                          and not line.startswith("LIBS:")
+                                          and not line.startswith("EELAYER"))]
 
         # caluclate the hash
         for line in sch_file_without_reference:
-            md5hash.update(line)
+            md5hash.update(line.encode('utf-8'))
 
         return md5hash
 
