@@ -367,12 +367,26 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         # show dialog
         logger.info("Showing dialog")
         dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference, logger)
+        # find pcbnew position
+        pcbnew_pos = _pcbnew_frame.GetScreenPosition()
+        logger.info("Pcbnew position: " + repr(pcbnew_pos))
+
+        # find all the display sizes
+        display = list()
+        for n in range(wx.Display.GetCount()):
+            display.append(wx.Display(n).GetGeometry())
+            logger.info("Display " + repr(n) + ": " + repr(wx.Display(n).GetGeometry()))
+
         # find position of right toolbar
-        toolbar_pos = _pcbnew_frame.FindWindowById(pcbnew.ID_V_TOOLBAR).GetPosition()
+        toolbar_pos = _pcbnew_frame.FindWindowById(pcbnew.ID_V_TOOLBAR).GetScreenPosition()
+        logger.info("Toolbar position: " + repr(toolbar_pos))
+        # caluclate absolute
+
         # find site of dialog
         size = dlg.GetSize()
         # calculate the position
         dialog_position = wx.Point(toolbar_pos[0] - size[0], toolbar_pos[1])
+        logger.info("Dialog position: " + repr(dialog_position))
         dlg.SetPosition(dialog_position)
         dlg.Show()
 
