@@ -607,9 +607,20 @@ class RestoreLayout():
                 new_track = track.Duplicate()
                 new_track.Rotate(mod1_pos, delta_orientation)
                 new_track.Move(move_vector)
-                logger.info("Setting track net to: " + repr(to_net_code) + ", " + repr(to_net_name))
-                new_track.SetNetCode(to_net_code)
-                new_track.SetNet(to_net_item)
+                logger.info("new_track: " + repr(type(new_track)) + ", " + repr(dir(new_track)))
+                brd_net = self.board.FindNet(to_net_name)
+                if brd_net:
+                    logger.info('Setting track: found brd_net '+str(brd_net.GetNet()))
+                    new_track.SetNetCode(brd_net.GetNet())
+                    #new_track.SetNet(brd_net)  # assert crash at first track
+                else:
+                    # might not be needed
+                    logger.info('Setting track: NOT found brd_net '+to_net_name)
+                    net = pcbnew.NETINFO_ITEM(self.board, to_net_name)
+                    self.board.AppendNet(net)
+                    new_track.SetNetCode(net.GetNet())
+                    #new_track.SetNet(net)
+
                 self.board.Add(new_track)
 
     def replicate_zones(self, pivot_anchor_mod, pivot_zones, anchor_mod, net_pairs):
