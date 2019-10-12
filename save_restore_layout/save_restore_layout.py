@@ -605,12 +605,12 @@ class RestoreLayout():
 
                 # make a duplicate, move it, rotate it, select proper net and add it to the board
                 new_track = track.Duplicate()
+                self.board.Add(new_track)
                 new_track.Rotate(mod1_pos, delta_orientation)
                 new_track.Move(move_vector)
                 logger.info("Setting track net to: " + repr(to_net_code) + ", " + repr(to_net_name))
                 new_track.SetNetCode(to_net_code)
-                new_track.SetNet(to_net_item)
-                self.board.Add(new_track)
+                new_track.SetNet(to_net_item)  # assert crash if board.Add after this line
 
     def replicate_zones(self, pivot_anchor_mod, pivot_zones, anchor_mod, net_pairs):
         """ method which replicates zones"""
@@ -661,11 +661,11 @@ class RestoreLayout():
 
             # make a duplicate, move it, rotate it, select proper net and add it to the board
             new_zone = zone.Duplicate()
+            self.board.Add(new_zone)
             new_zone.Rotate(mod1_pos, delta_orientation)
             new_zone.Move(move_vector)
             new_zone.SetNetCode(to_net_code)
-            new_zone.SetNet(to_net_item)
-            self.board.Add(new_zone)
+            new_zone.SetNet(to_net_item) # assert crash if board.Add after this line
 
     def replicate_text(self, pivot_anchor_mod, pivot_text, anchor_mod):
         logger.info("Replicating text")
