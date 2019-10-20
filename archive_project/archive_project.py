@@ -126,6 +126,36 @@ def find_all_sch_files(filename, list_of_files):
     return list_of_files
 
 
+def archive_worksheet(board):
+    logger.info("Starting to archive symbols")
+    # get project name
+    pcb_filename = os.path.abspath(board.GetFileName())
+    project_name = pcb_filename.replace(".kicad_pcb", ".pro")
+    project_dir = os.path.dirname(project_name)
+    # open project file
+    with open(project_name) as f:
+        project_file = f.readlines()
+
+    # find worksheet entry
+    worksheet_path = None
+    for line_index in range(len(project_file)):
+        line = project_file[line_index]
+        if line.startswith("PageLayoutDescrFile="):
+            worksheet_path = os.path.abspath(line.lstrip("PageLayoutDescrFile=").rstrip())
+            worksheet_filename = os.path.basename(worksheet_path)
+            line_index = project_file.index(line)
+
+            # copy worksheet to local path
+            destination_path = os.path.join(project_dir, worksheet_filename)
+            shutil.copy2(worksheet_path, os.path.join(project_dir, destination_path))
+
+            # try writing the project file
+            new_line = "PageLayoutDescrFile=" + worksheet_filename + "\n"
+            project_file[line_index] = new_line
+
+    with open(project_name, "w") as f:
+        f.writelines(project_file)
+
 def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False):
     global __name__
     logger.info("Starting to archive symbols")
@@ -587,6 +617,9 @@ def main():
         print(str(error))
     except NameError as error:
         print(str(error))
+
+    archive_worksheet(board)
+
     try:
         archive_3D_models(board, allow_missing_models=False, alt_files=True)
     except IOError as error:
