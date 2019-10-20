@@ -136,6 +136,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         rep_zones = self.chkbox_zones.GetValue()
         rep_text = self.chkbox_text.GetValue()
         rep_drawings = self.chkbox_drawings.GetValue()
+        remove_duplicates = self.chkbox_remove_duplicates.GetValue()
 
         # failsafe somtimes on my machine wx does not generate a listbox event
         level = self.list_levels.GetSelection()
@@ -184,7 +185,8 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
                                              tracks=rep_tracks,
                                              zones=rep_zones,
                                              text=rep_text,
-                                             drawings=rep_drawings)
+                                             drawings=rep_drawings,
+                                             remove_duplicates=remove_duplicates)
             self.logger.info("Replication complete")
             # clear highlight on all modules on selected level
             for mod in self.pivot_modules:

@@ -32,8 +32,10 @@ import math
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
     import compare_boards
+    import remove_duplicates
 else:
     from . import compare_boards
+    from . import remove_duplicates
 
 # V5.99 compatibility
 if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
@@ -46,7 +48,7 @@ if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipL
         pcbnew.MODULE.Flip_new(self, aCentre, False)
 
     from types import MethodType
-    pcbnew.MODULE.Flip = MethodType(old_flip, None, pcbnew.MODULE)
+    pcbnew.MODULE.Flip = MethodType(old_flip, pcbnew.MODULE)
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
@@ -946,8 +948,11 @@ class Replicator():
                     if bounding_box.Intersects(dwg_bb):
                         self.board.RemoveNative(drawing)
 
+    def removing_duplicates(self):
+        remove_duplicates.remove_duplicates(self.board)
+
     def replicate_layout(self, pivot_mod, level, sheets_for_replication,
-                         containing, remove, tracks, zones, text, drawings):
+                         containing, remove, tracks, zones, text, drawings, remove_duplicates):
         logger.info( "Starting replication of sheets: " + repr(sheets_for_replication)
                     +"\non level: " + repr(level)
                     +"\nwith tracks="+repr(tracks)+", zone="+repr(zones)+", text="+repr(text)
@@ -967,6 +972,8 @@ class Replicator():
         if text:
             self.max_stages = self.max_stages + 1
         if drawings:
+            self.max_stages = self.max_stages + 1
+        if remove_duplicates:
             self.max_stages = self.max_stages + 1
 
         # get pivot(anchor) module details
@@ -1003,6 +1010,10 @@ class Replicator():
             self.stage = 8
             self.update_progress(self.stage, 0.0, "Replicating drawings")
             self.replicate_drawings()
+        if remove_duplicates:
+            self.stage = 9
+            self.update_progress(self.stage, 0.0, "Removing duplicates")
+            self.removing_duplicates()
 
 
 def update_progress(stage, percentage, message=None):

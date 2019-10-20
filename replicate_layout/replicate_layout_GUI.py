@@ -71,6 +71,9 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 		self.chkbox_remove = wx.CheckBox( self, wx.ID_ANY, u"Remove existing tracks/zones/drawings", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer14.Add( self.chkbox_remove, 0, wx.ALL, 5 )
 		
+		self.chkbox_remove_duplicates = wx.CheckBox( self, wx.ID_ANY, u"Remove duplicates (might take some time)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer14.Add( self.chkbox_remove_duplicates, 0, wx.ALL, 5 )
+		
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 		
 		self.btn_ok = wx.Button( self, wx.ID_OK, u"Ok", wx.DefaultPosition, wx.DefaultSize, 0 )
