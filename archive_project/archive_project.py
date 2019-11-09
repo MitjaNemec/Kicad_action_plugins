@@ -137,7 +137,6 @@ def archive_worksheet(board):
         project_file = f.readlines()
 
     # find worksheet entry
-    worksheet_path = None
     for line_index in range(len(project_file)):
         line = project_file[line_index]
         if line.startswith("PageLayoutDescrFile="):
@@ -147,7 +146,12 @@ def archive_worksheet(board):
 
             # copy worksheet to local path
             destination_path = os.path.join(project_dir, worksheet_filename)
-            shutil.copy2(worksheet_path, os.path.join(project_dir, destination_path))
+            try:
+                shutil.copy2(worksheet_path, os.path.join(project_dir, destination_path))
+            except shutil.Error:
+                logger.info("Destination file: " + destination_path + " already exists.")
+            except OSError:
+                logger.info("Source file: " + worksheet_path + " does not exist.")
 
             # try writing the project file
             new_line = "PageLayoutDescrFile=" + worksheet_filename + "\n"
@@ -155,6 +159,7 @@ def archive_worksheet(board):
 
     with open(project_name, "w") as f:
         f.writelines(project_file)
+
 
 def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False):
     global __name__
