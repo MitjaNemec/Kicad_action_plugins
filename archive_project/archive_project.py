@@ -127,7 +127,7 @@ def find_all_sch_files(filename, list_of_files):
 
 
 def archive_worksheet(board):
-    logger.info("Starting to archive symbols")
+    logger.info("Starting to archive worksheets")
     # get project name
     pcb_filename = os.path.abspath(board.GetFileName())
     project_name = pcb_filename.replace(".kicad_pcb", ".pro")
@@ -140,7 +140,25 @@ def archive_worksheet(board):
     for line_index in range(len(project_file)):
         line = project_file[line_index]
         if line.startswith("PageLayoutDescrFile="):
-            worksheet_path = os.path.abspath(line.lstrip("PageLayoutDescrFile=").rstrip())
+            file_descriptor = line.lstrip("PageLayoutDescrFile=").rstrip()
+            logger.info("Found worksheet entry: " + file_descriptor)
+            worksheet_path = os.path.abspath(file_descriptor)
+            logger.info("Full worksheet path: " + worksheet_path)
+
+            if not os.path.isfile(worksheet_path):
+                logger.info("Worksheet file does not exist")
+                raise IOError
+
+            logger.info("Worksheet file does exist")
+
+            # try to open the file to see if we've got read access
+            try:
+                with open(worksheet_path) as f:
+                    logger.info("Worksheet file exists and we can read it")
+            except IOError:
+                logger.info("Worksheet file exists but is not accessible")
+                raise IOError
+
             worksheet_filename = os.path.basename(worksheet_path)
             line_index = project_file.index(line)
 
@@ -150,8 +168,12 @@ def archive_worksheet(board):
                 shutil.copy2(worksheet_path, os.path.join(project_dir, destination_path))
             except shutil.Error:
                 logger.info("Destination file: " + destination_path + " already exists.")
-            except OSError:
+            except OSError as e:
                 logger.info("Source file: " + worksheet_path + " does not exist.")
+                raise e
+            except IOError as e:
+                logger.info("Can not access the source file: " + worksheet_path)
+                raise e
 
             # try writing the project file
             new_line = "PageLayoutDescrFile=" + worksheet_filename + "\n"
