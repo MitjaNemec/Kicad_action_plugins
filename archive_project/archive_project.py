@@ -141,14 +141,14 @@ def archive_worksheet(board):
         line = project_file[line_index]
         if line.startswith("PageLayoutDescrFile="):
             file_descriptor = line.lstrip("PageLayoutDescrFile=").rstrip()
-            logger.info("Found worksheet entry: " + file_descriptor)
+            logger.info("Found worksheet entry: " + file_descriptor + " at line: " + str(line_index))
             worksheet_path = os.path.abspath(file_descriptor)
             logger.info("Full worksheet path: " + worksheet_path)
 
             if not os.path.isfile(worksheet_path):
                 logger.info("Worksheet file does not exist")
-                raise IOError
-
+                # I don't dare to change the project file in this case
+                continue
             logger.info("Worksheet file does exist")
 
             # try to open the file to see if we've got read access

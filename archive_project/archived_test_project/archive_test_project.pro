@@ -24,7 +24,7 @@ LabSize=50
 ERC_TestSimilarLabels=1
 [pcbnew]
 version=1
-PageLayoutDescrFile=C:/Program Files/KiCad/share/kicad/template/pagelayout_logo.kicad_wks
+PageLayoutDescrFile=
 LastNetListRead=
 CopperLayerCount=2
 BoardThickness=1.6
