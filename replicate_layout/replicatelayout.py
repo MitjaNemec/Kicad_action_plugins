@@ -1014,6 +1014,9 @@ class Replicator():
             self.stage = 9
             self.update_progress(self.stage, 0.0, "Removing duplicates")
             self.removing_duplicates()
+        # finally at the end refill the zones
+        filler = pcbnew.ZONE_FILLER(self.board)
+        filler.Fill(self.board.Zones())
 
 
 def update_progress(stage, percentage, message=None):
