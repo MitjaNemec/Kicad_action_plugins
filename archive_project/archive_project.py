@@ -556,6 +556,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     # go through all modules
     not_copied = []
     for mod in modules:
+        logger.debug("Getting 3D models for footprint of: " + mod.GetReference())
         # find all 3D models linked to module(footprint)
         models = mod.Models()
         # go thorugh all models bound to module
@@ -584,35 +585,35 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                     path = model_library_path
                 # if variable is defined, find proper model path
                 if path is not None:
-                    model_path = os.path.normpath(path+model_path[end_index+1:])
-                    clean_model_path = model_path
+                    clean_model_path = os.path.normpath(path+model_path[end_index+1:])
                 # if variable is not defined, we can not find the model. Thus don't put it on the list
                 else:
                     logger.info("Can not find model defined with enviroment variable:\n" + model_path)
             # check if there is no path (model is local to project
             elif model_path == os.path.basename(model_path):
-                model_path = os.path.normpath(proj_path + "//" + model_path)
-                clean_model_path = model_path
+                clean_model_path = os.path.normpath(proj_path + "//" + model_path)
             # check if model is given with absolute path
             elif os.path.exists(model_path):
                 clean_model_path = model_path
             # otherwise we don't know how to parse the path ignorring it
             else:
+                clean_model_path = None
                 logger.info("Can not find model:\n" + model_path)
 
             # copy model
-            model_without_extension = clean_model_path.rsplit('.', 1)[0]
             copied_at_least_one = False
-            for ext in ['.wrl', '.stp', '.step', '.igs']:
-                try:
-                    shutil.copy2(model_without_extension + ext, model_folder_path)
-                    copied_at_least_one = True
-                # src and dest are the same
-                except shutil.Error:
-                    copied_at_least_one = True
-                # file not found
-                except (OSError, IOError):
-                    pass
+            if clean_model_path:
+                model_without_extension = clean_model_path.rsplit('.', 1)[0]
+                for ext in ['.wrl', '.stp', '.step', '.igs']:
+                    try:
+                        shutil.copy2(model_without_extension + ext, model_folder_path)
+                        copied_at_least_one = True
+                    # src and dest are the same
+                    except shutil.Error:
+                        copied_at_least_one = True
+                    # file not found
+                    except (OSError, IOError):
+                        pass
 
             if not copied_at_least_one:
                 logger.debug("Did not copy: " + model.m_Filename)
@@ -636,8 +637,8 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    # board = pcbnew.LoadBoard('fresh_test_project/archive_test_project.kicad_pcb')
-    board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
+    board = pcbnew.LoadBoard('fresh_test_project/archive_test_project.kicad_pcb')
+    #board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=True, archive_documentation=True)
     except (ValueError, IOError, LookupError) as error:
