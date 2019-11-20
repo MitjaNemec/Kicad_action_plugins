@@ -597,8 +597,9 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 clean_model_path = model_path
             # otherwise we don't know how to parse the path ignorring it
             else:
-                clean_model_path = None
-                logger.info("Can not find model:\n" + model_path)
+                logger.info("Ambiguios path for the model: " + model_path)
+                clean_model_path = os.path.normpath(os.path.join(model_library_path,model_path))
+                logger.info("Going with: " + clean_model_path)
 
             # copy model
             copied_at_least_one = False
