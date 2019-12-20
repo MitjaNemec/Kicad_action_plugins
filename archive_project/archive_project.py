@@ -202,7 +202,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
         sys_path = os.path.normpath(pcbnew.GetKicadConfigPath())
     else:
         # hardcode the path for my machine - testing works only on my machine
-        sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad//V5")
+        sys_path = os.path.normpath("C://Users//MitjaN//AppData//Roaming//kicad")
 
     logger.info("Kicad config path: " + sys_path)
 
@@ -426,7 +426,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                 if len(link) > 10:
                     logger.info("Trying to archive documentation file: " + link)
                     # if it starts with http then it is url
-                    if link.startswith("http") or link.startswith("\"http"):
+                    if (link.startswith("http") or link.startswith("\"http")) and (link.endswith(".pdf") or link.endswith(".pdf\"")):
                         logger.info("File is encoded with URL")
                         if link.startswith("\""):
                             link = link.strip("\"")
