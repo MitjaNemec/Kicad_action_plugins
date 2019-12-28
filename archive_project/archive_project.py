@@ -425,11 +425,18 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                 link = line_contents[2]
                 if len(link) > 10:
                     logger.info("Trying to archive documentation file: " + link)
-                    # if it starts with http then it is url
-                    if (link.startswith("http") or link.startswith("\"http")) and (link.endswith(".pdf") or link.endswith(".pdf\"")):
+                    # if it is an url
+                    if (link.startswith("http") or link.startswith("\"http")
+                        or link.startswith("https") or link.startswith("\"https")
+                        or link.startswith("www") or link.startswith("\"www"))\
+                        and (link.endswith(".pdf") or link.endswith(".pdf\"")):
+
                         logger.info("File is encoded with URL")
                         if link.startswith("\""):
                             link = link.strip("\"")
+                        if link.startswith("www"):
+                            link = "https://" + link
+
                         # try to get the file
                         doc_filename = os.path.basename(link)
                         destination_dir = os.path.join(proj_path, "documentation")
