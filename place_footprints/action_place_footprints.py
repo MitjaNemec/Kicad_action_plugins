@@ -485,7 +485,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
             logger.info('Sorted and filtered list:\n' + repr(sorted_modules))
 
-            # display dialog
+            # create dialog
             dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference, user_units)
             dlg.list_modules.AppendItems(sorted_modules)
 
@@ -495,10 +495,12 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 set_highlight_on_module(module)
             pcbnew.Refresh()
 
-            # by default select all sheets
+            # by default select all modules
             number_of_items = dlg.list_modules.GetCount()
             for i in range(number_of_items):
                 dlg.list_modules.Select(i)
+
+            # show dialog
             res = dlg.ShowModal()
 
             if res == wx.ID_CANCEL:
@@ -512,6 +514,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             # get list of modules to place
             modules_to_place_indeces = dlg.list_modules.GetSelections()
             modules_to_place = natural_sort([sorted_modules[i] for i in modules_to_place_indeces])
+            logger.info('Modules to place:\n' + repr(modules_to_place))
             # get mode
             if dlg.com_arr.GetStringSelection() == u'Circular':
                 delta_angle = float(dlg.val_y_angle.GetValue())
