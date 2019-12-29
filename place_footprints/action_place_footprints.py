@@ -199,7 +199,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
             number_of_all_sheets = len(self.list_sheets.GetSelections())
             circumference = number_of_all_sheets * self.width
             radius = circumference / (2 * math.pi)
-            angle = 360.0 / number_of_all_sheets
+            angle = 360.0 / (number_of_all_sheets+1)
             if self.user_units == 'mm':
                 self.lbl_x_mag.SetLabelText(u"radius (mm):")
                 self.val_x_mag.SetValue("%.3f" % radius)

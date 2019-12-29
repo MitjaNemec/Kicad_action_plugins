@@ -325,19 +325,12 @@ class Placer():
 
         # get first module position
         reference_module_pos = reference_module.mod.GetPosition()
+        logger.info("reference module position at: " + repr(reference_module_pos))
         reference_index = modules.index(reference_module)
 
-        # get bounding_box_center
-        if by_sheet:
-            modules_on_sheet = self.get_modules_on_sheet(reference_module.sheet_id)
-            bbox_center = self.get_modules_bounding_box_center(modules_on_sheet)
-            height, _ = self.get_modules_bounding_box(modules_on_sheet)
-        else:
-            bbox_center = self.get_modules_bounding_box_center([reference_module])
-            height, _ = self.get_modules_bounding_box([reference_module])
+        point_of_rotation = (reference_module_pos[0], reference_module_pos[1] + radius * SCALE)
 
-        # point of rotation is below bounding box
-        point_of_rotation = (bbox_center[0], bbox_center[1] + (height/2 + radius) * SCALE)
+        logger.info("rotation center at: " + repr(point_of_rotation))
         for mod in modules:
             index = modules.index(mod)
             delta_index = index - reference_index
