@@ -580,7 +580,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                     step_y = float(dlg.val_y_angle.GetValue())/25.4
                 nr_columns = int(dlg.val_columns.GetValue())
                 try:
-                    placer.place_matrix(sorted_modules, pivot_module_reference, step_x, step_y, nr_columns)
+                    placer.place_matrix(modules_to_place, pivot_module_reference, step_x, step_y, nr_columns)
                     logger.info("Placing complete")
                     logging.shutdown()
                 except Exception:
