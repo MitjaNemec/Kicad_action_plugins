@@ -21,7 +21,7 @@ on MacOS:
 
 ## Replicate layout
 
-The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets.
+The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets in eeschema.
 The basic requirement for replication is that the section to be replicated is completely contained within a single hierarchical sheet, and replicated sections are just copies of the same sheet. Complex hierarchies are supported because as replicated sheet can contain subsheets. The plugin replicates footprints, zones, tracks and text.
 
 After the section for replication (pivot section) has been laid out (footprints, tracks, text objects and zones placed) you need to:
