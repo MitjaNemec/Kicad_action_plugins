@@ -422,7 +422,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                     symbols_form_missing_libraries.add(symbolname)
             # if it begins with F3 it might be a data sheet entry
             elif line_contents[0] == "F" and line_contents[1] == "3" and archive_documentation is True:
-                link = line_contents[2]
+                link = line_contents[2].lower()
                 if len(link) > 10:
                     logger.info("Trying to archive documentation file: " + link)
                     # if it is an url
