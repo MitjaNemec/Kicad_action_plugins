@@ -943,9 +943,9 @@ class SaveLayout(RestoreLayout):
         level_filename = [pivot_anchor_mod.filename[pivot_anchor_mod.sheetname.index(x)] for x in level]
         # save all data
         data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level, level_filename)
-        # pickle.dump(data_to_save, new_file, pickle.HIGHEST_PROTOCOL)
         with open(data_file, 'wb') as f:
             pickle.dump(data_to_save, f, 0)
+        logger.info("Succesfully saved the layout")
 
 
 def main():
