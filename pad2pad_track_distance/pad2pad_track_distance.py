@@ -49,15 +49,9 @@ class Distance:
         # get the net the pins are on
         net = pad1.GetNetname()
 
-        # poisci vse track-e
-        tracks = board.GetTracks()
-
-        # poisci samo track-e ki so na pravem net-u
-        self.tracks_on_net = []
-        for track in tracks:
-            track_net_name = track.GetNetname()
-            if track_net_name == net:
-                self.tracks_on_net.append(track)
+        # find all tracks on the net
+        netcode = self.board.GetNetcodeFromNetname(net)
+        self.tracks_on_net = self.board.TracksInNet(netcode)
 
         # starting point and layer
         self.start_point = selected_pads[0].GetPosition()

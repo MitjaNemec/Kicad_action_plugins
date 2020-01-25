@@ -116,15 +116,12 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
     def refresh(self):
         self.logger.info("Refreshing net lengths")
         start_time = timeit.default_timer()
-        # get all tracks
-        tracks = self.board.GetTracks()
 
-        # find only tracks on this net
+        # go through all the nets
         for net in self.nets:
-            tracks_on_net = []
-            for t in tracks:
-                if t.GetNetname() == net:
-                    tracks_on_net.append(t)
+            # get tracks on net
+            netcode = self.board.GetNetcodeFromNetname(net)
+            tracks_on_net = self.board.TracksInNet(netcode)
 
             # sum their lenght
             length = 0
