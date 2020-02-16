@@ -459,19 +459,27 @@ class Replicator():
         # find closest match
         mod_pairs = []
         mod_pairs_by_reference = []
-        for mod in mod_matches:
-            index = mod_matches.index(mod)
+        for index in range(len(mod_matches)):
+            mod = mod_matches[index]
+            # get number of matches
             matches = (len(mod) - 3) // 3
-            if matches != 1:
+            # if more than one match, get the most likely one
+            # this is when replicating a sheet which consist of two or more identical subsheets (multiple hierachy)
+            if matches > 1:
                 match_len = []
                 for index in range(0, matches):
                     match_len.append(len(set(mod[2]) & set(mod[2+3*(index+1)])))
                 index = match_len.index(max(match_len))
                 mod_pairs.append((mod[0], mod[3*(index+1)]))
                 mod_pairs_by_reference.append((mod[0].GetReference(), mod[3*(index+1)].GetReference()))
+            # if only one match
             elif matches == 1:
                 mod_pairs.append((mod[0], mod[3]))
                 mod_pairs_by_reference.append((mod[0].GetReference(), mod[3].GetReference()))
+            # can not find at least one matching footprint
+            elif matches == 0:
+                raise LookupError("Could not find at least one matching footprint for: " + mod[0].GetReference() +
+                                  ".\nPlease make sure that schematics and layout are in sync.")
 
         pad_pairs = []
         for x in range(len(mod_pairs)):
@@ -1064,7 +1072,8 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     # now we are ready for replication
     replicator.update_progress = update_progress
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
-                                 containing=containing, remove=remove, tracks=True, zones=True, text=True, drawings=True)
+                                 containing=containing, remove=remove, remove_duplicates=True,
+                                 tracks=True, zones=True, text=True, drawings=True)
 
     saved1 = pcbnew.SaveBoard(out_filename, board)
     test_file = out_filename.replace("temp", "test")
