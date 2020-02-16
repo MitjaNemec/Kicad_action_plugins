@@ -688,6 +688,7 @@ class Replicator():
                     mod_text_items[index].SetMultilineAllowed(pivot_text.IsMultilineAllowed())
                     mod_text_items[index].SetHorizJustify(pivot_text.GetHorizJustify())
                     mod_text_items[index].SetVertJustify(pivot_text.GetVertJustify())
+                    mod_text_items[index].SetKeepUpright(pivot_text.IsKeepUpright())
                     # set visibility
                     mod_text_items[index].SetVisible(pivot_text.IsVisible())
 
