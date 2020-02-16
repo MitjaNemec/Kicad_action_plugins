@@ -1072,8 +1072,8 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     # now we are ready for replication
     replicator.update_progress = update_progress
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
-                                 containing=containing, remove=remove, remove_duplicates=True,
-                                 tracks=True, zones=True, text=True, drawings=True)
+                                containing=containing, remove=remove, remove_duplicates=True,
+                                tracks=True, zones=True, text=True, drawings=True)
 
     saved1 = pcbnew.SaveBoard(out_filename, board)
     test_file = out_filename.replace("temp", "test")
