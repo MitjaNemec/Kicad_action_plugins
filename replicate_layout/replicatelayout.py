@@ -593,8 +593,8 @@ class Replicator():
             # go through all modules
             mod_sheet = self.get_modules_on_sheet(sheet)
             nr_mods = len(mod_sheet)
-            for track_index in range(nr_mods):
-                mod = mod_sheet[track_index]
+            for mod_index in range(nr_mods):
+                mod = mod_sheet[mod_index]
                 progress = progress + (1/nr_sheets)*(1/nr_mods)
                 self.update_progress(self.stage, progress, None)
 
