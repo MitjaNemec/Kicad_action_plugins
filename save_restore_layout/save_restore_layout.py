@@ -718,6 +718,8 @@ class RestoreLayout():
 
         # so one takes the last source level only
         last_level = source_level_filename[-1]
+        logger.info("Destination footprint is:" + repr(anchor_mod.ref))
+        logger.info("Destination levels available are:" + repr(anchor_mod.sheetname))
         indx = anchor_mod.filename.index(last_level)
         level = anchor_mod.sheetname[0:indx+1]
 
