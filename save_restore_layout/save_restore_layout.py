@@ -711,7 +711,7 @@ class RestoreLayout():
 
         # get saved hierarchy
         source_level_filename = data_saved.level_filename
-        logger.info("Source levels is:" + repr(source_level_filename))
+        logger.info("Source level is:" + repr(source_level_filename))
 
         # find the corresponding hierarchy in the target layout
         # this is tricky as target design might be shallower or deeper than source design
@@ -722,7 +722,7 @@ class RestoreLayout():
         level = anchor_mod.sheetname[0:indx+1]
 
         destination_level_filename = anchor_mod.filename[0:indx+1]
-        logger.info("Destination levels is:" + repr(destination_level_filename))
+        logger.info("Destination level is:" + repr(destination_level_filename))
 
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
         list_of_sheet_files = anchor_mod.filename[len(destination_level_filename)-1:]
@@ -964,6 +964,9 @@ def main():
 
     data_file = 'source_layout_test.pckl'
     save_layout.save_layout(pivot_mod, pivot_mod.sheetname[0:index + 1], data_file)
+
+    logger.info("--- layout saved succesfully --")
+    logger.info("--- proceeding with restoring --")
 
     # restore layout
     data_file = os.path.abspath(data_file)
