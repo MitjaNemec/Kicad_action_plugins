@@ -523,7 +523,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 else:
                     radius = float(dlg.val_x_mag.GetValue())/25.4
                 try:
-                    placer.place_circular(modules_to_place, pivot_module_reference, radius, delta_angle, False)
+                    placer.place_circular(modules_to_place, pivot_module_reference, radius, delta_angle)
                     logger.info("Placing complete")
                     logging.shutdown()
                 except Exception:
@@ -645,7 +645,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 else:
                     radius = float(dlg.val_x_mag.GetValue())/25.4
                 try:
-                    placer.place_circular(sorted_modules, pivot_module_reference, radius, delta_angle, True)
+                    placer.place_circular(sorted_modules, pivot_module_reference, radius, delta_angle)
                     logger.info("Placing complete")
                     logging.shutdown()
                 except Exception:

@@ -314,7 +314,7 @@ class Placer():
         pos_x = (right+left)/2
         return (pos_x, pos_y)
 
-    def place_circular(self, modules_to_place, reference_footprint, radius, delta_angle, by_sheet):
+    def place_circular(self, modules_to_place, reference_footprint, radius, delta_angle):
         logger.info("Starting placing with circular layout")
         # get proper module_list
         modules = []
@@ -378,6 +378,7 @@ class Placer():
             modules.append(self.get_mod_by_ref(mod_ref))
 
         # get first module position
+        # TODO - take reference footprint position for start and build matrix around it (before, after)
         first_module = modules[0]
         first_module_pos = first_module.mod.GetPosition()
         for mod in modules[1:]:
