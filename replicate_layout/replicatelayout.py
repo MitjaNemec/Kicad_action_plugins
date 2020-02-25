@@ -284,7 +284,7 @@ class Replicator():
         modules_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
-            if level == mod.sheet_id[0:level_depth] and (mod.mod.IsLocked() == False or locked==True):
+            if level == mod.sheet_id[0:level_depth]:
                 modules_on_sheet.append(mod)
         return modules_on_sheet
 
@@ -292,7 +292,7 @@ class Replicator():
         modules_not_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
-            if level != mod.sheet_id[0:level_depth] and (mod.mod.IsLocked() == False or locked==True):
+            if level != mod.sheet_id[0:level_depth]:
                 modules_not_on_sheet.append(mod)
         return modules_not_on_sheet
 
@@ -595,6 +595,10 @@ class Replicator():
             nr_mods = len(mod_sheet)
             for track_index in range(nr_mods):
                 mod = mod_sheet[track_index]
+                # skip locked footprints
+                if mod.mod.IsLocked() == True and self.locked == False:
+                    continue
+                    
                 progress = progress + (1/nr_sheets)*(1/nr_mods)
                 self.update_progress(self.stage, progress, None)
 
