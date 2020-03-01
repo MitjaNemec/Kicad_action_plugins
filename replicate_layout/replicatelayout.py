@@ -280,7 +280,7 @@ class Replicator():
 
         return all_sheets
 
-    def get_modules_on_sheet(self, level, locked):
+    def get_modules_on_sheet(self, level):
         modules_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
@@ -288,7 +288,7 @@ class Replicator():
                 modules_on_sheet.append(mod)
         return modules_on_sheet
 
-    def get_modules_not_on_sheet(self, level, locked):
+    def get_modules_not_on_sheet(self, level):
         modules_not_on_sheet = []
         level_depth = len(level)
         for mod in self.modules:
@@ -412,7 +412,7 @@ class Replicator():
 
     def get_sheet_anchor_module(self, sheet):
         # get all modules on this sheet
-        mod_sheet = self.get_modules_on_sheet(sheet, self.locked)
+        mod_sheet = self.get_modules_on_sheet(sheet)
         # get anchor module
         list_of_possible_anchor_modules = []
         for mod in mod_sheet:
@@ -439,7 +439,7 @@ class Replicator():
     def get_net_pairs(self, sheet):
         """ find all net pairs between pivot sheet and current sheet"""
         # find all modules, pads and nets on this sheet
-        sheet_modules = self.get_modules_on_sheet(sheet, self.locked)
+        sheet_modules = self.get_modules_on_sheet(sheet)
 
         # find all net pairs via same modules pads,
         net_pairs = []
@@ -541,11 +541,11 @@ class Replicator():
         # get a list of modules for replication
         logger.info("Getting the list of pivot footprints")
         self.update_progress(self.stage, 0/8, None)
-        self.pivot_modules = self.get_modules_on_sheet(level, self.locked)
+        self.pivot_modules = self.get_modules_on_sheet(level)
         # get the rest of the modules
         logger.info("Getting the list of all the remaining footprints")
         self.update_progress(self.stage, 1/8, None)
-        self.other_modules = self.get_modules_not_on_sheet(level, self.locked)
+        self.other_modules = self.get_modules_not_on_sheet(level)
         # get nets local to pivot modules
         logger.info("Getting nets local to pivot footprints")
         self.update_progress(self.stage, 2/8, None)
@@ -591,14 +591,15 @@ class Replicator():
             anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
 
             # go through all modules
-            mod_sheet = self.get_modules_on_sheet(sheet, self.locked)
+            mod_sheet = self.get_modules_on_sheet(sheet)
             nr_mods = len(mod_sheet)
             for track_index in range(nr_mods):
                 mod = mod_sheet[track_index]
+                
                 # skip locked footprints
-                if mod.mod.IsLocked() == True and self.locked == False:
+                if mod.mod.IsLocked() is True and self.locked is False:
                     continue
-                    
+
                 progress = progress + (1/nr_sheets)*(1/nr_mods)
                 self.update_progress(self.stage, progress, None)
 
@@ -879,7 +880,7 @@ class Replicator():
             sheet = self.sheets_for_replication[index]
             self.update_progress(self.stage, index/len(self.sheets_for_replication), None)
             # get modules on a sheet
-            mod_sheet = self.get_modules_on_sheet(sheet, self.locked)
+            mod_sheet = self.get_modules_on_sheet(sheet)
             # get bounding box
             bounding_box = self.get_modules_bounding_box(mod_sheet)
 
@@ -969,7 +970,7 @@ class Replicator():
         logger.info( "Starting replication of sheets: " + repr(sheets_for_replication)
                     +"\non level: " + repr(level)
                     +"\nwith tracks="+repr(tracks)+", zone="+repr(zones)+", text="+repr(text)
-                    +", containing="+repr(containing)+", remov="+repr(remove)+", locked="+repr(locked))
+                    +", containing="+repr(containing)+", remove="+repr(remove)+", locked="+repr(locked))
         self.level = level
         self.pivot_anchor_mod = pivot_mod
         self.sheets_for_replication = sheets_for_replication
@@ -1068,7 +1069,7 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     # first get all the anchor footprints
     all_sheet_footprints = []
     for sheet in sheets_for_replication:
-        all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet, locked))
+        all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet))
     anchor_fp = [x for x in all_sheet_footprints if x.mod_id == pivot_mod.mod_id]
     if all(fp.mod.IsFlipped() == pivot_mod.mod.IsFlipped() for fp in anchor_fp):
         a = 2

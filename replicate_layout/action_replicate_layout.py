@@ -114,7 +114,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
             self.list_sheets.Select(i)
 
         # get all pivot modules on selected level
-        pivot_modules = self.replicator.get_modules_on_sheet(self.pivot_mod.sheet_id[:index+1],self.chkbox_locked.GetValue())
+        pivot_modules = self.replicator.get_modules_on_sheet(self.pivot_mod.sheet_id[:index+1])
         self.pivot_modules = [x.mod for x in pivot_modules]
 
         # highlight all modules on selected level
@@ -138,6 +138,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         rep_drawings = self.chkbox_drawings.GetValue()
         remove_duplicates = self.chkbox_remove_duplicates.GetValue()
         rep_locked=self.chkbox_locked.GetValue()
+
         # failsafe somtimes on my machine wx does not generate a listbox event
         level = self.list_levels.GetSelection()
         selection_indeces = self.list_sheets.GetSelections()
@@ -148,7 +149,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         # first get all the anchor footprints
         all_sheet_footprints = []
         for sheet in sheets_for_replication:
-            all_sheet_footprints.extend(self.replicator.get_modules_on_sheet(sheet, rep_locked))
+            all_sheet_footprints.extend(self.replicator.get_modules_on_sheet(sheet))
         anchor_fp = [x for x in all_sheet_footprints if x.mod_id == self.pivot_mod.mod_id]
         # then check if all of them are on the same layer
         if not all(fp.mod.IsFlipped() == self.pivot_mod.mod.IsFlipped() for fp in anchor_fp):
@@ -188,6 +189,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
                                              drawings=rep_drawings,
                                              remove_duplicates=remove_duplicates,
                                              locked=rep_locked)
+
             self.logger.info("Replication complete")
             # clear highlight on all modules on selected level
             for mod in self.pivot_modules:
