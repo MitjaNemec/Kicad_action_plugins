@@ -595,6 +595,11 @@ class Replicator():
             nr_mods = len(mod_sheet)
             for mod_index in range(nr_mods):
                 mod = mod_sheet[mod_index]
+                
+                # skip locked footprints
+                if mod.mod.IsLocked() is True and self.locked is False:
+                    continue
+
                 progress = progress + (1/nr_sheets)*(1/nr_mods)
                 self.update_progress(self.stage, progress, None)
 
@@ -961,14 +966,15 @@ class Replicator():
         remove_duplicates.remove_duplicates(self.board)
 
     def replicate_layout(self, pivot_mod, level, sheets_for_replication,
-                         containing, remove, tracks, zones, text, drawings, remove_duplicates):
+                         containing, remove, tracks, zones, text, drawings, remove_duplicates, locked):
         logger.info( "Starting replication of sheets: " + repr(sheets_for_replication)
                     +"\non level: " + repr(level)
                     +"\nwith tracks="+repr(tracks)+", zone="+repr(zones)+", text="+repr(text)
-                    +", containing="+repr(containing)+", remov="+repr(remove))
+                    +", containing="+repr(containing)+", remove="+repr(remove)+", locked="+repr(locked))
         self.level = level
         self.pivot_anchor_mod = pivot_mod
         self.sheets_for_replication = sheets_for_replication
+        self.locked = locked
 
         if remove:
             self.max_stages = 2
@@ -1074,7 +1080,7 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
     replicator.update_progress = update_progress
     replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
                                 containing=containing, remove=remove, remove_duplicates=True,
-                                tracks=True, zones=True, text=True, drawings=True)
+                                tracks=True, zones=True, text=True, drawings=True, locked=True)
 
     saved1 = pcbnew.SaveBoard(out_filename, board)
     test_file = out_filename.replace("temp", "test")

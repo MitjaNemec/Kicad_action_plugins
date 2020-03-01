@@ -51,6 +51,9 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 
 		bSizer14.Add( bSizer16, 2, wx.EXPAND, 5 )
 
+		self.chkbox_locked = wx.CheckBox( self, wx.ID_ANY, u"Replicate locked footprints", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer14.Add( self.chkbox_locked, 0, wx.ALL, 5 )
+
 		self.chkbox_tracks = wx.CheckBox( self, wx.ID_ANY, u"Replicate tracks", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.chkbox_tracks.SetValue(True)
 		bSizer14.Add( self.chkbox_tracks, 0, wx.ALL, 5 )
