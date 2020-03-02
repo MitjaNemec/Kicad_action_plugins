@@ -68,15 +68,15 @@ def rotate_around_center(coordinates, angle):
     return new_x, new_y
 
 
-def rotate_around_pivot_point(old_position, pivot_point, angle):
-    """ rotate coordinates for a defined angle in degrees around a pivot point """
-    # get relative position to pivot point
-    rel_x = old_position[0] - pivot_point[0]
-    rel_y = old_position[1] - pivot_point[1]
+def rotate_around_point(old_position, point, angle):
+    """ rotate coordinates for a defined angle in degrees around a point """
+    # get relative position to point
+    rel_x = old_position[0] - point[0]
+    rel_y = old_position[1] - point[1]
     # rotate around
     new_rel_x, new_rel_y = rotate_around_center((rel_x, rel_y), angle)
     # get absolute position
-    new_position = (new_rel_x + pivot_point[0], new_rel_y + pivot_point[1])
+    new_position = (new_rel_x + point[0], new_rel_y + point[1])
     return new_position
 
 
@@ -211,14 +211,12 @@ class Replicator():
         logger.info('getting a list of all footprints on board') 
         bmod = board.GetModules()
         self.modules = []
-        mod_dict = {}
         for module in bmod:
             mod_named_tuple = Module(mod=module,
                                      mod_id=self.get_module_id(module),
                                      sheet_id=self.get_sheet_id(module)[0],
                                      filename=self.get_sheet_id(module)[1], 
                                      ref=module.GetReference())
-            mod_dict[module.GetReference()] = mod_named_tuple
             self.modules.append(mod_named_tuple)
         pass
 
@@ -230,19 +228,18 @@ class Replicator():
         return list_of_modules
 
     def get_sheets_to_replicate(self, mod, level):
-        # TODO - tukaj nekje tici hrosc
         sheet_id = mod.sheet_id
         sheet_file = mod.filename
-        # poisci level_id
+        # find level path id
         level_file = sheet_file[sheet_id.index(level)]
         logger.info('construcing a list of sheets suitable for replication on level:'+repr(level)+", file:"+repr(level_file))
 
-        sheet_id_up_to_level = []
+        src_sheet_path = []
         for i in range(len(sheet_id)):
-            sheet_id_up_to_level.append(sheet_id[i])
+            src_sheet_path.append(sheet_id[i])
             if sheet_id[i] == level:
                 break
-        logger.debug("Sheet ids up to the level:" + repr(sheet_id_up_to_level))
+        logger.debug("Source sheet path up to the level:" + repr(src_sheet_path))
 
         # get all footprints with same ID
         list_of_modules = self.get_list_of_modules_with_same_id(mod.mod_id)
@@ -254,12 +251,12 @@ class Replicator():
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
 
-        # pojdi cez vse footprinte z istim ID-jem
+        # go through all footprints with same ID
         for m in list_of_modules:
-            # in ce ta footprint je na tem nivoju, dodaj ta sheet v seznam
+            # if footprint is on the same file (which should be always)
             if level_file in m.filename:
                 sheet_id_list = []
-                # sestavi hierarhično pot samo do nivoja do katerega želimo
+                # construct hierarchy path only up to the level we want
                 for i in range(len(m.filename)):
                     sheet_id_list.append(m.sheet_id[i])
                     if m.filename[i] == level_file:
@@ -272,11 +269,11 @@ class Replicator():
         all_sheets = list(k for k, _ in itertools.groupby(all_sheets))
         logger.debug("All sheets to replicate sorted:\n" + repr(all_sheets))
 
-        # remove pivot_sheet
-        if sheet_id_up_to_level in all_sheets:
-            index = all_sheets.index(sheet_id_up_to_level)
+        # remove source sheet
+        if src_sheet_path in all_sheets:
+            index = all_sheets.index(src_sheet_path)
             del all_sheets[index]
-        logger.info("All sheets to replicate sorted and without pivot_sheet:\n" + repr(all_sheets))
+        logger.info("All sheets to replicate sorted and without source sheet:\n" + repr(all_sheets))
 
         return all_sheets
 
@@ -314,21 +311,21 @@ class Replicator():
                 nets_clean.append(i)
         return nets_clean
 
-    def get_local_nets(self, pivot_modules, other_modules):
+    def get_local_nets(self, src_modules, other_modules):
         # then get nets other modules are connected to
         other_nets = self.get_nets_from_modules(other_modules)
-        # then get nets only pivot modules are connected to
-        pivot_nets = self.get_nets_from_modules(pivot_modules)
+        # then get nets only source modules are connected to
+        src_nets = self.get_nets_from_modules(src_modules)
 
-        pivot_local_nets = []
-        for net in pivot_nets:
+        src_local_nets = []
+        for net in src_nets:
             if net not in other_nets:
-                pivot_local_nets.append(net)
+                src_local_nets.append(net)
 
-        return pivot_local_nets
+        return src_local_nets
 
     def get_modules_bounding_box(self, modules):
-        # get the pivot bounding box
+        # get the source bounding box
         bounding_box = modules[0].mod.GetFootprintRect()
         top = bounding_box.GetTop()
         bottom = bounding_box.GetBottom()
@@ -347,7 +344,7 @@ class Replicator():
         return bounding_box
 
     def get_tracks(self, bounding_box, local_nets, containing):
-        # find all tracks within the pivot bounding box
+        # find all tracks within the source bounding box
         all_tracks = self.board.GetTracks()
         # keep only tracks that are within our bounding box
         tracks = []
@@ -367,11 +364,11 @@ class Replicator():
         return tracks
 
     def get_zones(self, bounding_box, containing):
-        # get all zones in pivot bounding box
+        # get all zones in source bounding box
         all_zones = []
         for zoneid in range(self.board.GetAreaCount()):
             all_zones.append(self.board.GetArea(zoneid))
-        # find all zones which are completely within the pivot bounding box
+        # find all zones which are completely within the source bounding box
         zones = []
         for zone in all_zones:
             zone_bb = zone.GetBoundingBox()
@@ -381,63 +378,65 @@ class Replicator():
         return zones
 
     def get_text_items(self, bounding_box, containing):
-        # get all text objects in pivot bounding box
-        pivot_text = []
+        # get all text objects in source bounding box
+        all_text = []
         for drawing in self.board.GetDrawings():
             if not isinstance(drawing, pcbnew.TEXTE_PCB):
                 continue
             text_bb = drawing.GetBoundingBox()
             if containing:
                 if bounding_box.Contains(text_bb):
-                    pivot_text.append(drawing)
+                    all_text.append(drawing)
             else:
                 if bounding_box.Intersects(text_bb):
-                    pivot_text.append(drawing)
-        return pivot_text
+                    all_text.append(drawing)
+        return all_text
 
     def get_drawings(self, bounding_box, containing):
-        # get all drawings in pivot bounding box
-        pivot_drawings = []
+        # get all drawings in source bounding box
+        all_drawings = []
         for drawing in self.board.GetDrawings():
             if not isinstance(drawing, pcbnew.DRAWSEGMENT):
                 continue
             dwg_bb = drawing.GetBoundingBox()
             if containing:
                 if bounding_box.Contains(dwg_bb):
-                    pivot_drawings.append(drawing)
+                    all_drawings.append(drawing)
             else:
                 if bounding_box.Intersects(dwg_bb):
-                    pivot_drawings.append(drawing)
-        return pivot_drawings
+                    all_drawings.append(drawing)
+        return all_drawings
 
     def get_sheet_anchor_module(self, sheet):
         # get all modules on this sheet
-        mod_sheet = self.get_modules_on_sheet(sheet)
+        sheet_modules = self.get_modules_on_sheet(sheet)
         # get anchor module
         list_of_possible_anchor_modules = []
-        for mod in mod_sheet:
-            if mod.mod_id == self.pivot_anchor_mod.mod_id:
+        for mod in sheet_modules:
+            if mod.mod_id == self.src_anchor_module.mod_id:
                 list_of_possible_anchor_modules.append(mod)
 
-        # if there is more than one possible anchor, select the correct one
+        # if there is only one
         if len(list_of_possible_anchor_modules) == 1:
-            anchor_mod = list_of_possible_anchor_modules[0]
+            sheet_anchor_mod = list_of_possible_anchor_modules[0]
+        # if there are more then one, we're dealing with multiple hierarchy
+        # the correct one is the one who's path is the best match
         else:
             list_of_mathces = []
             for mod in list_of_possible_anchor_modules:
                 index = list_of_possible_anchor_modules.index(mod)
                 matches = 0
-                for item in self.pivot_anchor_mod.sheet_id:
+                for item in self.src_anchor_module.sheet_id:
                     if item in mod.sheet_id:
                         matches = matches + 1
                 list_of_mathces.append((index, matches))
-            # todo select the one with most matches
+            # select the one with most matches
             index, _ = max(list_of_mathces, key=lambda item: item[1])
-            anchor_mod = list_of_possible_anchor_modules[index]
-        return anchor_mod
+            sheet_anchor_mod = list_of_possible_anchor_modules[index]
+        return sheet_anchor_mod
 
     def get_net_pairs(self, sheet):
-        """ find all net pairs between pivot sheet and current sheet"""
+        """ find all net pairs between source sheet and current sheet"""
         # find all modules, pads and nets on this sheet
         sheet_modules = self.get_modules_on_sheet(sheet)
 
@@ -446,16 +445,16 @@ class Replicator():
         net_dict = {}
         # construct module pairs
         mod_matches = []
-        for p_mod in self.pivot_modules:
-            mod_matches.append([p_mod.mod, p_mod.mod_id, p_mod.sheet_id])
+        for s_mod in self.src_modules:
+            mod_matches.append([s_mod.mod, s_mod.mod_id, s_mod.sheet_id])
 
-        for s_mod in sheet_modules:
+        for d_mod in sheet_modules:
             for mod in mod_matches:
-                if mod[1] == s_mod.mod_id:
+                if mod[1] == d_mod.mod_id:
                     index = mod_matches.index(mod)
-                    mod_matches[index].append(s_mod.mod)
-                    mod_matches[index].append(s_mod.mod_id)
-                    mod_matches[index].append(s_mod.sheet_id)
+                    mod_matches[index].append(d_mod.mod)
+                    mod_matches[index].append(d_mod.mod_id)
+                    mod_matches[index].append(d_mod.sheet_id)
         # find closest match
         mod_pairs = []
         mod_pairs_by_reference = []
@@ -465,6 +464,7 @@ class Replicator():
             matches = (len(mod) - 3) // 3
             # if more than one match, get the most likely one
             # this is when replicating a sheet which consist of two or more identical subsheets (multiple hierachy)
+            # todo might want to find common code with code in "get_sheet_anchor_module"
             if matches > 1:
                 match_len = []
                 for index in range(0, matches):
@@ -488,49 +488,49 @@ class Replicator():
         for pair in mod_pairs:
             index = mod_pairs.index(pair)
             # get all footprint pads
-            p_mod_pads = pair[0].Pads()
-            s_mod_pads = pair[1].Pads()
+            s_mod_pads = pair[0].Pads()
+            d_mod_pads = pair[1].Pads()
             # create a list of padsnames and pads
-            p_pads = []
             s_pads = []
-            for pad in p_mod_pads:
-                p_pads.append((pad.GetName(), pad))
+            d_pads = []
             for pad in s_mod_pads:
                 s_pads.append((pad.GetName(), pad))
+            for pad in d_mod_pads:
+                d_pads.append((pad.GetName(), pad))
             # sort by padnames
-            p_pads.sort(key=lambda tup: tup[0])
             s_pads.sort(key=lambda tup: tup[0])
+            d_pads.sort(key=lambda tup: tup[0])
             # extract pads and append them to pad pairs list
-            pad_pairs[index].append([x[1] for x in p_pads])
             pad_pairs[index].append([x[1] for x in s_pads])
+            pad_pairs[index].append([x[1] for x in d_pads])
 
         for pair in mod_pairs:
             index = mod_pairs.index(pair)
-            p_mod = pair[0]
-            s_mod = pair[1]
+            s_mod = pair[0]
+            d_mod = pair[1]
             # get their pads
-            p_mod_pads = pad_pairs[index][0]
-            s_mod_pads = pad_pairs[index][1]
+            s_mod_pads = pad_pairs[index][0]
+            d_mod_pads = pad_pairs[index][1]
             # I am going to assume pads are in the same order
-            p_nets = []
             s_nets = []
+            d_nets = []
             # get nelists for each pad
-            for p_pad in p_mod_pads:
+            for p_pad in s_mod_pads:
                 pad_name = p_pad.GetName()
-                p_nets.append((pad_name, p_pad.GetNetname()))
-            for s_pad in s_mod_pads:
+                s_nets.append((pad_name, p_pad.GetNetname()))
+            for s_pad in d_mod_pads:
                 pad_name = s_pad.GetName()
-                s_nets.append((pad_name, s_pad.GetNetname()))
+                d_nets.append((pad_name, s_pad.GetNetname()))
                 net_dict[s_pad.GetNetname()] = s_pad.GetNet()
             # sort both lists by pad name
             # so that they have the same order - needed in some cases
             # as the iterator thorugh the pads list does not return pads always in the proper order
-            p_nets.sort(key=lambda tup: tup[0])
             s_nets.sort(key=lambda tup: tup[0])
+            d_nets.sort(key=lambda tup: tup[0])
             # build list of net tupules
-            for net in p_nets:
-                index = get_index_of_tuple(p_nets, 1, net[1])
-                net_pairs.append((p_nets[index][1], s_nets[index][1]))
+            for net in s_nets:
+                index = get_index_of_tuple(s_nets, 1, net[1])
+                net_pairs.append((s_nets[index][1], d_nets[index][1]))
 
         # remove duplicates
         net_pairs_clean = list(set(net_pairs))
@@ -538,200 +538,200 @@ class Replicator():
         return net_pairs_clean, net_dict
 
     def prepare_for_replication(self, level, containing):
-        # get a list of modules for replication
-        logger.info("Getting the list of pivot footprints")
+        # get a list of source modules for replication
+        logger.info("Getting the list of source footprints")
         self.update_progress(self.stage, 0/8, None)
-        self.pivot_modules = self.get_modules_on_sheet(level)
+        self.src_modules = self.get_modules_on_sheet(level)
         # get the rest of the modules
         logger.info("Getting the list of all the remaining footprints")
         self.update_progress(self.stage, 1/8, None)
         self.other_modules = self.get_modules_not_on_sheet(level)
-        # get nets local to pivot modules
-        logger.info("Getting nets local to pivot footprints")
+        # get nets local to source modules
+        logger.info("Getting nets local to source footprints")
         self.update_progress(self.stage, 2/8, None)
-        self.pivot_local_nets = self.get_local_nets(self.pivot_modules, self.other_modules)
-        # get pivot bounding box
-        logger.info("Getting pivot bounding box")
+        self.src_local_nets = self.get_local_nets(self.src_modules, self.other_modules)
+        # get source bounding box
+        logger.info("Getting source bounding box")
         self.update_progress(self.stage, 3/8, None)
-        self.pivot_bounding_box = self.get_modules_bounding_box(self.pivot_modules)
-        # get pivot tracks
-        logger.info("Getting pivot tracks")
+        self.src_bounding_box = self.get_modules_bounding_box(self.src_modules)
+        # get source tracks
+        logger.info("Getting source tracks")
         self.update_progress(self.stage, 4/8, None)
-        self.pivot_tracks = self.get_tracks(self.pivot_bounding_box, self.pivot_local_nets, containing)
-        # get pivot zones
-        logger.info("Getting pivot zones")
+        self.src_tracks = self.get_tracks(self.src_bounding_box, self.src_local_nets, containing)
+        # get source zones
+        logger.info("Getting source zones")
         self.update_progress(self.stage, 5/8, None)
-        self.pivot_zones = self.get_zones(self.pivot_bounding_box, containing)
-        # get pivot text items
-        logger.info("Getting pivot text items")
+        self.src_zones = self.get_zones(self.src_bounding_box, containing)
+        # get source text items
+        logger.info("Getting source text items")
         self.update_progress(self.stage, 6/8, None)
-        self.pivot_text = self.get_text_items(self.pivot_bounding_box, containing)
-        # get pivot drawings
-        logger.info("Getting pivot text items")
+        self.src_text = self.get_text_items(self.src_bounding_box, containing)
+        # get source drawings
+        logger.info("Getting source text items")
         self.update_progress(self.stage, 7/8, None)
-        self.pivot_drawings = self.get_drawings(self.pivot_bounding_box, containing)
+        self.src_drawings = self.get_drawings(self.src_bounding_box, containing)
         self.update_progress(self.stage, 8/8, None)
 
     def replicate_modules(self):
         logger.info("Replicating footprints")
-        nr_sheets = len(self.sheets_for_replication)
+        nr_sheets = len(self.dst_sheets)
         for st_index in range(nr_sheets):
-            sheet = self.sheets_for_replication[st_index]
+            sheet = self.dst_sheets[st_index]
             progress = st_index/nr_sheets
             self.update_progress(self.stage, progress, None)
             logger.info("Replicating footprints on sheet " + repr(sheet))
             # get anchor module
-            anchor_mod = self.get_sheet_anchor_module(sheet)
-            # get anchor angle with respect to pivot module
-            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            dst_anchor_module = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to source module
+            dst_anchor_module_angle = dst_anchor_module.mod.GetOrientationDegrees()
             # get exact anchor position
-            anchor_pos = anchor_mod.mod.GetPosition()
+            dst_anchor_module_position = dst_anchor_module.mod.GetPosition()
 
-            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
-            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+            anchor_delta_angle = self.src_anchor_module.mod.GetOrientationDegrees() - dst_anchor_module_angle
+            anchor_delta_pos = dst_anchor_module_position - self.src_anchor_module.mod.GetPosition()
 
             # go through all modules
-            mod_sheet = self.get_modules_on_sheet(sheet)
-            nr_mods = len(mod_sheet)
+            dst_modules = self.get_modules_on_sheet(sheet)
+            nr_mods = len(dst_modules)
             for mod_index in range(nr_mods):
-                mod = mod_sheet[mod_index]
-                
-                # skip locked footprints
-                if mod.mod.IsLocked() is True and self.locked is False:
-                    continue
+                dst_mod = dst_modules[mod_index]
 
                 progress = progress + (1/nr_sheets)*(1/nr_mods)
                 self.update_progress(self.stage, progress, None)
 
-                # find proper match in pivot modules
-                mod_to_clone = None
-                list_of_possible_pivot_modules = []
-                for pmod in self.pivot_modules:
-                    if pmod.mod_id == mod.mod_id:
-                        list_of_possible_pivot_modules.append(pmod)
+                # skip locked footprints
+                if dst_mod.mod.IsLocked() is True and self.rep_locked is False:
+                    continue
+
+                # find proper match in source modules
+                src_mod = None
+                list_of_possible_src_modules = []
+                for s_mod in self.src_modules:
+                    if s_mod.mod_id == dst_mod.mod_id:
+                        list_of_possible_src_modules.append(s_mod)
 
                 # if there is more than one possible anchor, select the correct one
-                if len(list_of_possible_pivot_modules) == 1:
-                    mod_to_clone = list_of_possible_pivot_modules[0]
+                if len(list_of_possible_src_modules) == 1:
+                    src_mod = list_of_possible_src_modules[0]
                 else:
                     list_of_matches = []
-                    for m in list_of_possible_pivot_modules:
-                        index = list_of_possible_pivot_modules.index(m)
+                    for m in list_of_possible_src_modules:
+                        index = list_of_possible_src_modules.index(m)
                         matches = 0
-                        for item in mod.sheet_id:
+                        for item in dst_mod.sheet_id:
                             if item in m.sheet_id:
                                 matches = matches + 1
                         list_of_matches.append((index, matches))
-                    # todo select the one with most matches
+                    # select the one with most matches
                     index, _ = max(list_of_matches, key=lambda item: item[1])
-                    mod_to_clone = list_of_possible_pivot_modules[index]
+                    src_mod = list_of_possible_src_modules[index]
 
                 # get module to clone position
-                pivot_mod_orientation = mod_to_clone.mod.GetOrientationDegrees()
-                pivot_mod_pos = mod_to_clone.mod.GetPosition()
-                # get relative position with respect to pivot anchor
-                pivot_anchor_pos = self.pivot_anchor_mod.mod.GetPosition()
-                pivot_mod_delta_pos = pivot_mod_pos - pivot_anchor_pos
+                src_module_orientation = src_mod.mod.GetOrientationDegrees()
+                src_module_position = src_mod.mod.GetPosition()
+                # get relative position with respect to source anchor
+                src_anchor_position = self.src_anchor_module.mod.GetPosition()
+                src_mod_delta_position = src_module_position - src_anchor_position
 
                 # new orientation is simple
-                new_orientation = pivot_mod_orientation - anchor_delta_angle
-                old_position = pivot_mod_delta_pos + anchor_pos
-                newposition = rotate_around_pivot_point(old_position, anchor_pos, anchor_delta_angle)
+                new_orientation = src_module_orientation - anchor_delta_angle
+                old_position = src_mod_delta_position + dst_anchor_module_position
+                newposition = rotate_around_point(old_position, dst_anchor_module_position, anchor_delta_angle)
 
                 # convert to tuple of integers
                 newposition = [int(x) for x in newposition]
                 # place current module - only if current module is not also the anchor
-                if mod.ref != anchor_mod.ref:
-                    mod.mod.SetPosition(pcbnew.wxPoint(*newposition))
+                if dst_mod.ref != dst_anchor_module.ref:
+                    dst_mod.mod.SetPosition(pcbnew.wxPoint(*newposition))
 
-                    pivot_mod_flipped = mod_to_clone.mod.IsFlipped()
-                    if (mod.mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.mod.IsFlipped()):
-                        mod.mod.Flip(mod.mod.GetPosition())
-                    mod.mod.SetOrientationDegrees(new_orientation)
+                    src_mod_flipped = src_mod.mod.IsFlipped()
+                    if dst_mod.mod.IsFlipped() != src_mod_flipped:
+                        dst_mod.mod.Flip(dst_mod.mod.GetPosition())
+                    dst_mod.mod.SetOrientationDegrees(new_orientation)
 
                     # Copy local settings.
-                    mod.mod.SetLocalClearance(mod_to_clone.mod.GetLocalClearance())
-                    mod.mod.SetLocalSolderMaskMargin(mod_to_clone.mod.GetLocalSolderMaskMargin())
-                    mod.mod.SetLocalSolderPasteMargin(mod_to_clone.mod.GetLocalSolderPasteMargin())
-                    mod.mod.SetLocalSolderPasteMarginRatio(mod_to_clone.mod.GetLocalSolderPasteMarginRatio())
-                    mod.mod.SetZoneConnection(mod_to_clone.mod.GetZoneConnection())
+                    dst_mod.mod.SetLocalClearance(src_mod.mod.GetLocalClearance())
+                    dst_mod.mod.SetLocalSolderMaskMargin(src_mod.mod.GetLocalSolderMaskMargin())
+                    dst_mod.mod.SetLocalSolderPasteMargin(src_mod.mod.GetLocalSolderPasteMargin())
+                    dst_mod.mod.SetLocalSolderPasteMarginRatio(src_mod.mod.GetLocalSolderPasteMarginRatio())
+                    dst_mod.mod.SetZoneConnection(src_mod.mod.GetZoneConnection())
 
                 # replicate also text layout - also for anchor module. I am counting that the user is lazy and will
                 # just position the anchors and will not edit them
-                # get pivot_module_text
+                # get source_module_text
                 # get module text
-                pivot_mod_text_items = get_module_text_items(mod_to_clone)
-                mod_text_items = get_module_text_items(mod)
-                # check if both modules (pivot and the one for replication) have the same number of text items
-                if len(pivot_mod_text_items) != len(mod_text_items):
-                    raise LookupError("Pivot module: " + mod_to_clone.ref + " has different number of text items (" + repr(len(pivot_mod_text_items)) 
-                                      + ")\nthan module for replication: " + mod.ref + " (" + repr(len(mod_text_items)) + ")")
+                src_mod_text_items = get_module_text_items(src_mod)
+                dst_mod_text_items = get_module_text_items(dst_mod)
+                # check if both modules (source and the one for replication) have the same number of text items
+                if len(src_mod_text_items) != len(dst_mod_text_items):
+                    raise LookupError("Source module: " + src_mod.ref + " has different number of text items (" + repr(len(src_mod_text_items))
+                                      + ")\nthan module for replication: " + dst_mod.ref + " (" + repr(len(dst_mod_text_items)) + ")")
                 # replicate each text item
-                for pivot_text in pivot_mod_text_items:
-                    index = pivot_mod_text_items.index(pivot_text)
-                    pivot_text_position = pivot_text.GetPosition() + anchor_delta_pos
+                for src_text in src_mod_text_items:
+                    index = src_mod_text_items.index(src_text)
+                    src_text_position = src_text.GetPosition() + anchor_delta_pos
 
-                    newposition = rotate_around_pivot_point(pivot_text_position, anchor_pos, anchor_delta_angle)
+                    newposition = rotate_around_point(src_text_position, dst_anchor_module_position, anchor_delta_angle)
 
                     # convert to tuple of integers
                     newposition = [int(x) for x in newposition]
-                    mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
+                    dst_mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
 
                     # set orientation
-                    mod_text_items[index].SetTextAngle(pivot_text.GetTextAngle())
+                    dst_mod_text_items[index].SetTextAngle(src_text.GetTextAngle())
                     # thickness
-                    mod_text_items[index].SetThickness(pivot_text.GetThickness())
+                    dst_mod_text_items[index].SetThickness(src_text.GetThickness())
                     # width
-                    mod_text_items[index].SetTextWidth(pivot_text.GetTextWidth())
+                    dst_mod_text_items[index].SetTextWidth(src_text.GetTextWidth())
                     # height
-                    mod_text_items[index].SetTextHeight(pivot_text.GetTextHeight())
+                    dst_mod_text_items[index].SetTextHeight(src_text.GetTextHeight())
                     # rest of the parameters
                     # TODO check SetEffects method, might be better
-                    mod_text_items[index].SetItalic(pivot_text.IsItalic())
-                    mod_text_items[index].SetBold(pivot_text.IsBold())
-                    mod_text_items[index].SetMirrored(pivot_text.IsMirrored())
-                    mod_text_items[index].SetMultilineAllowed(pivot_text.IsMultilineAllowed())
-                    mod_text_items[index].SetHorizJustify(pivot_text.GetHorizJustify())
-                    mod_text_items[index].SetVertJustify(pivot_text.GetVertJustify())
-                    mod_text_items[index].SetKeepUpright(pivot_text.IsKeepUpright())
+                    dst_mod_text_items[index].SetItalic(src_text.IsItalic())
+                    dst_mod_text_items[index].SetBold(src_text.IsBold())
+                    dst_mod_text_items[index].SetMirrored(src_text.IsMirrored())
+                    dst_mod_text_items[index].SetMultilineAllowed(src_text.IsMultilineAllowed())
+                    dst_mod_text_items[index].SetHorizJustify(src_text.GetHorizJustify())
+                    dst_mod_text_items[index].SetVertJustify(src_text.GetVertJustify())
+                    dst_mod_text_items[index].SetKeepUpright(src_text.IsKeepUpright())
                     # set visibility
-                    mod_text_items[index].SetVisible(pivot_text.IsVisible())
+                    dst_mod_text_items[index].SetVisible(src_text.IsVisible())
 
     def replicate_tracks(self):
         logger.info("Replicating tracks")
-        nr_sheets = len(self.sheets_for_replication)
+        nr_sheets = len(self.dst_sheets)
         for st_index in range(nr_sheets):
-            sheet = self.sheets_for_replication[st_index]
+            sheet = self.dst_sheets[st_index]
             progress = st_index/nr_sheets
             self.update_progress(self.stage, progress, None)
             logger.info("Replicating tracks on sheet " + repr(sheet))
 
             # get anchor module
-            mod2 = self.get_sheet_anchor_module(sheet)
-            # get anchor angle with respect to pivot module
-            mod2_angle = mod2.mod.GetOrientation()
+            dst_anchor_module = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to source anchor module
+            dst_anchor_module_angle = dst_anchor_module.mod.GetOrientation()
             # get exact anchor position
-            mod2_pos = mod2.mod.GetPosition()
+            dst_anchor_module_position = dst_anchor_module.mod.GetPosition()
 
-            mod1_angle = self.pivot_anchor_mod.mod.GetOrientation()
-            mod1_pos = self.pivot_anchor_mod.mod.GetPosition()
+            src_anchor_module_angle = self.src_anchor_module.mod.GetOrientation()
+            src_anchor_module_position = self.src_anchor_module.mod.GetPosition()
 
-            move_vector = mod2_pos - mod1_pos
-            delta_orientation = mod2_angle - mod1_angle
+            move_vector = dst_anchor_module_position - src_anchor_module_position
+            delta_orientation = dst_anchor_module_angle - src_anchor_module_angle
 
             net_pairs, net_dict = self.get_net_pairs(sheet)
 
             # go through all the tracks
-            nr_tracks = len(self.pivot_tracks)
+            nr_tracks = len(self.src_tracks)
             for track_index in range(nr_tracks):
-                track = self.pivot_tracks[track_index]
+                track = self.src_tracks[track_index]
                 progress = progress + (1/nr_sheets)*(1/nr_tracks)
                 self.update_progress(self.stage, progress, None)
-                # get from which net we are clonning
+                # get from which net we are cloning
                 from_net_name = track.GetNetname()
                 # find to net
                 tup = [item for item in net_pairs if item[0] == from_net_name]
-                # if net was not fount, then the track is not part of this sheet and should not be cloned
+                # if net was not found, then the track is not part of this sheet and should not be cloned
                 if not tup:
                     pass
                 else:
@@ -741,7 +741,7 @@ class Replicator():
 
                     # make a duplicate, move it, rotate it, select proper net and add it to the board
                     new_track = track.Duplicate()
-                    new_track.Rotate(mod1_pos, delta_orientation)
+                    new_track.Rotate(src_anchor_module_position, delta_orientation)
                     new_track.Move(move_vector)
                     new_track.SetNetCode(to_net_code)
                     new_track.SetNet(to_net_item)
@@ -751,35 +751,35 @@ class Replicator():
         """ method which replicates zones"""
         logger.info("Replicating zones")
         # start cloning
-        nr_sheets = len(self.sheets_for_replication)
+        nr_sheets = len(self.dst_sheets)
         for st_index in range(nr_sheets):
-            sheet = self.sheets_for_replication[st_index]
+            sheet = self.dst_sheets[st_index]
             progress = st_index/nr_sheets
             self.update_progress(self.stage, progress, None)
             logger.info("Replicating zones on sheet " + repr(sheet))
 
             # get anchor module
-            mod2 = self.get_sheet_anchor_module(sheet)
-            # get anchor angle with respect to pivot module
-            mod2_angle = mod2.mod.GetOrientation()
+            dst_anchor_module = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to source anchor module
+            dst_anchor_module_angle = dst_anchor_module.mod.GetOrientation()
             # get exact anchor position
-            mod2_pos = mod2.mod.GetPosition()
+            dst_anchor_module_position = dst_anchor_module.mod.GetPosition()
 
-            mod1_angle = self.pivot_anchor_mod.mod.GetOrientation()
-            mod1_pos = self.pivot_anchor_mod.mod.GetPosition()
+            src_anchor_module_angle = self.src_anchor_module.mod.GetOrientation()
+            src_anchor_module_position = self.src_anchor_module.mod.GetPosition()
 
-            move_vector = mod2_pos - mod1_pos
-            delta_orientation = mod2_angle - mod1_angle
+            move_vector = dst_anchor_module_position - src_anchor_module_position
+            delta_orientation = dst_anchor_module_angle - src_anchor_module_angle
 
             net_pairs, net_dict = self.get_net_pairs(sheet)
             # go through all the zones
-            nr_zones = len(self.pivot_zones)
+            nr_zones = len(self.src_zones)
             for zone_index in range(nr_zones):
-                zone = self.pivot_zones[zone_index]
+                zone = self.src_zones[zone_index]
                 progress = progress + (1/nr_sheets)*(1/nr_zones)
                 self.update_progress(self.stage, progress, None)
 
-                # get from which net we are clonning
+                # get from which net we are cloning
                 from_net_name = zone.GetNetname()
                 # if zone is not on copper layer it does not matter on which net it is
                 if not zone.IsOnCopperLayer():
@@ -808,7 +808,7 @@ class Replicator():
 
                 # make a duplicate, move it, rotate it, select proper net and add it to the board
                 new_zone = zone.Duplicate()
-                new_zone.Rotate(mod1_pos, delta_orientation)
+                new_zone.Rotate(src_anchor_module_position, delta_orientation)
                 new_zone.Move(move_vector)
                 new_zone.SetNetCode(to_net_code)
                 new_zone.SetNet(to_net_item)
@@ -817,68 +817,70 @@ class Replicator():
     def replicate_text(self):
         logger.info("Replicating text")
         # start cloning
-        nr_sheets = len(self.sheets_for_replication)
+        nr_sheets = len(self.dst_sheets)
         for st_index in range(nr_sheets):
-            sheet = self.sheets_for_replication[st_index]
+            sheet = self.dst_sheets[st_index]
             progress = st_index/nr_sheets
             self.update_progress(self.stage, progress, None)
             logger.info("Replicating text on sheet " + repr(sheet))
+
             # get anchor module
-            anchor_mod = self.get_sheet_anchor_module(sheet)
-            # get anchor angle with respect to pivot module
-            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
+            dst_anchor_module = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to source module
+            dst_anchor_module_angle = dst_anchor_module.mod.GetOrientationDegrees()
             # get exact anchor position
-            anchor_pos = anchor_mod.mod.GetPosition()
+            dst_anchor_module_position = dst_anchor_module.mod.GetPosition()
 
-            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
-            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+            anchor_delta_angle = self.src_anchor_module.mod.GetOrientationDegrees() - dst_anchor_module_angle
+            anchor_delta_pos = dst_anchor_module_position - self.src_anchor_module.mod.GetPosition()
 
-            nr_text = len(self.pivot_text)
+            nr_text = len(self.src_text)
             for text_index in range(nr_text):
-                text = self.pivot_text[text_index]
+                text = self.src_text[text_index]
                 progress = progress + (1/nr_sheets)*(1/nr_text)
                 self.update_progress(self.stage, progress, None)
 
                 new_text = text.Duplicate()
                 new_text.Move(anchor_delta_pos)
-                new_text.Rotate(anchor_pos, -anchor_delta_angle * 10)
+                new_text.Rotate(dst_anchor_module_position, -anchor_delta_angle * 10)
                 self.board.Add(new_text)
 
     def replicate_drawings(self):
         logger.info("Replicating drawings")
-        nr_sheets = len(self.sheets_for_replication)
+        nr_sheets = len(self.dst_sheets)
         for st_index in range(nr_sheets):
-            sheet = self.sheets_for_replication[st_index]
+            sheet = self.dst_sheets[st_index]
             progress = st_index/nr_sheets
             self.update_progress(self.stage, progress, None)
             logger.info("Replicating drawings on sheet " + repr(sheet))
-            # get anchor module
-            anchor_mod = self.get_sheet_anchor_module(sheet)
-            # get anchor angle with respect to pivot module
-            anchor_angle = anchor_mod.mod.GetOrientationDegrees()
-            # get exact anchor position
-            anchor_pos = anchor_mod.mod.GetPosition()
 
-            anchor_delta_angle = self.pivot_anchor_mod.mod.GetOrientationDegrees() - anchor_angle
-            anchor_delta_pos = anchor_pos - self.pivot_anchor_mod.mod.GetPosition()
+            # get anchor module
+            dst_anchor_module = self.get_sheet_anchor_module(sheet)
+            # get anchor angle with respect to source module
+            dst_anchor_module_angle = dst_anchor_module.mod.GetOrientationDegrees()
+            # get exact anchor position
+            dst_anchor_module_position = dst_anchor_module.mod.GetPosition()
+
+            anchor_delta_angle = self.src_anchor_module.mod.GetOrientationDegrees() - dst_anchor_module_angle
+            anchor_delta_pos = dst_anchor_module_position - self.src_anchor_module.mod.GetPosition()
 
             # go through all the drawings
-            nr_drawings = len(self.pivot_drawings)
+            nr_drawings = len(self.src_drawings)
             for dw_index in range(nr_drawings):
-                drawing = self.pivot_drawings[dw_index]
+                drawing = self.src_drawings[dw_index]
                 progress = progress + (1/nr_sheets)*(1/nr_drawings)
                 self.update_progress(self.stage, progress, None)
 
                 new_drawing = drawing.Duplicate()
                 new_drawing.Move(anchor_delta_pos)
-                new_drawing.Rotate(anchor_pos, -anchor_delta_angle * 10)
+                new_drawing.Rotate(dst_anchor_module_position, -anchor_delta_angle * 10)
 
                 self.board.Add(new_drawing)
 
     def remove_zones_tracks(self, containing):
-        for index in range(len(self.sheets_for_replication)):
-            sheet = self.sheets_for_replication[index]
-            self.update_progress(self.stage, index/len(self.sheets_for_replication), None)
+        for index in range(len(self.dst_sheets)):
+            sheet = self.dst_sheets[index]
+            self.update_progress(self.stage, index / len(self.dst_sheets), None)
             # get modules on a sheet
             mod_sheet = self.get_modules_on_sheet(sheet)
             # get bounding box
@@ -894,8 +896,8 @@ class Replicator():
                     tracks_on_nets_on_sheet.append(track)
 
             for track in tracks_on_nets_on_sheet:
-                # minus the tracks in pivot bounding box
-                if track not in self.pivot_tracks:
+                # minus the tracks in source bounding box
+                if track not in self.src_tracks:
                     track_bounding_box = track.GetBoundingBox()
                     # remove the tracks containing/interesecting in the replicated bounding box
                     if containing:
@@ -915,8 +917,8 @@ class Replicator():
                 if zone.GetNetname() in nets_on_sheet:
                     zones_on_nets_on_sheet.append(zone)
             for zone in all_zones:
-                # minus the zones in pivot bounding box
-                if zone not in self.pivot_zones:
+                # minus the zones in source bounding box
+                if zone not in self.src_zones:
                     zone_bounding_box = zone.GetBoundingBox()
                     # remove the zones containing/interesecting in the replicated bounding box
                     if containing:
@@ -930,8 +932,8 @@ class Replicator():
             for drawing in self.board.GetDrawings():
                 if not isinstance(drawing, pcbnew.TEXTE_PCB):
                     continue
-                # ignore text in the pivot sheet
-                if drawing in self.pivot_text:
+                # ignore text in the source sheet
+                if drawing in self.src_text:
                     continue
 
                 # add text in/intersecting with the replicated bounding box to
@@ -948,8 +950,8 @@ class Replicator():
             for drawing in self.board.GetDrawings():
                 if not isinstance(drawing, pcbnew.DRAWSEGMENT):
                     continue
-                # ignore text in the pivot sheet
-                if drawing in self.pivot_drawings:
+                # ignore text in the source sheet
+                if drawing in self.src_drawings:
                     continue
 
                 # add text in/intersecting with the replicated bounding box to
@@ -965,16 +967,17 @@ class Replicator():
     def removing_duplicates(self):
         remove_duplicates.remove_duplicates(self.board)
 
-    def replicate_layout(self, pivot_mod, level, sheets_for_replication,
-                         containing, remove, tracks, zones, text, drawings, remove_duplicates, locked):
-        logger.info( "Starting replication of sheets: " + repr(sheets_for_replication)
-                    +"\non level: " + repr(level)
-                    +"\nwith tracks="+repr(tracks)+", zone="+repr(zones)+", text="+repr(text)
-                    +", containing="+repr(containing)+", remove="+repr(remove)+", locked="+repr(locked))
+    def replicate_layout(self, src_anchor_module, level, dst_sheets,
+                         containing, remove, tracks, zones, text, drawings, rm_duplicates, rep_locked):
+        logger.info( "Starting replication of sheets: " + repr(dst_sheets)
+                     +"\non level: " + repr(level)
+                     +"\nwith tracks=" + repr(tracks) +", zone=" + repr(zones) +", text=" + repr(text)
+                     +", containing=" + repr(containing) +", remove=" + repr(remove) +", locked=" + repr(rep_locked))
+
         self.level = level
-        self.pivot_anchor_mod = pivot_mod
-        self.sheets_for_replication = sheets_for_replication
-        self.locked = locked
+        self.src_anchor_module = src_anchor_module
+        self.dst_sheets = dst_sheets
+        self.rep_locked = rep_locked
 
         if remove:
             self.max_stages = 2
@@ -988,12 +991,12 @@ class Replicator():
             self.max_stages = self.max_stages + 1
         if drawings:
             self.max_stages = self.max_stages + 1
-        if remove_duplicates:
+        if rm_duplicates:
             self.max_stages = self.max_stages + 1
 
-        # get pivot(anchor) module details
-        self.pivot_mod_orientation = self.pivot_anchor_mod.mod.GetOrientationDegrees()
-        self.pivot_mod_position = self.pivot_anchor_mod.mod.GetPosition()
+        # get source anchor module details
+        self.src_anchor_module_angle = self.src_anchor_module.mod.GetOrientationDegrees()
+        self.src_anchor_module_position = self.src_anchor_module.mod.GetPosition()
         self.update_progress(self.stage, 0.0, "Preparing for replication")
         self.prepare_for_replication(level, containing)
         if remove:
@@ -1025,7 +1028,7 @@ class Replicator():
             self.stage = 8
             self.update_progress(self.stage, 0.0, "Replicating drawings")
             self.replicate_drawings()
-        if remove_duplicates:
+        if rm_duplicates:
             self.stage = 9
             self.update_progress(self.stage, 0.0, "Removing duplicates")
             self.removing_duplicates()
@@ -1040,22 +1043,22 @@ def update_progress(stage, percentage, message=None):
     print(percentage)
 
 
-def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containing, remove):
+def test_file(in_filename, out_filename, src_anchor_module_reference, level, sheets, containing, remove):
     board = pcbnew.LoadBoard(in_filename)
     # get board information
     replicator = Replicator(board)
-    # get pivot module info
-    pivot_mod = replicator.get_mod_by_ref(pivot_mod_ref)
+    # get source module info
+    src_anchor_module = replicator.get_mod_by_ref(src_anchor_module_reference)
     # have the user select replication level
-    levels = pivot_mod.filename
+    levels = src_anchor_module.filename
     # get the level index from user
     index = levels.index(levels[level])
     # get list of sheets
-    sheet_list = replicator.get_sheets_to_replicate(pivot_mod, pivot_mod.sheet_id[index])
+    sheet_list = replicator.get_sheets_to_replicate(src_anchor_module, src_anchor_module.sheet_id[index])
 
-    # get acnhor modules
-    anchor_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
-    # find matching anchors to maching sheets
+    # get anchor modules
+    anchor_modules = replicator.get_list_of_modules_with_same_id(src_anchor_module.mod_id)
+    # find matching anchors to matching sheets
     ref_list = []
     for sheet in sheet_list:
         for mod in anchor_modules:
@@ -1064,28 +1067,28 @@ def test_file(in_filename, out_filename, pivot_mod_ref, level, sheets, containin
                 break
 
     # get the list selection from user
-    sheets_for_replication = [sheet_list[i] for i in sheets]
+    dst_sheets = [sheet_list[i] for i in sheets]
 
     # first get all the anchor footprints
     all_sheet_footprints = []
-    for sheet in sheets_for_replication:
+    for sheet in dst_sheets:
         all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet))
-    anchor_fp = [x for x in all_sheet_footprints if x.mod_id == pivot_mod.mod_id]
-    if all(fp.mod.IsFlipped() == pivot_mod.mod.IsFlipped() for fp in anchor_fp):
+    anchor_fp = [x for x in all_sheet_footprints if x.mod_id == src_anchor_module.mod_id]
+    if all(src_anchor_module.mod.IsFlipped() == dst_mod.mod.IsFlipped() for dst_mod in anchor_fp):
         a = 2
     else:
-        assert(2==3), "footprint positions do not match"
+        assert(2==3), "Destination anchor footprints are not on the same layer as source anchor footprint"
 
     # now we are ready for replication
     replicator.update_progress = update_progress
-    replicator.replicate_layout(pivot_mod, pivot_mod.sheet_id[0:index+1], sheets_for_replication,
-                                containing=containing, remove=remove, remove_duplicates=True,
-                                tracks=True, zones=True, text=True, drawings=True, locked=True)
+    replicator.replicate_layout(src_anchor_module, src_anchor_module.sheet_id[0:index+1], dst_sheets,
+                                containing=containing, remove=remove, rm_duplicates=True,
+                                tracks=True, zones=True, text=True, drawings=True, rep_locked=True)
 
-    saved1 = pcbnew.SaveBoard(out_filename, board)
-    test_file = out_filename.replace("temp", "test")
+    pcbnew.SaveBoard(out_filename, board)
+    test_filename = out_filename.replace("temp", "test")
 
-    return compare_boards.compare_boards(out_filename, test_file)
+    return compare_boards.compare_boards(out_filename, test_filename)
 
 
 def main():
@@ -1094,22 +1097,23 @@ def main():
     logger.info("Testing multiple hierarchy - inner levels")
     input_file = 'multiple_hierarchy.kicad_pcb'
     output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
-    err = test_file(input_file, output_file, 'Q301', level=1 ,sheets=(0, 2, 5,), containing=False, remove=True)
+    err = test_file(input_file, output_file, 'Q301', level=1, sheets=(0, 2, 5,), containing=False, remove=True)
     assert (err == 0), "multiple_hierarchy - inner levels failed"
     
-    logger.info("Testing multiple hierarchy - inner levels pivot on a different level")
+    logger.info("Testing multiple hierarchy - inner levels source on a different hierarchical level")
     input_file = 'multiple_hierarchy.kicad_pcb'
     output_file = input_file.split('.')[0]+"_temp_alt"+".kicad_pcb"
-    err = test_file(input_file, output_file, 'Q1401', level=0 ,sheets=(0, 2, 5,), containing=False, remove=True)
+    err = test_file(input_file, output_file, 'Q1401', level=0, sheets=(0, 2, 5,), containing=False, remove=True)
     assert (err == 0), "multiple_hierarchy - inner levels from bottom failed"
 
     logger.info("Testing multiple hierarchy - outer levels")
     input_file = 'multiple_hierarchy_outer.kicad_pcb'
     output_file = input_file.split('.')[0]+"_temp"+".kicad_pcb"
-    err = test_file(input_file, output_file, 'Q301', level=0 ,sheets=(1,), containing=False, remove=False)
+    err = test_file(input_file, output_file, 'Q301', level=0, sheets=(1,), containing=False, remove=False)
     assert (err == 0), "multiple_hierarchy - outer levels failed"
 
     print ("all tests passed")
+
 
 # for testing purposes only
 if __name__ == "__main__":
