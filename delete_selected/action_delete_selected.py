@@ -32,7 +32,11 @@ else:
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
 with open(version_filename) as f:
     VERSION = f.readline().strip()
-
+# > V5.1.5 and V 5.99 build information
+if hasattr(pcbnew, 'GetBuildVersion'):
+    BUILD_VERSION = pcbnew.GetBuildVersion()
+else:
+    BUILD_VERSION = "Unknown"
 
 class DeleteLayoutDialog(delete_selected_GUI.DeleteSelectedGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython

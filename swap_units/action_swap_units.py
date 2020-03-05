@@ -35,6 +35,12 @@ version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ve
 with open(version_filename) as f:
     VERSION = f.readline().strip()
 
+# > V5.1.5 and V 5.99 build information
+if hasattr(pcbnew, 'GetBuildVersion'):
+    BUILD_VERSION = pcbnew.GetBuildVersion()
+else:
+    BUILD_VERSION = "Unknown"
+
 
 class SwapUnits(pcbnew.ActionPlugin):
     """
@@ -78,6 +84,9 @@ class SwapUnits(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
+        logger.info("Plugin executed on: " + repr(sys.platform))
+        logger.info("Plugin executed with python version: " + repr(sys.version))
+        logger.info("KiCad build version: " + BUILD_VERSION)
         logger.info("Swap units plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')

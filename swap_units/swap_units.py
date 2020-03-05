@@ -34,6 +34,12 @@ version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "ve
 with open(version_filename) as f:
     VERSION = f.readline().strip()
 
+# > V5.1.5 and V 5.99 build information
+if hasattr(pcbnew, 'GetBuildVersion'):
+    BUILD_VERSION = pcbnew.GetBuildVersion()
+else:
+    BUILD_VERSION = "Unknown"
+
 
 def swap(board, pad_1, pad_2):
     logger.info("Starting swap_units")
@@ -578,6 +584,9 @@ if __name__ == "__main__":
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
+    logger.info("Plugin executed on: " + repr(sys.platform))
+    logger.info("Plugin executed with python version: " + repr(sys.version))
+    logger.info("KiCad build version: " + BUILD_VERSION)
     logger.info("Swap units plugin version: " + VERSION + " started in standalone mode")
 
     main()

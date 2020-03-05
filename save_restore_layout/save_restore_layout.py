@@ -37,6 +37,17 @@ LayoutData = namedtuple('LayoutData', ['layout', 'hash', 'dict_of_sheets', 'list
 
 logger = logging.getLogger(__name__)
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
+# > V5.1.5 and V 5.99 build information
+if hasattr(pcbnew, 'GetBuildVersion'):
+    BUILD_VERSION = pcbnew.GetBuildVersion()
+else:
+    BUILD_VERSION = "Unknown"
+
 
 def rotate_around_center(coordinates, angle):
     """ rotate coordinates for a defined angle in degrees around coordinate center"""
@@ -1003,7 +1014,9 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
+    logger.info("Plugin executed on: " + repr(sys.platform))
     logger.info("Plugin executed with python version: " + repr(sys.version))
+    logger.info("KiCad build version: " + BUILD_VERSION)
     logger.info("Save/Restore Layout plugin started in standalone mode")
 
     main()

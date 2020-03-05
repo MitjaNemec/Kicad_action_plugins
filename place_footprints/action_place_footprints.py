@@ -40,6 +40,18 @@ else:
     from . import place_by_sheet_GUI
 
 
+# get version information
+version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
+with open(version_filename) as f:
+    VERSION = f.readline().strip()
+
+# > V5.1.5 and V 5.99 build information
+if hasattr(pcbnew, 'GetBuildVersion'):
+    BUILD_VERSION = pcbnew.GetBuildVersion()
+else:
+    BUILD_VERSION = "Unknown"
+
+
 def natural_sort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower() 
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
@@ -62,12 +74,6 @@ def clear_highlight_on_module(module):
     drawings = module.GraphicalItems()
     for item in drawings:
         item.ClearBrightened()   
-
-
-# get version information
-version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
 
 
 class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
@@ -405,6 +411,9 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
+        logger.info("Plugin executed on: " + repr(sys.platform))
+        logger.info("Plugin executed with python version: " + repr(sys.version))
+        logger.info("KiCad build version: " + BUILD_VERSION)
         logger.info("Place footprints plugin version: " + VERSION + " started")
 
         stdout_logger = logging.getLogger('STDOUT')

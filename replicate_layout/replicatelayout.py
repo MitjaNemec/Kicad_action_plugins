@@ -37,7 +37,7 @@ else:
     from . import compare_boards
     from . import remove_duplicates
 
-# V5.99 compatibility
+# V5.99 compatibility - flip method
 if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
     # remap the current method to new name
     pcbnew.MODULE.Flip_new = pcbnew.MODULE.Flip
@@ -57,6 +57,12 @@ logger = logging.getLogger(__name__)
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
 with open(version_filename) as f:
     VERSION = f.readline().strip()
+
+# > V5.1.5 and V 5.99 build information
+if hasattr(pcbnew, 'GetBuildVersion'):
+    BUILD_VERSION = pcbnew.GetBuildVersion()
+else:
+    BUILD_VERSION = "Unknown"
 
 
 def rotate_around_center(coordinates, angle):
@@ -1127,6 +1133,9 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
+    logger.info("Plugin executed on: " + repr(sys.platform))
+    logger.info("Plugin executed with python version: " + repr(sys.version))
+    logger.info("KiCad build version: " + BUILD_VERSION)
     logger.info("Replicate layout plugin version: " + VERSION + " started in standalone mode")
 
     main()
