@@ -80,27 +80,27 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         self.logger = logger
 
         self.replicator = replicator
-        self.pivot_mod = self.replicator.get_mod_by_ref(mod_ref)
-        self.levels = self.pivot_mod.filename
+        self.src_anchor_module = self.replicator.get_mod_by_ref(mod_ref)
+        self.levels = self.src_anchor_module.filename
 
         # clear levels
         self.list_levels.Clear()
         self.list_levels.AppendItems(self.levels)
 
-        self.pivot_modules = []
+        self.src_modules = []
 
     def level_changed(self, event):
 
         index = self.list_levels.GetSelection()
-        list_sheetsChoices = self.replicator.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[index])
+        list_sheetsChoices = self.replicator.get_sheets_to_replicate(self.src_anchor_module, self.src_anchor_module.sheet_id[index])
 
         # clear highlight on all modules on selected level
-        for mod in self.pivot_modules:
+        for mod in self.src_modules:
             clear_highlight_on_module(mod)
         pcbnew.Refresh()
 
         # get anchor modules
-        anchor_modules = self.replicator.get_list_of_modules_with_same_id(self.pivot_mod.mod_id)
+        anchor_modules = self.replicator.get_list_of_modules_with_same_id(self.src_anchor_module.mod_id)
         # find matching anchors to maching sheets
         ref_list = []
         for sheet in list_sheetsChoices:
@@ -119,12 +119,12 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         for i in range(number_of_items):
             self.list_sheets.Select(i)
 
-        # get all pivot modules on selected level
-        pivot_modules = self.replicator.get_modules_on_sheet(self.pivot_mod.sheet_id[:index+1])
-        self.pivot_modules = [x.mod for x in pivot_modules]
+        # get all source modules on selected level
+        src_modules = self.replicator.get_modules_on_sheet(self.src_anchor_module.sheet_id[:index + 1])
+        self.src_modules = [x.mod for x in src_modules]
 
         # highlight all modules on selected level
-        for mod in self.pivot_modules:
+        for mod in self.src_modules:
             set_highlight_on_module(mod)
         pcbnew.Refresh()
 
@@ -133,9 +133,10 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
     def OnOk(self, event):
         selected_items = self.list_sheets.GetSelections()
         slected_names = []
-        for sel in selected_items:
-            slected_names.append(self.list_sheets.GetString(sel))
+        for item in selected_items:
+            slected_names.append(self.list_sheets.GetString(item))
 
+        # grab checkboxes
         replicate_containing_only = not self.chkbox_intersecting.GetValue()
         remove_existing_nets_zones = self.chkbox_remove.GetValue()
         rep_tracks = self.chkbox_tracks.GetValue()
@@ -143,29 +144,30 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         rep_text = self.chkbox_text.GetValue()
         rep_drawings = self.chkbox_drawings.GetValue()
         remove_duplicates = self.chkbox_remove_duplicates.GetValue()
-        rep_locked=self.chkbox_locked.GetValue()
+        rep_locked = self.chkbox_locked.GetValue()
 
         # failsafe somtimes on my machine wx does not generate a listbox event
         level = self.list_levels.GetSelection()
         selection_indeces = self.list_sheets.GetSelections()
-        sheets_on_a_level = self.replicator.get_sheets_to_replicate(self.pivot_mod, self.pivot_mod.sheet_id[level])
-        sheets_for_replication = [sheets_on_a_level[i] for i in selection_indeces]
+        sheets_on_a_level = self.replicator.get_sheets_to_replicate(self.src_anchor_module, self.src_anchor_module.sheet_id[level])
+        dst_sheets = [sheets_on_a_level[i] for i in selection_indeces]
 
-        # check if all the anchor footprints are on the same layer as pivot footprint
+        # check if all the destination anchor footprints are on the same layer as source anchorfootprint
         # first get all the anchor footprints
-        all_sheet_footprints = []
-        for sheet in sheets_for_replication:
-            all_sheet_footprints.extend(self.replicator.get_modules_on_sheet(sheet))
-        anchor_fp = [x for x in all_sheet_footprints if x.mod_id == self.pivot_mod.mod_id]
+        all_dst_modules = []
+        for sheet in dst_sheets:
+            all_dst_modules.extend(self.replicator.get_modules_on_sheet(sheet))
+        dst_anchor_modules = [x for x in all_dst_modules if x.mod_id == self.src_anchor_module.mod_id]
+
         # then check if all of them are on the same layer
-        if not all(fp.mod.IsFlipped() == self.pivot_mod.mod.IsFlipped() for fp in anchor_fp):
+        if not all(self.src_anchor_module.mod.IsFlipped() == mod.mod.IsFlipped() for mod in dst_anchor_modules):
             # clear highlight on all modules on selected level
-            for mod in self.pivot_modules:
+            for mod in self.src_modules:
                 clear_highlight_on_module(mod)
             pcbnew.Refresh()
 
             caption = 'Replicate Layout'
-            message = "Anchor footprints must be on the same layer as pivot footprint!"
+            message = "Destination anchor footprints must be on the same layer as source anchor footprint!"
             dlg = wx.MessageDialog(self, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
@@ -186,19 +188,19 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         try:
             # update progress dialog 
             self.replicator.update_progress = self.update_progress
-            self.replicator.replicate_layout(self.pivot_mod, self.pivot_mod.sheet_id[0:level+1], sheets_for_replication,
+            self.replicator.replicate_layout(self.src_anchor_module, self.src_anchor_module.sheet_id[0:level + 1], dst_sheets,
                                              containing=replicate_containing_only,
                                              remove=remove_existing_nets_zones,
                                              tracks=rep_tracks,
                                              zones=rep_zones,
                                              text=rep_text,
                                              drawings=rep_drawings,
-                                             remove_duplicates=remove_duplicates,
-                                             locked=rep_locked)
+                                             rm_duplicates=remove_duplicates,
+                                             rep_locked=rep_locked)
 
             self.logger.info("Replication complete")
             # clear highlight on all modules on selected level
-            for mod in self.pivot_modules:
+            for mod in self.src_modules:
                 clear_highlight_on_module(mod)
             pcbnew.Refresh()
 
@@ -207,7 +209,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
             self.Destroy()
         except LookupError as exception:
             # clear highlight on all modules on selected level
-            for mod in self.pivot_modules:
+            for mod in self.src_modules:
                 clear_highlight_on_module(mod)
             pcbnew.Refresh()
 
@@ -222,7 +224,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
             return
         except Exception:
             # clear highlight on all modules on selected level
-            for mod in self.pivot_modules:
+            for mod in self.src_modules:
                 clear_highlight_on_module(mod)
             pcbnew.Refresh()
 
@@ -243,7 +245,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
 
     def OnCancel(self, event):
         # clear highlight on all modules on selected level
-        for mod in self.pivot_modules:
+        for mod in self.src_modules:
             clear_highlight_on_module(mod)
         pcbnew.Refresh()
 
@@ -280,8 +282,6 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         self.description = "Replicate layout of a hierchical sheet"
         self.icon_file_name = os.path.join(
                 os.path.dirname(__file__), 'duplicate-replicate_layout.svg.png')
-
-
 
     def Run(self):
         # load board
@@ -333,11 +333,11 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             logging.shutdown()
             return
         # if exactly one module is selected
-        # this is a pivot module
-        pivot_module_reference = selected_names[0]
+        # this is a source anchor module
+        src_anchor_mod_reference = selected_names[0]
 
         # prepare the replicator
-        logger.info("Preparing replicator with " + pivot_module_reference + " as a reference")
+        logger.info("Preparing replicator with " + src_anchor_mod_reference + " as a reference")
 
         try:
             replicator = replicatelayout.Replicator(board)
@@ -360,16 +360,17 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             dlg.Destroy()
             logging.shutdown()
             return
-        pivot_mod = replicator.get_mod_by_ref(pivot_module_reference)
 
-        logger.info("Pivot footprint is %s\nLocated on:%s\nWith filenames:%s\nWith sheet_id:%s" \
-                    % (repr(pivot_mod.ref), repr(pivot_mod.sheet_id), repr(pivot_mod.filename), repr(pivot_mod.sheet_id)))
+        src_anchor_module = replicator.get_mod_by_ref(src_anchor_mod_reference)
 
-        list_of_modules_with_same_id = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
-        nice_list = [(x.ref, x.sheet_id) for x in list_of_modules_with_same_id]
+        logger.info("source anchor footprint is %s\nLocated on:%s\nWith filenames:%s\nWith sheet_id:%s" \
+                    % (repr(src_anchor_module.ref), repr(src_anchor_module.sheet_id), repr(src_anchor_module.filename), repr(src_anchor_module.sheet_id)))
+
+        dst_anchor_modules = replicator.get_list_of_modules_with_same_id(src_anchor_module.mod_id)
+        nice_list = [(x.ref, x.sheet_id) for x in dst_anchor_modules]
         logger.info("Corresponding footprints are \n%s" % repr(nice_list))
 
-        list_of_modules = replicator.get_list_of_modules_with_same_id(pivot_mod.mod_id)
+        list_of_modules = replicator.get_list_of_modules_with_same_id(src_anchor_module.mod_id)
         if not list_of_modules:
             caption = 'Replicate Layout'
             message = "Selected footprint is uniqe in the pcb (only one footprint with this ID)"
@@ -381,7 +382,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
 
         # show dialog
         logger.info("Showing dialog")
-        dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, pivot_module_reference, logger)
+        dlg = ReplicateLayoutDialog(_pcbnew_frame, replicator, src_anchor_mod_reference, logger)
         # find pcbnew position
         pcbnew_pos = _pcbnew_frame.GetScreenPosition()
         logger.info("Pcbnew position: " + repr(pcbnew_pos))
@@ -406,7 +407,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         dlg.Show()
 
         # clear highlight on all modules on selected level
-        for mod in dlg.pivot_modules:
+        for mod in dlg.src_modules:
             clear_highlight_on_module(mod)
         pcbnew.Refresh()
 
