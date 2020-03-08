@@ -37,7 +37,25 @@ else:
     from . import compare_boards
     from . import remove_duplicates
 
+
+# V5.1.x backward compatibility for module ID
+def get_path(module):
+    path = module.GetPath()
+    if hasattr(path, 'AsString'):
+        path = path.AsString()
+    return path
+
+
+# V5.99 forward compatibility
+def flip_module(module, position):
+    if module.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
+        module.Flip(position, False)
+    else:
+        module.Flip(position)
+
+
 # V5.99 compatibility - flip method
+# TODO reimplement this a a static method instead of monkeypatching python API
 if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
     # remap the current method to new name
     pcbnew.MODULE.Flip_new = pcbnew.MODULE.Flip
@@ -171,13 +189,13 @@ class Replicator():
     @staticmethod
     def get_module_id(module):
         """ get module id """
-        module_path = module.GetPath().split('/')
+        module_path = get_path(module).split('/')
         module_id = "/".join(module_path[-1:])
         return module_id
 
     def get_sheet_id(self, module):
         """ get sheet id """
-        module_path = module.GetPath().split('/')
+        module_path = get_path(module).split('/')
         sheet_id = module_path[0:-1]
         sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
         sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
@@ -252,7 +270,7 @@ class Replicator():
         logger.debug("Footprints on the sheets:\n" + repr([x.ref for x in list_of_modules]))
 
         # log all modules sheet id
-        logger.debug("Footprints raw sheet ids:\n" + repr([x.mod.GetPath() for x in list_of_modules]))
+        logger.debug("Footprints raw sheet ids:\n" + repr([get_path(x.mod) for x in list_of_modules]))
 
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
@@ -652,7 +670,8 @@ class Replicator():
 
                     src_mod_flipped = src_mod.mod.IsFlipped()
                     if dst_mod.mod.IsFlipped() != src_mod_flipped:
-                        dst_mod.mod.Flip(dst_mod.mod.GetPosition())
+                        flip_module(dst_mod.mod, dst_mod.mod.GetPosition())
+                        # dst_mod.mod.Flip(dst_mod.mod.GetPosition())
                     dst_mod.mod.SetOrientationDegrees(new_orientation)
 
                     # Copy local settings.
