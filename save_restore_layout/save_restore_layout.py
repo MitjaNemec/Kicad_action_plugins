@@ -49,6 +49,21 @@ else:
     BUILD_VERSION = "Unknown"
 
 
+# V5.1.x and 5.99 compatibility layer
+def get_path(module):
+    path = module.GetPath()
+    if hasattr(path, 'AsString'):
+        path = path.AsString()
+    return path
+
+# V5.99 forward compatibility
+def flip_module(module, position):
+    if module.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
+        module.Flip(position, False)
+    else:
+        module.Flip(position)
+
+
 def rotate_around_center(coordinates, angle):
     """ rotate coordinates for a defined angle in degrees around coordinate center"""
     new_x = coordinates[0] * math.cos(2 * math.pi * angle/360)\
@@ -193,14 +208,14 @@ class PcbData():
     @staticmethod
     def get_module_id(module):
         """ get module id """
-        module_path = module.GetPath().split('/')
+        module_path = get_path(module).split('/')
         module_id = "/".join(module_path[-1:])
         return module_id
 
     @staticmethod
     def get_sheet_id(module):
         """ get sheet id """
-        module_path = module.GetPath()
+        module_path = get_path(module)
         sheet_path = module_path.split('/')
         sheet_id = sheet_path[1:-1]
         return sheet_id
@@ -535,7 +550,8 @@ class RestoreLayout():
 
                 pivot_mod_flipped = mod_to_clone.mod.IsFlipped()
                 if (mod.mod.IsFlipped() and not pivot_mod_flipped) or (pivot_mod_flipped and not mod.mod.IsFlipped()):
-                    mod.mod.Flip(mod.mod.GetPosition())
+                    flip_module(mod.mod, mod.mod.GetPosition())
+                    # mod.mod.Flip(mod.mod.GetPosition())
 
                 mod.mod.SetOrientationDegrees(new_orientation)
 
