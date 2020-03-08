@@ -1,4 +1,4 @@
-(kicad_pcb (version 20171130) (host pcbnew "(5.1.0)-1")
+(kicad_pcb (version 20171130) (host pcbnew "(5.1.5-90-g5c7ac1bb7)-1")
 
   (general
     (thickness 1.6)
@@ -1438,7 +1438,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C6975F9)
-    (at 57.730001 35.625001)
+    (at 42 34)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F70D/5C66F845)
@@ -1474,7 +1474,7 @@
   )
 
   (module Passives:R1206M (layer F.Cu) (tedit 5A956603) (tstamp 5C6975E8)
-    (at 81.28 29.845)
+    (at 80 30)
     (descr "Capacitor SMD 1206, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 1206")
     (path /5C66F730/5C66F7B3)
