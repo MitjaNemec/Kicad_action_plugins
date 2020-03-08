@@ -47,6 +47,22 @@ else:
     BUILD_VERSION = "Unknown"
 
 
+# V5.1.x backward compatibility for module ID
+def get_path(module):
+    path = module.GetPath()
+    if hasattr(path, 'AsString'):
+        path = path.AsString()
+    return path
+
+
+# V5.99 forward compatibility
+def flip_module(module, position):
+    if module.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
+        module.Flip(position, False)
+    else:
+        module.Flip(position)
+
+
 def natural_sort(l): 
     convert = lambda text: int(text) if text.isdigit() else text.lower() 
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
@@ -153,13 +169,13 @@ class Placer():
     @staticmethod
     def get_module_id(module):
         """ get module id """
-        module_path = module.GetPath().split('/')
+        module_path = get_path(module).split('/')
         module_id = "/".join(module_path[-1:])
         return module_id
 
     def get_sheet_id(self, module):
         """ get sheet id """
-        module_path = module.GetPath().split('/')
+        module_path = get_path(module).split('/')
         sheet_id = module_path[0:-1]
         sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
         sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
@@ -347,8 +363,8 @@ class Placer():
             mod.mod.SetOrientationDegrees(reference_module.mod.GetOrientationDegrees()-delta_index*delta_angle)
 
             first_mod_flipped = reference_module.mod.IsFlipped()
-            if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
-                mod.mod.Flip(mod.mod.GetPosition())
+            if (mod.mod.IsFlipped() != first_mod_flipped):
+                flip_module(mod.mod, mod.mod.GetPosition())
 
     def place_linear(self, modules_to_place, reference_footprint, step_x, step_y):
         logger.info("Starting placing with linear layout")
@@ -373,8 +389,8 @@ class Placer():
             mod.mod.SetOrientationDegrees(reference_module.mod.GetOrientationDegrees())
 
             first_mod_flipped = reference_module.mod.IsFlipped()
-            if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
-                mod.mod.Flip(mod.mod.GetPosition())
+            if (mod.mod.IsFlipped() != first_mod_flipped):
+                flip_module(mod.mod, mod.mod.GetPosition)
 
     def place_matrix(self, modules_to_place, reference_footprint, step_x, step_y, nr_columns):
         logger.info("Starting placing with matrix layout")
@@ -400,8 +416,8 @@ class Placer():
             mod.mod.SetOrientationDegrees(first_module.mod.GetOrientationDegrees())
 
             first_mod_flipped = first_module.mod.IsFlipped()
-            if (mod.mod.IsFlipped() and not first_mod_flipped) or (first_mod_flipped and not mod.mod.IsFlipped()):
-                mod.mod.Flip(mod.mod.GetPosition())
+            if (mod.mod.IsFlipped() != first_mod_flipped):
+                flip_module(mod.mod, mod.mod.GetPosition())
 
 
 def test(in_file, out_file, pivot_module_reference, mode, layout):
@@ -451,9 +467,9 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
 
     if layout == 'circular':
         if mode == 'by sheet':
-            placer.place_circular(sorted_modules, reference_module, 10.0, 30.0, by_sheet=True)
+            placer.place_circular(sorted_modules, reference_module, 10.0, 30.0)
         else:
-            placer.place_circular(sorted_modules, reference_module, 10.0, 30.0, by_sheet=False)
+            placer.place_circular(sorted_modules, reference_module, 10.0, 30.0)
     if layout == 'linear':
         placer.place_linear(sorted_modules, reference_module, 5.0, 0.0)
     if layout == 'matrix':
@@ -468,7 +484,7 @@ def test(in_file, out_file, pivot_module_reference, mode, layout):
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "place_footprints"))
     input_file = 'place_footprints.kicad_pcb'
-    pivot_module_reference = 'R203'
+    pivot_module_reference = 'R202'
 
     output_file = input_file.split('.')[0]+"_temp_ref_circular"+".kicad_pcb"
     err = test(input_file, output_file, pivot_module_reference, 'by ref', 'circular')
