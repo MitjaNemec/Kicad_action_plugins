@@ -757,7 +757,13 @@ class RestoreLayout():
         # so one takes the last source level only
         last_level = source_level_filename[-1]
         logger.info("Destination footprint is:" + repr(anchor_mod.ref))
-        logger.info("Destination levels available are:" + repr(anchor_mod.sheetname))
+        logger.info("Destination levels available are:" + repr(anchor_mod.filename))
+
+        # check if saved (source) hierarchy is available in destination
+        if not all(item in anchor_mod.filename for item in source_level_filename):
+            raise LookupError(  "Destination hierarchy: " + repr(anchor_mod.filename) + "\n"
+                              + "does not match source hierarchy: " + repr(source_level_filename))
+
         indx = anchor_mod.filename.index(last_level)
         level = anchor_mod.sheetname[0:indx+1]
 
@@ -925,10 +931,11 @@ class SaveLayout(RestoreLayout):
         for mod in modules:
             self.board.RemoveNative(mod.mod)
 
-    def save_layout(self, pivot_anchor_mod, level, data_file):
+    def save_layout(self, src_anchor_mod, level, data_file):
+        logger.info("Saving layout for level: " + repr(level))
         logger.info("Calculating hash of the layout schematics")
         # load schematics and calculate hash of schematics (you have to support nested hierarchy)
-        list_of_sheet_files = pivot_anchor_mod.filename[len(level)-1:]
+        list_of_sheet_files = src_anchor_mod.filename[len(level) - 1:]
 
         logger.info("Saving hash for files: " + repr(list_of_sheet_files))
 
@@ -980,7 +987,7 @@ class SaveLayout(RestoreLayout):
 
         logger.info("Saving layout data")
         # level_filename, level
-        level_filename = [pivot_anchor_mod.filename[pivot_anchor_mod.sheetname.index(x)] for x in level]
+        level_filename = [src_anchor_mod.filename[src_anchor_mod.sheetname.index(x)] for x in level]
         # save all data
         data_to_save = LayoutData(layout, hex_hash, self.schematics.dict_of_sheets, local_nets, level, level_filename)
         with open(data_file, 'wb') as f:

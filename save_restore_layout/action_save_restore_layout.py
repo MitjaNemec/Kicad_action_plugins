@@ -302,7 +302,7 @@ class SaveRestoreLayout(pcbnew.ActionPlugin):
 
             try:
                 restore_layout.restore_layout(pivot_mod, layout_file)
-            except (ValueError) as error:
+            except (ValueError, LookupError) as error:
                 caption = 'Save/Restore Layout'
                 message = str(error)
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_EXCLAMATION)
