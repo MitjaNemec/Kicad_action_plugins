@@ -854,7 +854,7 @@ class SaveLayout(RestoreLayout):
         self.tempfilename = os.path.join(tempdir, 'temp_boardfile_for_save.kicad_pcb')
         if os.path.isfile(self.tempfilename):
             os.remove(self.tempfilename)
-        saved = pcbnew.SaveBoard(self.tempfilename, board)
+        pcbnew.SaveBoard(self.tempfilename, board)
         self.board = pcbnew.LoadBoard(self.tempfilename)
 
         # create a copy of the board and then work on the copy
@@ -868,30 +868,36 @@ class SaveLayout(RestoreLayout):
     def remove_drawings(self, bounding_box, containing):
         logger.info("Removing drawing")
         # remove all drawings outside of bounding box
+        drawings_to_delete = []
         for drawing in self.board.GetDrawings():
             if not isinstance(drawing, pcbnew.DRAWSEGMENT):
                 continue
             drawing_bb = drawing.GetBoundingBox()
             if containing:
                 if not bounding_box.Contains(drawing_bb):
-                    self.board.RemoveNative(drawing)
+                    drawings_to_delete.append(drawing)
             else:
                 if bounding_box.Intersects(drawing_bb):
-                    self.board.RemoveNative(drawing)
+                    drawings_to_delete.append(drawing)
+        for dwg in drawings_to_delete:
+            self.board.RemoveNative(dwg)
 
     def remove_text(self, bounding_box, containing):
         logger.info("Removing text")
         # remove all text outside of bounding box
+        text_to_delete = []
         for text in self.board.GetDrawings():
             if not isinstance(text, pcbnew.TEXTE_PCB):
                 continue
             text_bb = text.GetBoundingBox()
             if containing:
                 if not bounding_box.Contains(text_bb):
-                    self.board.RemoveNative(text)
+                    text_to_delete.append(text)
             else:
                 if bounding_box.Intersects(text_bb):
-                    self.board.RemoveNative(text)
+                    text_to_delete.append(text)
+        for txt in text_to_delete:
+            self.board.RemoveNative(txt)
 
     def remove_zones(self, bounding_box, containing):
         logger.info("Removing zones")
@@ -911,20 +917,26 @@ class SaveLayout(RestoreLayout):
 
     def remove_tracks(self, bounding_box, containing):
         logger.info("Removing tracks")
+
+        logger.info("Bounding box points: "
+                    + repr((bounding_box.GetTop(), bounding_box.GetBottom(), bounding_box.GetLeft(), bounding_box.GetRight())))
         # find all tracks within the pivot bounding box
-        all_tracks = self.board.GetTracks()
+        # construct a python list as in 5.99 deque hase issues if we delete an item
+        # TODO might be smarter to iterate thorugh original deque and instead of deleting tracks immediately,
+        # TODO add them to new list and only then delete them
+        tracks_to_delete = []
         # get all the tracks for replication
-        for track in all_tracks:
+        for track in self.board.GetTracks():
             track_bb = track.GetBoundingBox()
             # if track is contained or intersecting the bounding box
             if containing:
                 if not bounding_box.Contains(track_bb):
-                    # TODO don't- delete if track is on local nets
-                    self.board.RemoveNative(track)
+                    tracks_to_delete.append(track)
             else:
                 if not bounding_box.Intersects(track_bb):
-                    # TODO don't- delete if track is on local nets
-                    self.board.RemoveNative(track)
+                    tracks_to_delete.append(track)
+        for trk in tracks_to_delete:
+            self.board.RemoveNative(trk)
 
     def remove_modules(self, modules):
         logger.info("Removing modules")
@@ -946,15 +958,16 @@ class SaveLayout(RestoreLayout):
         hex_hash = md5hash.hexdigest()
 
         # get modules on a sheet
-        modules = self.layout.get_modules_on_sheet(level)
+        src_modules = self.layout.get_modules_on_sheet(level)
+        logging.info("Source modules are: " + repr([x.ref for x in src_modules]))
 
         # get other modules
         other_modules = self.layout.get_modules_not_on_sheet(level)
         # get nets local to pivot modules
-        local_nets = self.layout.get_local_nets(modules, other_modules)
+        local_nets = self.layout.get_local_nets(src_modules, other_modules)
 
         # get modules bounding box
-        bounding_box = self.layout.get_modules_bounding_box(modules)
+        bounding_box = self.layout.get_modules_bounding_box(src_modules)
 
         logger.info("Removing everything else from the layout")
 
@@ -976,7 +989,7 @@ class SaveLayout(RestoreLayout):
 
         # save the layout
         logger.info("Saving layout in temporary file")
-        saved = pcbnew.SaveBoard(self.tempfilename, self.board)
+        pcbnew.SaveBoard(self.tempfilename, self.board)
         # load as text
         logger.info("Reading layout as text")
         with open(self.tempfilename, 'r') as f:
@@ -1037,15 +1050,11 @@ if __name__ == "__main__":
     # if debugging outside of this folder change the folder
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    file_handler = logging.FileHandler(filename='copy_layout.log', mode='w')
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    handlers = [file_handler, stdout_handler]
-
     logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s %(name)s %(lineno)d:%(message)s',
-                        datefmt='%m-%d %H:%M:%S',
-                        handlers=handlers
-                        )
+                        filename="save_restore_layout.log",
+                        filemode='w',
+                        format='%(lineno)d:%(message)s',
+                        datefmt=None)
 
     logger = logging.getLogger(__name__)
     logger.info("Plugin executed on: " + repr(sys.platform))
