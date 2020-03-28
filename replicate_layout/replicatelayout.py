@@ -42,8 +42,9 @@ else:
 def get_path(module):
     path = module.GetPath()
     if hasattr(path, 'AsString'):
-        path = path.AsString()
-    return path
+        path_raw = path.AsString()
+        cleaned_path = "/".join(map(lambda x: x[-8:].upper(), path_raw.split('/')))
+    return cleaned_path
 
 
 # V5.99 forward compatibility
@@ -52,21 +53,6 @@ def flip_module(module, position):
         module.Flip(position, False)
     else:
         module.Flip(position)
-
-
-# V5.99 compatibility - flip method
-# TODO reimplement this a a static method instead of monkeypatching python API
-if pcbnew.MODULE.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
-    # remap the current method to new name
-    pcbnew.MODULE.Flip_new = pcbnew.MODULE.Flip
-
-    # create new method with the same signature as in V5.1.x versions
-    def old_flip(self, aCentre):
-        """ monkeypatched method to have the same signature as in V5.1.x versions """
-        pcbnew.MODULE.Flip_new(self, aCentre, False)
-
-    from types import MethodType
-    pcbnew.MODULE.Flip = MethodType(old_flip, pcbnew.MODULE)
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
