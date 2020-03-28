@@ -53,19 +53,9 @@ else:
 def get_path(module):
     path = module.GetPath()
     if hasattr(path, 'AsString'):
-        path = path.AsString()
-        # clean up the path
-        parts = path.split("/")
-        cleaned_parts = []
-        for part in parts:
-            # tidy up the path ID
-            cleaned_id = part.replace("-", "").lstrip("0").upper()
-            # left pad zeros, if they were removed
-            if 1 < len(cleaned_id) < 8:
-                cleaned_id = cleaned_id.rjust(8, '0')
-            cleaned_parts.append(cleaned_id)
-        path = "/".join(cleaned_parts)
-    return path
+        path_raw = path.AsString()
+        cleaned_path = "/".join(map(lambda x: x[-8:].upper(), path_raw.split('/')))
+    return cleaned_path
 
 # V5.99 forward compatibility
 def flip_module(module, position):

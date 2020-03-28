@@ -47,12 +47,13 @@ else:
     BUILD_VERSION = "Unknown"
 
 
-# V5.1.x backward compatibility for module ID
+# V5.1.x and 5.99 compatibility layer
 def get_path(module):
     path = module.GetPath()
     if hasattr(path, 'AsString'):
-        path = path.AsString()
-    return path
+        path_raw = path.AsString()
+        cleaned_path = "/".join(map(lambda x: x[-8:].upper(), path_raw.split('/')))
+    return cleaned_path
 
 
 # V5.99 forward compatibility
