@@ -54,8 +54,8 @@ def get_path(module):
     path = module.GetPath()
     if hasattr(path, 'AsString'):
         path_raw = path.AsString()
-        cleaned_path = "/".join(map(lambda x: x[-8:].upper(), path_raw.split('/')))
-    return cleaned_path
+        path = "/".join(map(lambda x: x[-8:].upper(), path_raw.split('/')))
+    return path
 
 # V5.99 forward compatibility
 def flip_module(module, position):
