@@ -23,7 +23,7 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 
 		bSizer14 = wx.BoxSizer( wx.VERTICAL )
 
-		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Hierarchy level:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Source hierarchy level:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		bSizer14.Add( self.m_staticText5, 0, wx.ALL, 5 )
@@ -37,7 +37,7 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 
 		bSizer14.Add( bSizer18, 1, wx.EXPAND, 5 )
 
-		self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Sheets to replicate:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Destination sheets:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText6.Wrap( -1 )
 
 		bSizer14.Add( self.m_staticText6, 0, wx.ALL, 5 )
