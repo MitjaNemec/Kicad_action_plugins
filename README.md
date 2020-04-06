@@ -6,9 +6,9 @@ All plugins have been tested on Kicad 5.1-1 on Windows7. You need to have KICAD_
 
 The plugins have been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
-To install teplugin copy relevant folder into 'scripting/plugins' subfolde of the KiCad configuration folder:
+To install the plugin copy relevant folder into 'scripting/plugins' subfolder of the KiCad configuration folder:
 on Windows:
-    `%APPDATA%\scritping\plugins` (which most commonly translates to `C:\Users\username\AppData\Roaming\kicad\scripting\plugins`)
+    `%APPDATA%\scripting\plugins` (which most commonly translates to `C:\Users\username\AppData\Roaming\kicad\scripting\plugins`)
 
 on GNU/linux: 
     `~/.kicad/scripting/plugins` or
@@ -56,7 +56,7 @@ If you want to place the footprints by consecutive reference numbers you have to
 3. select which place by reference number
 4. choose which footprint in the sequence you want to place
 5. select the arrangement (linear, matrix, circular)
-6. select place dimension (step in x and y axes in linear and matrixc mode and angle step and radius in circlar mode)
+6. select place dimension (step in x and y axes in linear and matrix mode and angle step and radius in circular mode)
 7. run the plugin
 
 If you want to place the footprints by same ID with
@@ -69,10 +69,10 @@ If you want to place the footprints by same ID with
 7. run the plugin
 
 Example of place by reference number
-![Place by referenc number](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_ref.gif)
+![Place by reference number](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_ref.gif)
 
 Example of place by sheet ID
-![Place by sheet ID ](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_sheet.gif)
+![Place by sheet ID](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_sheet.gif)
 
 ## Delete Selected
 
@@ -116,7 +116,7 @@ The archiving of the pcb and its footprints is already implemented within pcbnew
 The 3D models archive is placed in "shapes3D" subfolder where all 3D models are copied.
 Then, the links to the models within the layout (.kicad_pcb) file are modified so that they point to the archived 3D models with a path relative to the project folder.
 
-The plugin is run from pcbnew. When the plugin is run, eeschema has to be closed. If the plugin finished successfully, it automatically closes pcbnew. This behavior is expected and required to perform the operation.
+The plugin is run from pcbnew. When the plugin is run, eeschema has to be closed. If the plugin finished successfully, it automatically closes pcbnew. This behaviour is expected and required to perform the operation.
 
 If the project is modified later it should be archived again in order to stay portable. If a symbol of a unit has to be replaced, all units with the same symbol have to be deleted.
 
@@ -139,13 +139,13 @@ Example of unit swapping
 
 ## Length stats
 
-This plugin displays lenght of all tracks on selected nets. This can be used for lenght matching.
+This plugin displays length of all tracks on selected nets. This can be used for length matching.
 
 Workflow:
-1. Select tracks or pads on nets you want the lenght displayed. You can also select a footprint(s)
+1. Select tracks or pads on nets you want the length displayed. You can also select a footprint(s)
 2. Run the plugin. You can remove redundant nets
 3. Lay the tracks
-4. Close the track lenght window
+4. Close the track length window
 
 Example:
 ![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/length_stats_ff.gif)
