@@ -22,11 +22,11 @@ on MacOS:
 ## Replicate layout
 
 The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets in eeschema.
-The basic requirement for replication is that the section to be replicated is completely contained within a single hierarchical sheet, and replicated sections are just copies of the same sheet. Complex hierarchies are supported because as replicated sheet can contain subsheets. The plugin replicates footprints, zones, tracks and text.
+The basic requirement for replication is that the section to be replicated (source) is completely contained within a single hierarchical sheet, and replicated sections (destination) are just copies of the same sheet. Complex hierarchies are supported therefore replicated sheet can contain subsheets. The plugin replicates footprints, zones, tracks, text adn drawings.
 
-After the section for replication (pivot section) has been laid out (footprints, tracks, text objects and zones placed) you need to:
-1. Place the anchor footprints for the sections you want to replicate. This defines the position and orientation of replicated sections. You can use [Place footprints] action plugin for this.
-2. Select the same anchor footprint within the pivot section.
+After the section for replication (source section) has been laid out (footprints, tracks, text objects and zones placed) you need to:
+1. Place the anchor footprints for the destiantion sections you want to replicate. This defines the position and orientation of replicated sections. You can use [Place footprints] action plugin for this.
+2. Select the same anchor footprint within the source section.
 3. Run the plugin.
 4. Choose which hierarchical level you wish to replicate.
 5. Select which sheets you want to replicate (default is all of them)
@@ -35,7 +35,7 @@ After the section for replication (pivot section) has been laid out (footprints,
 8. Select whether you want to delete already laid out tracks/zones/text (this is useful when updating an already replicated layout).
 9. Hit OK.
 
-Additionally you can choose whether you want to also replicate zones, text and/or tracks. By default, only objects which are contained in the bounding box constituted by all the footprints in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that bounding boxes are squares aligned with the x and y axis, regardless of section orientation.
+By default, only objects which are fully contained in the bounding box constituted by all the footprints in the section will be replicated. You can select to also replicate zones and tracks which intersect this bounding box. Additionally, tracks, text and zones which are already laid out in the replicated bounding boxes can be removed (useful when updating). Note that bounding boxes are squares aligned with the x and y axis, regardless of section orientation.
 
 Example replication of a complex hierarchical project. Replicating inner sheet first, then outer.
 
