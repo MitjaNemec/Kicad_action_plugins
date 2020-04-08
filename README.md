@@ -2,7 +2,7 @@
 
 This repository contains KiCad pcbnew Action Plugins()
 
-All plugins have been tested on Kicad 5.1-1 on Windows7. You need to have KICAD_SCRIPTING_WXPYTHON enabled. They should also work on GNU/Linux distributions and MacOS even with Python3.
+All plugins have been tested on Kicad 5.1.x on Windows7/Windows10. You need to have KICAD_SCRIPTING_WXPYTHON enabled. They should also work on GNU/Linux distributions and MacOS even with Python3. The plugins might or might not work on 5.99.
 
 The plugins have been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
@@ -17,7 +17,8 @@ on GNU/linux:
 on MacOS:
     `~/Library/Application Support/kicad/scripting/plugins` or on newer versions
     `~/Library/Preferences/kicad/scripting/plugins`
-
+  
+V 5.99 users, you have to put the plugin within the 5.99 subfolder (e.g. `%APPDATA%\5.99\scripting\plugins`, `~/.kicad/5.99/scripting/plugins` or `~/Library/Preferences/kicad/5.99/scripting/plugins`).
 
 ## Replicate layout
 
