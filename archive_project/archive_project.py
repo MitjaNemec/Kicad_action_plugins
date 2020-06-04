@@ -542,19 +542,17 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
 def archive_3D_models(board, allow_missing_models=False, alt_files=False):
     logger.info("Starting to archive 3D models")
 
-    path_3d = os.getenv("KISYS3DMOD")
-    if path_3d is not None:
-        model_library_path = os.path.normpath(path_3d)
-    else:
-        model_library_path = None
+    logger.info("All defined environment variables: " + repr(os.environ))
 
-    # if running standalone, enviroment variables might not be set
-    if model_library_path is None:
+    # if running standalone, environment variables might not be set
+    if os.getenv("KISYS3DMOD") is None:
         # hardcode the path for my machine - testing works only on my machine
-        model_library_path = os.path.normpath("D://Mitja//Plate//Kicad_libs//official_libs//Packages3D")
-    logger.info("KISYS3DMOD path: " + model_library_path)
+        os.environ["KISYS3DMOD"] = os.path.normpath("D://Mitja//Plate//Kicad_libs//official_libs//Packages3D")
+    if os.getenv("KIPRJMOD") is None:
+        # hardcode the path for my machine - testing works only on my machine
+        os.environ["KIPRJMOD"] = os.path.abspath(os.path.dirname(board.GetFileName()))
 
-    # prepare folder for 3dmodels
+    # prepare folder for 3Dmodels
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
     if alt_files:
         model_folder_path = os.path.normpath(proj_path + "//shapes3D_temp")
@@ -587,15 +585,9 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                 start_index = model_path.find("${")+2 or model_path.find("$(")+2
                 end_index = model_path.find("}") or model_path.find(")")
                 env_var = model_path[start_index:end_index]
-                if env_var != "KISYS3DMOD":
-                    global __name__
-                    if __name__ == "__main__":
-                        if env_var == "KIPRJMOD":
-                            path = os.path.abspath(os.path.dirname(board.GetFileName()))
-                    else:
-                        path = os.getenv(env_var)
-                else:
-                    path = model_library_path
+
+                path = os.getenv(env_var)
+
                 # if variable is defined, find proper model path
                 if path is not None:
                     clean_model_path = os.path.normpath(path+model_path[end_index+1:])
@@ -608,11 +600,20 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
             # check if model is given with absolute path
             elif os.path.exists(model_path):
                 clean_model_path = model_path
-            # otherwise we don't know how to parse the path ignorring it
+            # otherwise we don't know how to parse the path
             else:
                 logger.info("Ambiguios path for the model: " + model_path)
-                clean_model_path = os.path.normpath(os.path.join(model_library_path,model_path))
-                logger.info("Going with: " + clean_model_path)
+                # test default 3D_library location "KISYS3DMOD"
+                if os.path.exists(os.path.normpath(os.path.join(os.getenv("KISYS3DMOD"),model_path))):
+                    # testin project folder location
+                    clean_model_path = os.path.normpath(os.path.join(os.getenv("KISYS3DMOD"),model_path))
+                    logger.info("Going with: " + clean_model_path)
+                elif os.path.exists(os.path.normpath(os.path.join(proj_path,model_path))):
+                    clean_model_path = os.path.normpath(os.path.join(proj_path,model_path))
+                    logger.info("Going with: " + clean_model_path)
+                else:
+                    logger.info("Can not find model defined with enviroment variable:\n" + model_path)
+                    clean_model_path = None
 
             # copy model
             copied_at_least_one = False
