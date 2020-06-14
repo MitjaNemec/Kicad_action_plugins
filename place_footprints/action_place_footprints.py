@@ -448,7 +448,16 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         dlg = InitialDialog(_pcbnew_frame)
         res = dlg.ShowModal()
 
-        placer = place_footprints.Placer(board)
+        try:
+            placer = place_footprints.Placer(board)
+        except LookupError as error:
+            caption = 'Place footprints'
+            message = str(error)
+            dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            logging.shutdown()
+            return
 
         pivot_module = placer.get_mod_by_ref(pivot_module_reference)
 
