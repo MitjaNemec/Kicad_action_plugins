@@ -53,8 +53,8 @@ else:
 
 
 def natural_sort(l):
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key=alphanum_key)
 
 
@@ -73,7 +73,7 @@ def clear_highlight_on_module(module):
         pad.ClearBrightened()
     drawings = module.GraphicalItems()
     for item in drawings:
-        item.ClearBrightened()   
+        item.ClearBrightened()
 
 
 class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
@@ -120,7 +120,7 @@ class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
         for ref in self.ref_list:
             module = self.placer.get_mod_by_ref(ref)
             set_highlight_on_module(module.mod)
-        pcbnew.Refresh()        
+        pcbnew.Refresh()
 
         if self.com_arr.GetStringSelection() == u"Linear":
             if self.user_units == 'mm':
@@ -384,8 +384,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         self.name = "Place footprints"
         self.category = "Modify Drawing PCB"
         self.description = "Place footprints along a predefined pattern (line, matrix, circle)"
-        self.icon_file_name = os.path.join(
-                os.path.dirname(__file__), 'array-place_footprints.svg.png')
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), "./array-place_footprints.svg.png")
 
     def Run(self):
         # load board
@@ -426,16 +425,16 @@ class PlaceFootprints(pcbnew.ActionPlugin):
 
         _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
-        # check if there is exactly one module selected
-        selected_modules = [x for x in pcbnew.GetBoard().GetModules() if x.IsSelected()]
+        # check if there is at least one module selected
+        selected_modules = [x for x in board.GetModules() if x.IsSelected()]
         selected_names = []
         for mod in selected_modules:
             selected_names.append("{}".format(mod.GetReference()))
 
         # if more or less than one show only a messagebox
-        if len(selected_names) != 1:
+        if len(selected_names) == 0:
             caption = 'Place footprints'
-            message = "More or less than 1 footprint selected. Please select exactly one footprint and run the script again"
+            message = "No footprint selected. Please select at least one footprint and run the script again"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
@@ -464,44 +463,47 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         # by reference number
         if res == wx.ID_OK:
             # by ref
-            for i in range(len(pivot_module_reference)):
-                if not pivot_module_reference[i].isdigit():
-                    index = i+1
-            module_reference_designator = pivot_module_reference[:index]
-            module_reference_number = pivot_module_reference[index:]
-            logger.info("Reference designator is: " + module_reference_designator)
-            logger.info("Rerefence number is: " + module_reference_number)
+            if len(selected_names) == 1:
+                for i in range(len(pivot_module_reference)):
+                    if not pivot_module_reference[i].isdigit():
+                        index = i+1
+                module_reference_designator = pivot_module_reference[:index]
+                module_reference_number = pivot_module_reference[index:]
+                logger.info("Reference designator is: " + module_reference_designator)
+                logger.info("Rerefence number is: " + module_reference_number)
 
-            # get list of all modules with same reference designator
-            list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
+                # get list of all modules with same reference designator
+                list_of_all_modules_with_same_designator = placer.get_modules_with_reference_designator(module_reference_designator)
 
-            sorted_list = sorted_data=sorted(list_of_all_modules_with_same_designator, key=lambda x : int(x[index:]))
+                sorted_list = sorted_data=sorted(list_of_all_modules_with_same_designator, key=lambda x : int(x[index:]))
 
-            # find only consequtive modules
-            list_of_consecutive_modules = []
-            # go through the list in positive direction
-            start_index = sorted_list.index(pivot_module_reference)
-            count_start = int(module_reference_number)
-            for mod in sorted_list[start_index:]:
-                if int(mod[index:]) == count_start:
-                    count_start = count_start + 1
-                    list_of_consecutive_modules.append(mod)
-                else:
-                    break
+                # find only consequtive modules
+                list_of_consecutive_modules = []
+                # go through the list in positive direction
+                start_index = sorted_list.index(pivot_module_reference)
+                count_start = int(module_reference_number)
+                for mod in sorted_list[start_index:]:
+                    if int(mod[index:]) == count_start:
+                        count_start = count_start + 1
+                        list_of_consecutive_modules.append(mod)
+                    else:
+                        break
 
-            # go through the list in negative direction
-            reversed_list = list(reversed(sorted_list))
-            start_index = reversed_list.index(pivot_module_reference)
-            count_start = int(module_reference_number)
-            for mod in reversed_list[start_index:]:
-                if int(mod[index:]) == count_start:
-                    count_start = count_start - 1
-                    list_of_consecutive_modules.append(mod)
-                else:
-                    break
+                # go through the list in negative direction
+                reversed_list = list(reversed(sorted_list))
+                start_index = reversed_list.index(pivot_module_reference)
+                count_start = int(module_reference_number)
+                for mod in reversed_list[start_index:]:
+                    if int(mod[index:]) == count_start:
+                        count_start = count_start - 1
+                        list_of_consecutive_modules.append(mod)
+                    else:
+                        break
 
-            sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
-            logger.info('Sorted and filtered list:\n' + repr(sorted_modules))
+                sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
+                logger.info('Sorted and filtered list:\n' + repr(sorted_modules))
+            else:
+                sorted_modules = selected_names
 
             # create dialog
             dlg = PlaceByReference(_pcbnew_frame, placer, pivot_module_reference, user_units)
@@ -617,7 +619,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                         clear_highlight_on_module(module)
                     pcbnew.Refresh()
                     return
-            
+
             # clear highlight all modules by default
             for mod in sorted_modules:
                 module = board.FindModuleByReference(mod)
