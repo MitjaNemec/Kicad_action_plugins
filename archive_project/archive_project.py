@@ -631,7 +631,7 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
                         pass
 
             if not copied_at_least_one:
-                logger.debug("Did not copy: " + model.m_Filename)
+                logger.debug("Did not copy: " + model.m_Filename + " at: " + clean_model_path)
                 not_copied.append(model.m_Filename)
 
             if copied_at_least_one or allow_missing_models:
