@@ -28,6 +28,7 @@ import logging
 import itertools
 import re
 import math
+from io import open
 
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
