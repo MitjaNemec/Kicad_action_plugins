@@ -110,7 +110,7 @@ def get_module_text_items(module):
 class Replicator():
     @staticmethod
     def extract_subsheets(filename):
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             file_folder = os.path.dirname(os.path.abspath(filename))
             file_lines = f.read()
         # alternative solution
