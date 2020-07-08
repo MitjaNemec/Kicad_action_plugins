@@ -39,8 +39,11 @@ logger = logging.getLogger(__name__)
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
+with open(version_filename, 'rb') as f:
+    # read and decode
+    version_file_contents = f.read().decode('utf-8')
+    # extract first line
+    VERSION = version_file_contents.split('\n').strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
@@ -110,9 +113,9 @@ class Footprint():
 class SchData():
     @staticmethod
     def extract_subsheets(filename):
-        with open(filename) as f:
-            file_folder = os.path.dirname(os.path.abspath(filename))
-            file_lines = f.read()
+        with open(filename, 'rb') as f:
+        file_folder = os.path.dirname(os.path.abspath(filename))
+        file_lines = f.read().decode('utf-8')
         # alternative solution
         # extract all sheet references
         sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
@@ -185,8 +188,9 @@ class SchData():
 
     def get_sch_hash(self, sch_file, md5hash):
         # load sch file
-        with open(sch_file) as f:
-            sch_lines = f.readlines()
+        with open(sch_file, 'rb') as f:
+            file_contents = f.read().decode('utf-8')
+            sch_lines = file_contents.split('\n')
 
         # remove all lines containing references (L, U, AR) and other stuff
         sch_file_without_reference \
@@ -784,8 +788,8 @@ class RestoreLayout():
         # save board from the saved layout only temporary
         tempdir = tempfile.gettempdir()
         temp_filename = os.path.join(tempdir, 'temp_layout_for_restore.kicad_pcb')
-        with open(temp_filename, 'w') as f:
-            f.write(data_saved.layout)
+        with open(temp_filename, 'wb') as f:
+            f.write(data_saved.layout.encode('utf-8'))
 
         # restore layout data
         saved_board = pcbnew.LoadBoard(temp_filename)
@@ -982,8 +986,8 @@ class SaveLayout(RestoreLayout):
         pcbnew.SaveBoard(self.tempfilename, self.board)
         # load as text
         logger.info("Reading layout as text")
-        with open(self.tempfilename, 'r') as f:
-            layout = f.read()
+        with open(self.tempfilename, 'rb') as f:
+            layout = f.read().decode('utf-8')
 
         # remove the file
         os.remove(self.tempfilename)

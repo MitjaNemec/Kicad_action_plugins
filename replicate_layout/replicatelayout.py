@@ -28,7 +28,6 @@ import logging
 import itertools
 import re
 import math
-from io import open
 
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
@@ -55,13 +54,17 @@ def flip_module(module, position):
     else:
         module.Flip(position)
 
+
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
+with open(version_filename, 'rb') as f:
+    # read and decode
+    version_file_contents = f.read().decode('utf-8')
+    # extract first line
+    VERSION = version_file_contents.split('\n')[0].strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
@@ -111,9 +114,9 @@ def get_module_text_items(module):
 class Replicator():
     @staticmethod
     def extract_subsheets(filename):
-        with open(filename, encoding='utf-8') as f:
+        with open(filename, 'rb') as f:
             file_folder = os.path.dirname(os.path.abspath(filename))
-            file_lines = f.read()
+            file_lines = f.read().decode('utf-8')
         # alternative solution
         # extract all sheet references
         sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]

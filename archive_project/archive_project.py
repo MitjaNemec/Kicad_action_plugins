@@ -18,8 +18,11 @@ logger = logging.getLogger(__name__)
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
+with open(version_filename, 'rb') as f:
+    # read and decode
+    version_file_contents = f.read().decode('utf-8')
+    # extract first line
+    VERSION = version_file_contents.split('\n')[0].strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
@@ -77,9 +80,9 @@ def remove_braced_content(args):
 
 
 def extract_subsheets(filename):
-    with open(filename) as f:
+    with open(filename, 'rb') as f:
         file_folder = os.path.dirname(os.path.abspath(filename))
-        file_lines = f.read()
+        file_lines = f.read().decode('utf-8')
     # alternative solution
     # extract all sheet references
     sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
@@ -139,8 +142,9 @@ def archive_worksheet(board):
     project_name = pcb_filename.replace(".kicad_pcb", ".pro")
     project_dir = os.path.dirname(project_name)
     # open project file
-    with open(project_name) as f:
-        project_file = f.readlines()
+    with open(project_name, 'rb') as f:
+        file_contents = f.read().decode('utf-8')
+        project_file = file_contents.split('\n')
 
     # find worksheet entry
     for line_index in range(len(project_file)):
@@ -159,7 +163,7 @@ def archive_worksheet(board):
 
             # try to open the file to see if we've got read access
             try:
-                with open(worksheet_path) as f:
+                with open(worksheet_path, 'rb') as f:
                     logger.info("Worksheet file exists and we can read it")
             except IOError:
                 logger.info("Worksheet file exists but is not accessible")
@@ -185,8 +189,9 @@ def archive_worksheet(board):
             new_line = "PageLayoutDescrFile=" + worksheet_filename + "\n"
             project_file[line_index] = new_line
 
-    with open(project_name, "w") as f:
-        f.writelines(project_file)
+    with open(project_name, "wb") as f:
+        project_file_contents = ''.join(project_file)
+        f.write(project_file_contents.encode('utf-8'))
 
 
 def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archive_documentation=False):
@@ -214,8 +219,9 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
 
     global_sym_lib_file_path = os.path.normpath(sys_path + "//sym-lib-table")
     try:
-        with open(global_sym_lib_file_path) as f:
-            global_sym_lib_file = f.readlines()
+        with open(global_sym_lib_file_path, 'rb') as f:
+            file_contents = f.read().decode('utf-8')
+            global_sym_lib_file = file_contents.split('\n')
     except IOError:
         logger.info("Global sym-lib-table does not exist!")
         raise IOError("Global sym-lib-table does not exist!")
@@ -240,14 +246,15 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
     proj_path = os.path.dirname(os.path.abspath(board.GetFileName()))
     proj_sym_lib_file_path = os.path.normpath(proj_path + "//sym-lib-table")
     try:
-        with open(proj_sym_lib_file_path) as f:
-            project_sym_lib_file = f.readlines()
+        with open(proj_sym_lib_file_path, 'rb') as f:
+            file_contents = f.read().decode('utf-8')
+            project_sym_lib_file = file_contents.split('\n')
     # if file does not exists, create new
     except IOError:
         logger.info("Project sym lib table does not exist")
         new_sym_lib_file = [u"(sym_lib_table\n", u")\n"]
-        with open(proj_sym_lib_file_path, "w") as f:
-            f.writelines(new_sym_lib_file)
+        with open(proj_sym_lib_file_path, 'wb') as f:
+            f.write("".join(new_sym_lib_file).encode('utf-8'))
             project_sym_lib_file = new_sym_lib_file
     # append nicknames
     for line in project_sym_lib_file:
@@ -283,8 +290,8 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
         logger.info("Entering archive library in sym-lib-table")
         line_contents = "    (lib (name archive)(type Legacy)(uri \"${KIPRJMOD}/" + archive_lib_name + "\")(options \"\")(descr \"\"))\n"
         project_sym_lib_file.insert(1, line_contents)
-        with open(proj_sym_lib_file_path, "w") as f:
-            f.writelines(project_sym_lib_file)
+        with open(proj_sym_lib_file_path, 'wb') as f:
+            f.write("".join(project_sym_lib_file).encode('utf-8'))
 
     # copy cache library and overwrite acrhive library, if it exists
     if not os.path.isfile(os.path.join(proj_path, cache_lib_name)):
@@ -298,14 +305,15 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                  os.path.join(proj_path, archive_lib_name.replace(".lib", ".dcm")))
 
     # read_archive library
-    with open(os.path.join(proj_path, archive_lib_name)) as f:
-        project_archive_file = f.readlines()
+    with open(os.path.join(proj_path, archive_lib_name), 'rb') as f:
+        file_contents = f.read().decode('utf-8')
+        project_archive_file = file_contents.split('\n')
 
     # first find all symbols in the library
     symbols_list = []
     for line in project_archive_file:
         line_contents = line.split()
-        if line_contents[0] == "DEF":
+        if line_contents and line_contents[0] == "DEF":
             symbols_list.append(line_contents[1].replace("~", ""))
 
     # find all symbol references and replace them with correct ones
@@ -350,8 +358,8 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
     project_archive_file_output.extend(project_archive_file[stop_indeces[-1]:])
 
     # writeback the archive file
-    with open(os.path.join(proj_path, archive_lib_name), "w") as f:
-        f.writelines(project_archive_file_output)
+    with open(os.path.join(proj_path, archive_lib_name), 'wb') as f:
+        f.write("\n".join(project_archive_file_output).encode('utf-8'))
 
     archive_symbols_list = []
     for sym in new_symbol_list:
@@ -375,8 +383,9 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
     symbols_form_missing_libraries = set()
     for filename in all_sch_files:
         out_files[filename] = []
-        with open(filename) as f:
-            sch_file = f.readlines()
+        with open(filename, 'rb') as f:
+            file_contents = f.read().decode('utf-8')
+            sch_file = file_contents.split('\n')
             logger.info("Archiving file: " + filename)
 
         # go throught the symbols only
@@ -531,8 +540,8 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
         # write
         if alt_files:
             filename = filename.replace(".sch", "_temp.sch")
-        with open(filename, "w") as f:
-            f.writelines(out_files[key])
+        with open(filename, 'wb') as f:
+            f.write("".join(out_files[key]).encode('utf-8'))
 
     # if not testing, delete cache file
     if not alt_files:
@@ -652,8 +661,8 @@ def archive_3D_models(board, allow_missing_models=False, alt_files=False):
 
 
 def main():
-    board = pcbnew.LoadBoard('fresh_test_project/archive_test_project.kicad_pcb')
-    #board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
+    #board = pcbnew.LoadBoard('fresh_test_project/archive_test_project.kicad_pcb')
+    board = pcbnew.LoadBoard('archived_test_project/archive_test_project.kicad_pcb')
     try:
         archive_symbols(board, allow_missing_libraries=True, alt_files=True, archive_documentation=True)
     except (ValueError, IOError, LookupError) as error:

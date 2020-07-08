@@ -31,8 +31,11 @@ logger = logging.getLogger(__name__)
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
+with open(version_filename, 'rb') as f:
+    # read and decode
+    version_file_contents = f.read().decode('utf-8')
+    # extract first line
+    VERSION = version_file_contents.split('\n').strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
@@ -88,9 +91,9 @@ def swap(board, pad_1, pad_2):
     relevant_sch_files = []
     for page in all_sch_files:
         # link refernce to symbol
-        with open(page) as f:
+        with open(page, 'rb') as f:
+            contents = f.read().decode('utf-8')
             # go through all components
-            contents = f.read()
             comp_indices = [m.start() for m in re.finditer('\$Comp', contents)]
             endcomp_indices = [m.start() for m in re.finditer('\$EndComp', contents)]
 
@@ -132,8 +135,8 @@ def swap(board, pad_1, pad_2):
 
     # load the symbol from cache library
     logger.info("Looking for: %s in cache.lib" % relevant_sch_files[0][3])
-    with open(cache_file) as f:
-        contents = f.read()
+    with open(cache_file, 'rb') as f:
+        contents = f.read().decode('utf-8')
         def_indices = [m.start() for m in re.finditer('DEF ', contents)]
         enddef_indices = [m.start() for m in re.finditer('ENDDEF', contents)]
         if len(def_indices) != len(enddef_indices):
@@ -244,8 +247,9 @@ def swap(board, pad_1, pad_2):
     logger.info("Pin 2 rotation: " + pin_2_rot)
 
     # load schematics
-    with open(page_1) as f:
-        shematics_1 = f.readlines()
+    with open(page_1, 'rb') as f:
+        file_contents = f.read().decode('utf-8')
+        shematics_1 = file_contents.split('\n')
     # parse it and find text labels at pin locations
     list_line_1 = []
     for index, line in enumerate(shematics_1):
@@ -277,8 +281,9 @@ def swap(board, pad_1, pad_2):
     if len(list_line_1) > 1:
         line_1 = min(list_line_1, key=itemgetter(3))
 
-    with open(page_2) as f:
-        shematics_2 = f.readlines()
+    with open(page_2, 'rb') as f:
+        file_contents = f.read().decode('utf-8')
+        shematics_2 = file_contents.split('\n')
 
     list_line_2 = []
     for index, line in enumerate(shematics_2):
@@ -348,8 +353,8 @@ def swap(board, pad_1, pad_2):
                                              'temp_' + os.path.basename(page_1))
         else:
             sch_file_to_write = page_1
-        with open(sch_file_to_write, 'w') as f:
-            f.writelines(new_shematics)
+        with open(sch_file_to_write, 'wb') as f:
+            f.write("\n".join(new_shematics).encode('utf-8'))
         logger.info("Saved the schematics in same file.")
 
     # pins are on different pages
@@ -393,10 +398,10 @@ def swap(board, pad_1, pad_2):
         else:
             sch_file_to_write_1 = page_1
             sch_file_to_write_2 = page_2
-        with open(sch_file_to_write_1, 'w') as f:
-            f.writelines(new_shematics_1)
-        with open(sch_file_to_write_2, 'w') as f:
-            f.writelines(new_shematics_2)
+        with open(sch_file_to_write_1, 'wb') as f:
+            f.write("\n".join(new_shematics_1).encode('utf-8'))
+        with open(sch_file_to_write_2, 'wb') as f:
+            f.write("\n".join(new_shematics_2).encode('utf-8'))
         logger.info("Saved the schematics in different files.")
 
     # swap nets in layout
@@ -419,9 +424,9 @@ def get_distance(point1, point2):
 
 
 def extract_subsheets(filename):
-    with open(filename) as f:
+    with open(filename, 'rb') as f:
         file_folder = os.path.dirname(os.path.abspath(filename))
-        file_lines = f.read()
+        file_lines = f.read().decode('utf-8')
     # alternative solution
     # extract all sheet references
     sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]

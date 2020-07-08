@@ -37,8 +37,11 @@ else:
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
+with open(version_filename, 'rb') as f:
+    # read and decode
+    version_file_contents = f.read().decode('utf-8')
+    # extract first line
+    VERSION = version_file_contents.split('\n').strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
@@ -105,9 +108,9 @@ def get_index_of_tuple(list_of_tuples, index, value):
 class Placer():
     @staticmethod
     def extract_subsheets(filename):
-        with open(filename) as f:
-            file_folder = os.path.dirname(os.path.abspath(filename))
-            file_lines = f.read()
+        with open(filename, 'rb') as f:
+        file_folder = os.path.dirname(os.path.abspath(filename))
+        file_lines = f.read().decode('utf-8')
         # alternative solution
         # extract all sheet references
         sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]

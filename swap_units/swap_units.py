@@ -31,8 +31,11 @@ if __name__ != "__main__":
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
-with open(version_filename) as f:
-    VERSION = f.readline().strip()
+with open(version_filename, 'rb') as f:
+    # read and decode
+    version_file_contents = f.read().decode('utf-8')
+    # extract first line
+    VERSION = version_file_contents.split('\n').strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
@@ -72,17 +75,17 @@ def swap(board, pad_1, pad_2):
     # find all schematic pages containing reference
     relevant_sch_files = []
     for page in all_sch_files:
-        with open(page) as f:
-            current_sch_file = f.read()
+        with open(page, 'rb') as f:
+            current_sch_file = f.read().decode('utf-8')
         if footprint_reference in current_sch_file:
             relevant_sch_files.append(page)
 
     logger.info("Sch files to modify are: " + repr(relevant_sch_files))
 
     # link refernce to symbol
-    with open(relevant_sch_files[0]) as f:
+    with open(relevant_sch_files[0], 'rb') as f:
+        contents = f.read().decode('utf-8')
         # go through all components
-        contents = f.read()
         components = contents.split('$Comp')
         for component in components:
             # TODO matching with in is not precise enough (e.g. C401 is in IC401 also)
@@ -96,8 +99,8 @@ def swap(board, pad_1, pad_2):
     sym_name = symbol_name.rsplit(":", 1)[1]
 
     # load the symbol from cache library
-    with open(cache_file) as f:
-        contents = f.read()
+    with open(cache_file, 'rb') as f:
+        contents = f.read().decode('utf-8')
         symbols = contents.split('ENDDEF')
         # go throught all symbols and when you hit the correct one, yield
         for sym in symbols:
@@ -158,8 +161,8 @@ def swap(board, pad_1, pad_2):
     page_1 = None
     page_2 = None
     for page in relevant_sch_files:
-        with open(page) as f:
-            current_sch_file = f.read()
+        with open(page, 'rb') as f:
+            current_sch_file = f.read().decode('utf-8')
             if footprint_reference in current_sch_file:
                 components = current_sch_file.split('$Comp')
                 for component in components:
@@ -187,10 +190,10 @@ def swap(board, pad_1, pad_2):
 
     # swap units in schematics
     if page_1 is not None:
-        with open(page_1) as f:
+        with open(page_1, 'rb') as f:
+            current_sch_file = f.read().decode('utf-8')
             unit_1_loc = None
             unit_1ar_loc = []
-            current_sch_file = f.read()
             current_sch_file_by_lines = current_sch_file.split("\n")
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
@@ -258,10 +261,10 @@ def swap(board, pad_1, pad_2):
 
     # if page_1 == page_2 do not swap again
     if (page_2 is not None):
-        with open(page_2) as f:
+        with open(page_2, 'rb') as f:
+            current_sch_file = f.read().decode('utf-8')
             unit_2_loc = None
             unit_2ar_loc = []
-            current_sch_file = f.read()
             current_sch_file_by_lines = current_sch_file.split("\n")
             # find location of specific unit
             comp_starts = [m.start() for m in re.finditer('\$Comp', current_sch_file)]
@@ -384,11 +387,11 @@ def swap(board, pad_1, pad_2):
             filename = os.path.basename(page_1)
             subfolder = os.path.relpath(os.path.dirname(page_1))
             new_name = os.path.join(os.path.join(project_folder + "_temp", subfolder), filename)
-            with open(new_name, 'w') as f:
-                f.write(unit_2_sch_file)
+            with open(new_name, 'wb') as f:
+                f.write(unit_2_sch_file.encode('utf-8'))
         else:
-            with open(page_1, 'w') as f:
-                f.write(unit_2_sch_file)
+            with open(page_1, 'wb') as f:
+                f.write(unit_2_sch_file.encode('utf-8'))
     # if files are different, then there is no problem, write both of them and be done with it
     else:
         if __name__ == "__main__":
@@ -396,28 +399,28 @@ def swap(board, pad_1, pad_2):
             subfolder = os.path.relpath(os.path.dirname(page_1))
             new_name = os.path.join(os.path.join(project_folder + "_temp", subfolder), filename)
             if page_1 is not None:
-                with open(new_name, 'w') as f:
-                    f.write(unit_1_sch_file)
+                with open(new_name, 'wb') as f:
+                    f.write(unit_1_sch_file.encode('utf-8'))
             if page_2 is not None:
                 filename = os.path.basename(page_2)
                 subfolder = os.path.relpath(os.path.dirname(page_2))
                 new_name = os.path.join(os.path.join(project_folder + "_temp", subfolder), filename)
-                with open(new_name, 'w') as f:
-                    f.write(unit_2_sch_file)
+                with open(new_name, 'wb') as f:
+                    f.write(unit_2_sch_file.encode('utf-8'))
         else:
             if page_1 is not None:
-                with open(page_1, 'w') as f:
-                    f.write(unit_1_sch_file)
+                with open(page_1, 'wb') as f:
+                    f.write(unit_1_sch_file.encode('utf-8'))
             if page_2 is not None:
-                with open(page_2, 'w') as f:
-                    f.write(unit_2_sch_file)
+                with open(page_2, 'wb') as f:
+                    f.write(unit_2_sch_file.encode('utf-8'))
     logger.info("Saved the schematics.")
 
 
 def extract_subsheets(filename):
-    with open(filename) as f:
+    with open(filename, 'rb') as f:
         file_folder = os.path.dirname(os.path.abspath(filename))
-        file_lines = f.read()
+        file_lines = f.read().decode('utf-8')
     # alternative solution
     # extract all sheet references
     sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
