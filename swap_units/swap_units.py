@@ -35,7 +35,7 @@ with open(version_filename, 'rb') as f:
     # read and decode
     version_file_contents = f.read().decode('utf-8')
     # extract first line
-    VERSION = version_file_contents.split('\n').strip()
+    VERSION = version_file_contents.split('\n')[0].strip()
 
 # > V5.1.5 and V 5.99 build information
 if hasattr(pcbnew, 'GetBuildVersion'):
