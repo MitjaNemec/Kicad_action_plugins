@@ -315,6 +315,9 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         sl_err = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl_err
 
+        # for solving an issue #99
+        logger.info("wx top level windows: " +repr(wx.GetTopLevelWindows()))
+
         _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
         # check if there is exactly one module selected
