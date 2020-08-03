@@ -27,18 +27,24 @@ import logging
 import sys
 import math
 import re
+import platform
 # import place_footprints
 if __name__ == '__main__':
     import place_footprints
     import initial_dialog_GUI
     import place_by_reference_GUI
     import place_by_sheet_GUI
+    import place_by_selection_GUI
 else:
     from . import place_footprints
     from . import initial_dialog_GUI
     from . import place_by_reference_GUI
     from . import place_by_sheet_GUI
+    from . import place_by_selection_GUI
 
+ID_BY_SELECTION = 0
+ID_BY_REFERENCE = 1
+ID_BY_SHEET = 2
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
@@ -53,8 +59,8 @@ else:
 
 
 def natural_sort(l):
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key=alphanum_key)
 
 
@@ -73,7 +79,102 @@ def clear_highlight_on_module(module):
         pad.ClearBrightened()
     drawings = module.GraphicalItems()
     for item in drawings:
-        item.ClearBrightened()   
+        item.ClearBrightened()
+
+
+class PlaceBySelection(place_by_selection_GUI.PlaceBySelectionGUI):
+    def SetSizeHints(self, sz1, sz2):
+        # DO NOTHING
+        pass
+
+    # user changed arrangement
+    def arr_changed(self, event):
+        # linear layout
+        if self.com_arr.GetStringSelection() == u"Linear":
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width / 25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height / 25.4))
+            self.lbl_columns.Hide()
+            self.val_columns.Hide()
+        # Matrix
+        if self.com_arr.GetStringSelection() == u"Matrix":
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"step x (mm):")
+                self.lbl_y_angle.SetLabelText(u"step y (mm):")
+                self.val_x_mag.SetValue("%.3f" % self.width)
+                self.val_y_angle.SetValue("%.3f" % self.height)
+            else:
+                self.lbl_x_mag.SetLabelText(u"step x (in):")
+                self.lbl_y_angle.SetLabelText(u"step y (in):")
+                self.val_x_mag.SetValue("%.3f" % (self.width / 25.4))
+                self.val_y_angle.SetValue("%.3f" % (self.height / 25.4))
+            self.lbl_columns.Show()
+            self.val_columns.Show()
+
+            self.val_columns.Clear()
+            self.val_columns.SetValue(str(int(round(math.sqrt(len(self.list_modules.GetSelections()))))))
+        # circular layout
+        if self.com_arr.GetStringSelection() == u"Circular":
+            number_of_all_modules = self.list_modules.GetCount()
+            circumference = number_of_all_modules * self.width
+            radius = circumference / (2 * math.pi)
+            angle = 360.0 / number_of_all_modules
+            if self.user_units == 'mm':
+                self.lbl_x_mag.SetLabelText(u"radius (mm):")
+                self.val_x_mag.SetValue("%.3f" % radius)
+            else:
+                self.lbl_x_mag.SetLabelText(u"radius (in):")
+                self.val_x_mag.SetValue("%.3f" % (radius / 25.4))
+            self.lbl_y_angle.SetLabelText(u"angle (deg):")
+            self.val_y_angle.SetValue("%.3f" % angle)
+            self.lbl_columns.Hide()
+            self.val_columns.Hide()
+        event.Skip()
+
+    def __init__(self, parent, placer, pivot_mod, user_units):
+        place_by_selection_GUI.PlaceBySelectionGUI.__init__(self, parent)
+
+        if user_units == 'mm':
+            self.lbl_x_mag.SetLabelText(u"step x (mm):")
+        else:
+            self.lbl_x_mag.SetLabelText(u"step x (in):")
+
+        if user_units == 'mm':
+            self.lbl_y_angle.SetLabelText(u"step y (mm):")
+        else:
+            self.lbl_y_angle.SetLabelText(u"step y (in):")
+
+        # Connect Events
+        self.com_arr.Bind(wx.EVT_COMBOBOX, self.arr_changed)
+
+        self.placer = placer
+        self.user_units = user_units
+        self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
+
+        self.height, self.width = self.placer.get_modules_bounding_box([self.pivot_mod])
+
+        if user_units == 'mm':
+            self.val_x_mag.SetValue("%.3f" % self.width)
+            self.val_y_angle.SetValue("%.3f" % self.height)
+        else:
+            self.val_x_mag.SetValue("%.3f" % (self.width / 25.4))
+            self.val_y_angle.SetValue("%.3f" % (self.height / 25.4))
+
+    def on_selected(self, event):
+        # the selected footprint is new pivot module
+        pivot_mod = self.list_modules.GetString(self.list_modules.GetSelection())
+        self.pivot_mod = self.placer.get_mod_by_ref(pivot_mod)
+        self.height, self.width = self.placer.get_modules_bounding_box([self.pivot_mod])
+        # TODO might need to recalculate recommended x/y or radius if selected footprint is different
+
+        event.Skip()
 
 
 class PlaceBySheet(place_by_sheet_GUI.PlaceBySheetGUI):
@@ -369,6 +470,19 @@ class InitialDialog(initial_dialog_GUI.InitialDialogGUI):
     def __init__(self, parent):
         initial_dialog_GUI.InitialDialogGUI.__init__(self, parent)
 
+    # button handlers
+    def evt_selection(self, event):
+        self.EndModal(ID_BY_SELECTION)
+        self.Destroy()
+
+    def evt_reference(self, event):
+        self.EndModal(ID_BY_REFERENCE)
+        self.Destroy()
+
+    def evt_sheet(self, event):
+        self.EndModal(ID_BY_SHEET)
+        self.Destroy()
+
 
 class PlaceFootprints(pcbnew.ActionPlugin):
     """
@@ -384,8 +498,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         self.name = "Place footprints"
         self.category = "Modify Drawing PCB"
         self.description = "Place footprints along a predefined pattern (line, matrix, circle)"
-        self.icon_file_name = os.path.join(
-                os.path.dirname(__file__), 'array-place_footprints.svg.png')
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), 'array-place_footprints.svg.png')
 
     def Run(self):
         # load board
@@ -411,7 +524,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                             format='%(asctime)s %(name)s %(lineno)d:%(message)s',
                             datefmt='%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
-        logger.info("Plugin executed on: " + repr(sys.platform))
+        logger.info("Plugin executed on: " + repr(platform.platform()))
         logger.info("Plugin executed with python version: " + repr(sys.version))
         logger.info("KiCad build version: " + BUILD_VERSION)
         logger.info("Place footprints plugin version: " + VERSION + " started")
@@ -426,22 +539,22 @@ class PlaceFootprints(pcbnew.ActionPlugin):
 
         _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
 
-        # check if there is exactly one module selected
-        selected_modules = [x for x in pcbnew.GetBoard().GetModules() if x.IsSelected()]
+        # check if there is at least one module selected
+        selected_modules = [x for x in board.GetModules() if x.IsSelected()]
         selected_names = []
         for mod in selected_modules:
             selected_names.append("{}".format(mod.GetReference()))
 
-        # if more or less than one show only a messagebox
-        if len(selected_names) != 1:
+        # if no footprints selected exit early
+        if len(selected_names) == 0:
             caption = 'Place footprints'
-            message = "More or less than 1 footprint selected. Please select exactly one footprint and run the script again"
+            message = "No footprints selected. Please select one or more footprints and run the script again"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # this it the reference footprint
+        # this is the reference footprint
         pivot_module_reference = selected_names[0]
 
         # ask user which way to select other footprints (by increasing reference number or by ID)
@@ -462,8 +575,17 @@ class PlaceFootprints(pcbnew.ActionPlugin):
         pivot_module = placer.get_mod_by_ref(pivot_module_reference)
 
         # by reference number
-        if res == wx.ID_OK:
-            # by ref
+        if res == ID_BY_REFERENCE:
+            # if more or less than one show only a messagebox
+            if len(selected_names) > 1:
+                caption = 'Place footprints'
+                message = "More than one footprints selected. Please select exactly one footprint and run the script again"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
+
+            # get the pivot module reference number
             for i in range(len(pivot_module_reference)):
                 if not pivot_module_reference[i].isdigit():
                     index = i+1
@@ -500,6 +622,7 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 else:
                     break
 
+            # this is the complete list of footprints with consecutive numbers before and after the pivot footprint
             sorted_modules = natural_sort(list(set(list_of_consecutive_modules)))
             logger.info('Sorted and filtered list:\n' + repr(sorted_modules))
 
@@ -617,14 +740,22 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                         clear_highlight_on_module(module)
                     pcbnew.Refresh()
                     return
-            
+
             # clear highlight all modules by default
             for mod in sorted_modules:
                 module = board.FindModuleByReference(mod)
                 clear_highlight_on_module(module)
             pcbnew.Refresh()
         # by sheet
-        else:
+        if res == ID_BY_SHEET:
+            # if more or less than one show only a messagebox
+            if len(selected_names) > 1:
+                caption = 'Place footprints'
+                message = "More than one footprints selected. Please select exactly one footprint and run the script again"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
             # get list of all modules with same ID
             list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
             # display dialog
@@ -747,7 +878,140 @@ class PlaceFootprints(pcbnew.ActionPlugin):
                 module = board.FindModuleByReference(mod)
                 clear_highlight_on_module(module)
             pcbnew.Refresh()
+        # by selection
+        if res == ID_BY_SELECTION:
+            # if less than two show only a messagebox
+            if len(selected_names) < 2:
+                caption = 'Place footprints'
+                message = "Less then two footprints selected. Please select two or more footprints and run the script again"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return
 
+            # get and sort the list of selected modules
+            sorted_modules = sorted(selected_names)
+            logger.info("Selected footprints are: " + repr(sorted_modules))
+
+            # show the dialog so that the user can select the pivot footprint and place options
+            # create dialog and populate the list
+            dlg = PlaceBySelection(_pcbnew_frame, placer, pivot_module_reference, user_units)
+            dlg.list_modules.AppendItems(sorted_modules)
+
+            # highlight all modules by default
+            for mod in sorted_modules:
+                module = board.FindModuleByReference(mod)
+                set_highlight_on_module(module)
+            pcbnew.Refresh()
+
+            # by default select the topmost module
+            dlg.list_modules.Select(0)
+
+            # show dialog
+            res = dlg.ShowModal()
+
+            if res == wx.ID_CANCEL:
+                # clear highlight all modules by default
+                for mod in sorted_modules:
+                    module = board.FindModuleByReference(mod)
+                    clear_highlight_on_module(module)
+                pcbnew.Refresh()
+                return
+
+            # get pivot module
+            pivot_module_reference = dlg.list_modules.GetString(dlg.list_modules.GetSelection())
+            modules_to_place = sorted_modules
+
+            # place footprints
+            if dlg.com_arr.GetStringSelection() == u'Circular':
+                delta_angle = float(dlg.val_y_angle.GetValue())
+                if user_units == 'mm':
+                    radius = float(dlg.val_x_mag.GetValue())
+                else:
+                    radius = float(dlg.val_x_mag.GetValue()) / 25.4
+                try:
+                    placer.place_circular(modules_to_place, pivot_module_reference, radius, delta_angle)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n" \
+                              + "You can raise an issue on GiHub page.\n" \
+                              + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
+                    return
+
+            if dlg.com_arr.GetStringSelection() == u'Linear':
+                if user_units == 'mm':
+                    step_x = float(dlg.val_x_mag.GetValue())
+                    step_y = float(dlg.val_y_angle.GetValue())
+                else:
+                    step_x = float(dlg.val_x_mag.GetValue()) / 25.4
+                    step_y = float(dlg.val_y_angle.GetValue()) / 25.4
+                try:
+                    placer.place_linear(modules_to_place, pivot_module_reference, step_x, step_y)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n" \
+                              + "You can raise an issue on GiHub page.\n" \
+                              + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
+                    return
+
+            if dlg.com_arr.GetStringSelection() == u'Matrix':
+                if user_units == 'mm':
+                    step_x = float(dlg.val_x_mag.GetValue())
+                    step_y = float(dlg.val_y_angle.GetValue())
+                else:
+                    step_x = float(dlg.val_x_mag.GetValue()) / 25.4
+                    step_y = float(dlg.val_y_angle.GetValue()) / 25.4
+                nr_columns = int(dlg.val_columns.GetValue())
+                try:
+                    placer.place_matrix(modules_to_place, pivot_module_reference, step_x, step_y, nr_columns)
+                    logger.info("Placing complete")
+                    logging.shutdown()
+                except Exception:
+                    logger.exception("Fatal error when executing place footprints")
+                    caption = 'Place footprints'
+                    message = "Fatal error when executing place footprints.\n" \
+                              + "You can raise an issue on GiHub page.\n" \
+                              + "Please attach the place_footprints.log which you should find in the project folder."
+                    dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                    logging.shutdown()
+                    # clear highlight all modules by default
+                    for mod in sorted_modules:
+                        module = board.FindModuleByReference(mod)
+                        clear_highlight_on_module(module)
+                    pcbnew.Refresh()
+                    return
+
+            # clear highlight all modules by default
+            for mod in sorted_modules:
+                module = board.FindModuleByReference(mod)
+                clear_highlight_on_module(module)
+            pcbnew.Refresh()
 
 class StreamToLogger(object):
     """

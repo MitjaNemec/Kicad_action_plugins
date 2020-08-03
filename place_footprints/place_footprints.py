@@ -28,6 +28,7 @@ import logging
 import itertools
 import math
 import re
+import platform
 
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
@@ -68,8 +69,8 @@ def flip_module(module, position):
 
 
 def natural_sort(l): 
-    convert = lambda text: int(text) if text.isdigit() else text.lower() 
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)] 
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key=alphanum_key)
 
 SCALE = 1000000.0
@@ -540,7 +541,7 @@ if __name__ == "__main__":
                         )
 
     logger = logging.getLogger(__name__)
-    logger.info("Plugin executed on: " + repr(sys.platform))
+    logger.info("Plugin executed on: " + repr(platform.platform()))
     logger.info("Plugin executed with python version: " + repr(sys.version))
     logger.info("KiCad build version: " + BUILD_VERSION)
     logger.info("Place footprints plugin version: " + VERSION + " started in standalone mode")

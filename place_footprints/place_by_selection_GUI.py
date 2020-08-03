@@ -11,50 +11,36 @@ import wx
 import wx.xrc
 
 ###########################################################################
-## Class PlaceBySheetGUI
+## Class PlaceBySelectionGUI
 ###########################################################################
 
-class PlaceBySheetGUI ( wx.Dialog ):
+class PlaceBySelectionGUI ( wx.Dialog ):
 
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Place footprints", pos = wx.DefaultPosition, size = wx.Size( 258,553 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Place footprints", pos = wx.DefaultPosition, size = wx.Size( 257,496 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 
-		self.SetSizeHints( wx.Size( 258,409 ), wx.DefaultSize )
+		self.SetSizeHints( wx.Size( 257,-1 ), wx.DefaultSize )
 
-		bSizer14 = wx.BoxSizer( wx.VERTICAL )
+		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 
-		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Hierarchy level:", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText5.Wrap( -1 )
+		self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Choose pivot footprint", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText2.Wrap( -1 )
 
-		bSizer14.Add( self.m_staticText5, 0, wx.ALL, 5 )
+		bSizer3.Add( self.m_staticText2, 0, wx.ALL, 5 )
 
-		bSizer18 = wx.BoxSizer( wx.HORIZONTAL )
+		list_modulesChoices = []
+		self.list_modules = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list_modulesChoices, wx.LB_NEEDED_SB )
+		bSizer3.Add( self.list_modules, 1, wx.ALL|wx.EXPAND, 5 )
 
-		list_levelsChoices = []
-		self.list_levels = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_levelsChoices, 0 )
-		bSizer18.Add( self.list_levels, 1, wx.ALL|wx.EXPAND, 5 )
+		self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		bSizer3.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
 
-
-		bSizer14.Add( bSizer18, 1, wx.EXPAND, 5 )
-
-		self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Sheets to replicate:", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText6.Wrap( -1 )
-
-		bSizer14.Add( self.m_staticText6, 0, wx.ALL, 5 )
-
-		bSizer16 = wx.BoxSizer( wx.HORIZONTAL )
-
-		list_sheetsChoices = []
-		self.list_sheets = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_sheetsChoices, wx.LB_MULTIPLE|wx.LB_NEEDED_SB )
-		bSizer16.Add( self.list_sheets, 1, wx.ALL|wx.EXPAND, 5 )
+		bSizer5 = wx.BoxSizer( wx.HORIZONTAL )
 
 
-		bSizer14.Add( bSizer16, 2, wx.EXPAND, 5 )
+		bSizer3.Add( bSizer5, 0, wx.EXPAND, 5 )
 
-		self.m_staticline2 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		bSizer14.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
-
-		gSizer2 = wx.GridSizer( 0, 2, 0, 0 )
+		gSizer2 = wx.GridSizer( 1, 2, 0, 0 )
 
 		self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Arrangement:", wx.DefaultPosition, wx.Size( 110,-1 ), 0 )
 		self.m_staticText3.Wrap( -1 )
@@ -67,12 +53,12 @@ class PlaceBySheetGUI ( wx.Dialog ):
 		gSizer2.Add( self.com_arr, 0, wx.ALL, 5 )
 
 
-		bSizer14.Add( gSizer2, 0, 0, 5 )
+		bSizer3.Add( gSizer2, 0, 0, 5 )
 
-		self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		bSizer14.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
+		self.m_staticline2 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		bSizer3.Add( self.m_staticline2, 0, wx.EXPAND |wx.ALL, 5 )
 
-		bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
+		bSizer17 = wx.BoxSizer( wx.HORIZONTAL )
 
 		gSizer1 = wx.GridSizer( 4, 2, 0, 0 )
 
@@ -90,7 +76,7 @@ class PlaceBySheetGUI ( wx.Dialog ):
 		gSizer1.Add( self.lbl_y_angle, 0, wx.ALL, 5 )
 
 		self.val_y_angle = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		gSizer1.Add( self.val_y_angle, 0, wx.ALL, 5 )
+		gSizer1.Add( self.val_y_angle, 1, wx.ALL, 5 )
 
 		self.lbl_columns = wx.StaticText( self, wx.ID_ANY, u"Nr. columns:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.lbl_columns.Wrap( -1 )
@@ -111,20 +97,19 @@ class PlaceBySheetGUI ( wx.Dialog ):
 		gSizer1.Add( self.btn_cancel, 0, wx.ALL, 5 )
 
 
-		bSizer6.Add( gSizer1, 0, wx.EXPAND, 5 )
+		bSizer17.Add( gSizer1, 0, wx.EXPAND, 5 )
 
 
-		bSizer14.Add( bSizer6, 0, wx.EXPAND, 5 )
+		bSizer3.Add( bSizer17, 0, wx.EXPAND, 5 )
 
 
-		self.SetSizer( bSizer14 )
+		self.SetSizer( bSizer3 )
 		self.Layout()
 
 		self.Centre( wx.BOTH )
 
 		# Connect Events
-		self.list_levels.Bind( wx.EVT_LISTBOX, self.level_changed )
-		self.list_sheets.Bind( wx.EVT_LISTBOX, self.on_selected )
+		self.list_modules.Bind( wx.EVT_LISTBOX, self.on_selected )
 		self.com_arr.Bind( wx.EVT_COMBOBOX, self.arr_changed )
 
 	def __del__( self ):
@@ -132,9 +117,6 @@ class PlaceBySheetGUI ( wx.Dialog ):
 
 
 	# Virtual event handlers, overide them in your derived class
-	def level_changed( self, event ):
-		event.Skip()
-
 	def on_selected( self, event ):
 		event.Skip()
 
