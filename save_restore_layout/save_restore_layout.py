@@ -114,12 +114,12 @@ class SchData():
     @staticmethod
     def extract_subsheets(filename):
         with open(filename, 'rb') as f:
-         file_folder = os.path.dirname(os.path.abspath(filename))
-         file_lines = f.read().decode('utf-8')
+            file_folder = os.path.dirname(os.path.abspath(filename))
+            file_lines = f.read().decode('utf-8')
         # alternative solution
         # extract all sheet references
-         sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
-         endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
+        sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
+        endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
 
         if len(sheet_indices) != len(endsheet_indices):
             raise LookupError("Schematic page contains errors")
