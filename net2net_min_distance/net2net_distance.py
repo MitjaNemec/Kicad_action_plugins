@@ -54,7 +54,7 @@ def segments_distance(x11, y11, x12, y12, x21, y21, x22, y22):
     distances.append(point_segment_distance(x12, y12, x21, y21, x22, y22))
     distances.append(point_segment_distance(x21, y21, x11, y11, x12, y12))
     distances.append(point_segment_distance(x22, y22, x11, y11, x12, y12))
-
+    logger.info("All distances:\n" + repr(distances))
     return min(distances, key=lambda t: t[0])
 
 
@@ -163,14 +163,14 @@ def main():
     pads = mod.Pads()
     for pad in pads:
         if pad.GetPadName() == u'2':
-            pad1 = pad
+            pad1_net = pad.GetNetname()
     mod = board.FindModuleByReference('R102')
     pads = mod.Pads()
     for pad in pads:
         if pad.GetPadName() == u'2':
-            pad2 = pad
+            pad2_net = pad.GetNetname()
 
-    dis, loc = get_min_distance(board, pad1, pad2)
+    dis, loc = get_min_distance(board, [pad1_net, pad2_net])
 
 
 # for testing purposes only
