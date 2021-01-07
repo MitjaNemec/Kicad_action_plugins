@@ -6,6 +6,5 @@ from pad2pad_track_distance import *
 from place_footprints import *
 from replicate_layout import *
 from save_restore_layout import *
-from screenshots import *
 from swap_pins import *
 from swap_units import *
