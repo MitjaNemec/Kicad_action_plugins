@@ -28,6 +28,7 @@ import logging
 import itertools
 import re
 import math
+import sexp_parser
 
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
@@ -57,6 +58,8 @@ def flip_module(module, position):
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
 logger = logging.getLogger(__name__)
+logging.getLogger('sexp_parser').setLevel(logging.INFO)
+logging.getLogger('root').setLevel(logging.INFO)
 
 # get version information
 version_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version.txt")
@@ -106,10 +109,9 @@ def get_module_text_items(module):
 
     module_items = module.mod.GraphicalItems()
     for item in module_items:
-        if type(item) is pcbnew.TEXTE_MODULE:
+        if type(item) is pcbnew.FP_TEXT:
             list_of_items.append(item)
     return list_of_items
-
 
 class Replicator():
     @staticmethod
@@ -117,58 +119,79 @@ class Replicator():
         with open(filename, 'rb') as f:
             file_folder = os.path.dirname(os.path.abspath(filename))
             file_lines = f.read().decode('utf-8')
-        # alternative solution
-        # extract all sheet references
-        sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
-        endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
 
-        if len(sheet_indices) != len(endsheet_indices):
-            raise LookupError("Schematic page contains errors")
+        pcbnew_version = float(pcbnew.GetMajorMinorVersion())
 
-        sheet_locations = zip(sheet_indices, endsheet_indices)
-        for sheet_location in sheet_locations:
-            sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
-            # parse the sheed description
-            for line in sheet_reference:
-                # found sheet ID
-                if line.startswith('U '):
-                    subsheet_id = line.split()[1]
-                # found sheet name
-                if line.startswith('F0 '):
-                    # remove the first field ("F0 ")
-                    partial_line = line.lstrip("F0 ")
-                    partial_line = " ".join(partial_line.split()[:-1])
-                    # remove the last field (text size)
-                    subsheet_name = partial_line.rstrip("\"").lstrip("\"")
-                # found sheet filename
-                if line.startswith('F1 '):
-                    subsheet_path = re.findall("\s\"(.*.sch)\"\s", line)[0]
-                    subsheet_line = file_lines.split("\n").index(line)
-                    if not os.path.isabs(subsheet_path):
-                        # check if path is encoded with variables
-                        if "${" in subsheet_path:
-                            start_index = subsheet_path.find("${") + 2
-                            end_index = subsheet_path.find("}")
-                            env_var = subsheet_path[start_index:end_index]
-                            path = os.getenv(env_var)
-                            # if variable is not defined rasie an exception
-                            if path is None:
-                                raise LookupError("Can not find subsheet: " + subsheet_path)
-                            # replace variable with full path
-                            subsheet_path = subsheet_path.replace("${", "") \
-                                .replace("}", "") \
-                                .replace("env_var", path)
+        if pcbnew_version == 5.99 or  pcbnew_version > 6:
+            for sheet in [s for s in sexp_parser.parseSexp(file_lines) if type(s) != int and s[1] == 'sheet']:
+                for tag in sheet:
+                    if type(tag) != int and tag[1] == 'uuid':
+                       subsheet_id = tag[2][-8:].lower()
+                    if type(tag) != int and tag[2] == '"Sheet name"':
+                       subsheet_name = tag[3].replace('"','')
+                    if type(tag) != int and tag[2] == '"Sheet file"':
+                        #TODO variable name decoding
+                        subsheet_path = tag[3].replace('"','')
+                        if not os.path.isabs(subsheet_path):
+                            subsheet_path = os.path.join(file_folder, subsheet_path)
+                        subsheet_path = os.path.normpath(subsheet_path)
+                        file_path = os.path.abspath(subsheet_path)
+                yield file_path, subsheet_id, subsheet_name
 
-                    # if path is still not absolute, then it is relative to project
-                    if not os.path.isabs(subsheet_path):
-                        subsheet_path = os.path.join(file_folder, subsheet_path)
 
-                    subsheet_path = os.path.normpath(subsheet_path)
-                    # found subsheet reference go for the next one, no need to parse further
-                    break
+        else:
+            # alternative solution
+            # extract all sheet references
+            sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
+            endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
 
-            file_path = os.path.abspath(subsheet_path)
-            yield file_path, subsheet_id, subsheet_name
+            if len(sheet_indices) != len(endsheet_indices):
+                raise LookupError("Schematic page contains errors")
+
+            sheet_locations = zip(sheet_indices, endsheet_indices)
+            for sheet_location in sheet_locations:
+                sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
+                # parse the sheed description
+                for line in sheet_reference:
+                    # found sheet ID
+                    if line.startswith('U '):
+                        subsheet_id = line.split()[1]
+                    # found sheet name
+                    if line.startswith('F0 '):
+                        # remove the first field ("F0 ")
+                        partial_line = line.lstrip("F0 ")
+                        partial_line = " ".join(partial_line.split()[:-1])
+                        # remove the last field (text size)
+                        subsheet_name = partial_line.rstrip("\"").lstrip("\"")
+                    # found sheet filename
+                    if line.startswith('F1 '):
+                        subsheet_path = re.findall("\s\"(.*.sch)\"\s", line)[0]
+                        subsheet_line = file_lines.split("\n").index(line)
+                        if not os.path.isabs(subsheet_path):
+                            # check if path is encoded with variables
+                            if "${" in subsheet_path:
+                                start_index = subsheet_path.find("${") + 2
+                                end_index = subsheet_path.find("}")
+                                env_var = subsheet_path[start_index:end_index]
+                                path = os.getenv(env_var)
+                                # if variable is not defined rasie an exception
+                                if path is None:
+                                    raise LookupError("Can not find subsheet: " + subsheet_path)
+                                # replace variable with full path
+                                subsheet_path = subsheet_path.replace("${", "") \
+                                    .replace("}", "") \
+                                    .replace("env_var", path)
+
+                        # if path is still not absolute, then it is relative to project
+                        if not os.path.isabs(subsheet_path):
+                            subsheet_path = os.path.join(file_folder, subsheet_path)
+
+                        subsheet_path = os.path.normpath(subsheet_path)
+                        # found subsheet reference go for the next one, no need to parse further
+                        break
+
+                file_path = os.path.abspath(subsheet_path)
+                yield file_path, subsheet_id, subsheet_name
 
     def find_all_sch_files(self, filename, dict_of_sheets):
         for file_path, subsheet_id, subsheet_name in self.extract_subsheets(filename):
@@ -187,8 +210,8 @@ class Replicator():
         """ get sheet id """
         module_path = get_path(module).split('/')
         sheet_id = module_path[0:-1]
-        sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
-        sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
+        sheet_names = [self.dict_of_sheets[x.lower()][0] for x in sheet_id if x]
+        sheet_files = [self.dict_of_sheets[x.lower()][1] for x in sheet_id if x]
         sheet_id = [sheet_names, sheet_files]
         return sheet_id
 
@@ -204,7 +227,7 @@ class Replicator():
         self.update_progress = None
 
         self.pcb_filename = os.path.abspath(board.GetFileName())
-        self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".sch")
+        self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".kicad_sch")
         self.project_folder = os.path.dirname(self.pcb_filename)
 
         # test if sch file exist
@@ -223,7 +246,7 @@ class Replicator():
 
         # construct a list of modules with all pertinent data 
         logger.info('getting a list of all footprints on board') 
-        bmod = board.GetModules()
+        bmod = board.GetFootprints()
         self.modules = []
         for module in bmod:
             mod_named_tuple = Module(mod=module,
@@ -232,6 +255,7 @@ class Replicator():
                                      filename=self.get_sheet_id(module)[1], 
                                      ref=module.GetReference())
             self.modules.append(mod_named_tuple)
+        logger.info('total modules:' + str(len(self.modules))) 
         pass
 
     def get_list_of_modules_with_same_id(self, id):
@@ -395,7 +419,7 @@ class Replicator():
         # get all text objects in source bounding box
         all_text = []
         for drawing in self.board.GetDrawings():
-            if not isinstance(drawing, pcbnew.TEXTE_PCB):
+            if not isinstance(drawing, pcbnew.PCB_TEXT):
                 continue
             text_bb = drawing.GetBoundingBox()
             if containing:
@@ -409,16 +433,16 @@ class Replicator():
     def get_drawings(self, bounding_box, containing):
         # get all drawings in source bounding box
         all_drawings = []
-        for drawing in self.board.GetDrawings():
-            if not isinstance(drawing, pcbnew.DRAWSEGMENT):
-                continue
-            dwg_bb = drawing.GetBoundingBox()
-            if containing:
-                if bounding_box.Contains(dwg_bb):
-                    all_drawings.append(drawing)
-            else:
-                if bounding_box.Intersects(dwg_bb):
-                    all_drawings.append(drawing)
+        # for drawing in self.board.GetDrawings():
+        #     if not isinstance(drawing, pcbnew.DRAWSEGMENT):
+        #         continue
+        #     dwg_bb = drawing.GetBoundingBox()
+        #     if containing:
+        #         if bounding_box.Contains(dwg_bb):
+        #             all_drawings.append(drawing)
+        #     else:
+        #         if bounding_box.Intersects(dwg_bb):
+        #             all_drawings.append(drawing)
         return all_drawings
 
     def get_sheet_anchor_module(self, sheet):
@@ -695,7 +719,7 @@ class Replicator():
                     # set orientation
                     dst_mod_text_items[index].SetTextAngle(src_text.GetTextAngle())
                     # thickness
-                    dst_mod_text_items[index].SetThickness(src_text.GetThickness())
+                    dst_mod_text_items[index].SetTextThickness(src_text.GetTextThickness())
                     # width
                     dst_mod_text_items[index].SetTextWidth(src_text.GetTextWidth())
                     # height
@@ -945,7 +969,7 @@ class Replicator():
 
             # from all text items on the board
             for drawing in self.board.GetDrawings():
-                if not isinstance(drawing, pcbnew.TEXTE_PCB):
+                if not isinstance(drawing, pcbnew.PCB_TEXT):
                     continue
                 # ignore text in the source sheet
                 if drawing in self.src_text:
@@ -962,22 +986,22 @@ class Replicator():
                         self.board.RemoveNative(drawing)
 
             # from all drawing items on the board
-            for drawing in self.board.GetDrawings():
-                if not isinstance(drawing, pcbnew.DRAWSEGMENT):
-                    continue
-                # ignore text in the source sheet
-                if drawing in self.src_drawings:
-                    continue
+            # for drawing in self.board.GetDrawings():
+            #     if not isinstance(drawing, pcbnew.DRAWSEGMENT):
+            #         continue
+            #     # ignore text in the source sheet
+            #     if drawing in self.src_drawings:
+            #         continue
 
-                # add text in/intersecting with the replicated bounding box to
-                # the list for removal.
-                dwg_bb = drawing.GetBoundingBox()
-                if containing:
-                    if bounding_box.Contains(dwg_bb):
-                        self.board.RemoveNative(drawing)
-                else:
-                    if bounding_box.Intersects(dwg_bb):
-                        self.board.RemoveNative(drawing)
+            #     # add text in/intersecting with the replicated bounding box to
+            #     # the list for removal.
+            #     dwg_bb = drawing.GetBoundingBox()
+            #     if containing:
+            #         if bounding_box.Contains(dwg_bb):
+            #             self.board.RemoveNative(drawing)
+            #     else:
+            #         if bounding_box.Intersects(dwg_bb):
+            #             self.board.RemoveNative(drawing)
 
     def removing_duplicates(self):
         remove_duplicates.remove_duplicates(self.board)
