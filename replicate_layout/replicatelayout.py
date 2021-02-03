@@ -636,6 +636,10 @@ class Replicator():
                             if item in m.sheet_id:
                                 matches = matches + 1
                         list_of_matches.append((index, matches))
+                    # check if list is empty, if it is, then it is highly likely that shematics and pcb are not in sync
+                    if not list_of_matches:
+                        raise LookupError("Can not find anchor (source) footprint for footprint: " + repr(dst_mod.ref)
+                                          + "\n" + "Most likely, schematics and PCB are not in sync")
                     # select the one with most matches
                     index, _ = max(list_of_matches, key=lambda item: item[1])
                     src_mod = list_of_possible_src_modules[index]
