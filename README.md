@@ -4,6 +4,8 @@ This repository contains KiCad pcbnew Action Plugins()
 
 All plugins have been tested on Kicad 5.1.x on Windows7/Windows10. You need to have KICAD_SCRIPTING_WXPYTHON enabled. They should also work on GNU/Linux distributions and MacOS even with Python3.
 
+The plugins don't work with 5.99! Non supported version of Replicate_layout plugin working with 5.99 is available under [5.99 branch](https://github.com/MitjaNemec/Kicad_action_plugins/tree/5.99_test). Kindly supplied by [Albertas Mickėnas](https://github.com/Miceuz).
+
 The plugins have been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
 To install the plugin copy relevant folder into 'scripting/plugins' subfolder of the KiCad configuration folder:
@@ -18,8 +20,6 @@ on MacOS:
     `~/Library/Application Support/kicad/scripting/plugins` or on newer versions
     `~/Library/Preferences/kicad/scripting/plugins`
   
-V 5.99 users, you have to put the plugin within the 5.99 subfolder (e.g. `%APPDATA%\5.99\scripting\plugins`, `~/.kicad/5.99/scripting/plugins` or `~/Library/Preferences/kicad/5.99/scripting/plugins`). With 5.99 the plugins might or might not work. With 5.99 versions from Apr 7, 2020 the plugins might not work, as the schematics format changed and some plugins parse, or even change the schematic file.
-
 ## Replicate layout
 
 The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets in eeschema.
