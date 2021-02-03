@@ -315,10 +315,10 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         sl_err = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl_err
         
-        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().endswith('pcbnew')][0]
 
         # check if there is exactly one module selected
-        selected_modules = [x for x in pcbnew.GetBoard().GetModules() if x.IsSelected()]
+        selected_modules = [x for x in pcbnew.GetBoard().GetFootprints() if x.IsSelected()]
         selected_names = []
         for mod in selected_modules:
             selected_names.append("{}".format(mod.GetReference()))
