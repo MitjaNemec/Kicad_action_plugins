@@ -50,7 +50,7 @@ def get_path(module):
 
 # V5.99 forward compatibility
 def flip_module(module, position):
-    if module.Flip.__doc__ == "Flip(MODULE self, wxPoint aCentre, bool aFlipLeftRight)":
+    if module.Flip.__doc__ == "Flip(FOOTPRINT self, wxPoint aCentre, bool aFlipLeftRight)":
         module.Flip(position, False)
     else:
         module.Flip(position)
