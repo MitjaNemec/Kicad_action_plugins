@@ -779,7 +779,7 @@ class Replicator():
                     pass
                 else:
                     to_net_name = tup[0][1]
-                    to_net_code = net_dict[to_net_name].GetNet()
+                    to_net_code = net_dict[to_net_name].GetNetCode()
                     to_net_item = net_dict[to_net_name]
 
                     # make a duplicate, move it, rotate it, select proper net and add it to the board
@@ -846,7 +846,7 @@ class Replicator():
                     to_net_code = 0
                     to_net_item = self.board.FindNet(0)
                 else:
-                    to_net_code = net_dict[to_net_name].GetNet()
+                    to_net_code = net_dict[to_net_name].GetNetCode()
                     to_net_item = net_dict[to_net_name]
 
                 # make a duplicate, move it, rotate it, select proper net and add it to the board
