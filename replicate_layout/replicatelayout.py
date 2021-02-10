@@ -828,17 +828,16 @@ class Replicator():
                 if not zone.IsOnCopperLayer():
                     tup = [('', '')]
                 else:
-                    tup = [item for item in net_pairs if item[0] == from_net_name]
+                    if from_net_name:
+                        tup = [item for item in net_pairs if item[0] == from_net_name]
+                    else:
+                        tup = [('', '')]
 
                 # there is no net
                 if not tup:
                     # Allow keepout zones to be cloned.
-                    if zone.GetIsKeepout():
+                    if not zone.IsOnCopperLayer():
                         tup = [('', '')]
-                    # do not clone
-                    else:
-                        logger.info('Skipping replication of a zone on copper layer without a net')
-                        continue
 
                 # start the clone
                 to_net_name = tup[0][1]

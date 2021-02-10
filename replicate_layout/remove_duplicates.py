@@ -117,7 +117,7 @@ def text_equal(text1, text2):
     t1_properties.append(text1.GetPosition())
     t1_properties.append(text1.GetTextPos())
     t1_properties.append(text1.GetText())
-    t1_properties.append(text1.GetThickness())
+    #t1_properties.append(text1.GetThickness())
     t1_properties.append(text1.GetTextAngle())
     t1_properties.append(text1.IsItalic())
     t1_properties.append(text1.IsBold())
@@ -134,7 +134,7 @@ def text_equal(text1, text2):
     t2_properties.append(text2.GetPosition())
     t2_properties.append(text2.GetTextPos())
     t2_properties.append(text2.GetText())
-    t2_properties.append(text2.GetThickness())
+    #t2_properties.append(text2.GetThickness())
     t2_properties.append(text2.GetTextAngle())
     t2_properties.append(text2.IsItalic())
     t2_properties.append(text2.IsBold())
@@ -158,7 +158,7 @@ def remove_duplicate_text(board):
 
     text_items = []
     for drawing in drawings:
-        if isinstance(drawing, pcbnew.TEXTE_PCB):
+        if isinstance(drawing, pcbnew.PCB_TEXT):
             text_items.append(drawing)
 
     for index in range(len(text_items)):
@@ -205,7 +205,7 @@ def remove_duplicate_drawings(board):
 
     drawing_items = []
     for drawing in drawings:
-        if isinstance(drawing, pcbnew.DRAWSEGMENT):
+        if isinstance(drawing, pcbnew.DRAWINGS):
             drawing_items.append(drawing)
 
     for index in range(len(drawing_items)):
