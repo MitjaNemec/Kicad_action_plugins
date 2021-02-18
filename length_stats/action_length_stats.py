@@ -66,6 +66,11 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         self.net_data = []
 
         nets.sort()
+        #remove empty nets
+        for net in nets:
+            if not net:
+                nets.remove(net)
+
         for net in nets:
             index_net = nets.index(net)
             index = self.net_list.InsertStringItem(index_net, net)
@@ -82,6 +87,8 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
         self.timer = wx.Timer(self, 1)
         self.refresh_time = 0.1
+
+        self.sort_items(None)
 
         self.Bind(wx.EVT_TIMER, self.on_update, self.timer)
 
@@ -101,6 +108,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
         self.logger.info("Refreshing manually")
         self.refresh()
         event.Skip()
+		
 
     def on_btn_ok(self, event):
         # remove higlightning from tracks
@@ -198,7 +206,10 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
     def sort_items(self, event):
         self.logger.info("Sorting list")
         # find which columnt to sort
-        self.column_sorted = event.m_col
+        if event:
+            self.column_sorted = event.m_col
+        else:
+            self.column_sorted = 0
 
         # sort column 0
         if self.column_sorted == 0:
@@ -231,6 +242,28 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             index = self.net_list.InsertStringItem(index_net, net[0])
             self.net_list.SetStringItem(index, 1, "%.2f" % net[1])
 
+        if event:
+            event.Skip()
+
+
+    def copy_items(self, event):
+        self.logger.info("Copying List")
+        selectedItems = []
+        row = []
+        for j in xrange(self.net_list.GetColumnCount()):
+            row.append(self.net_list.GetColumn(j).GetText())
+        selectedItems.append("\t".join(row))
+        for i in xrange(self.net_list.GetItemCount()):
+            row = []
+            for j in xrange(self.net_list.GetColumnCount()):
+                row.append(self.net_list.GetItemText(i,j))
+            selectedItems.append("\t".join(row))
+
+        clipdata = wx.TextDataObject()
+        clipdata.SetText("\n".join(selectedItems))
+        wx.TheClipboard.Open()
+        wx.TheClipboard.SetData(clipdata)
+        wx.TheClipboard.Close()
         event.Skip()
 
 
