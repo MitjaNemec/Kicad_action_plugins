@@ -11,7 +11,7 @@
         <property name="embedded_files_path">res</property>
         <property name="encoding">UTF-8</property>
         <property name="event_generation">connect</property>
-        <property name="file">lenght_stats_GUI</property>
+        <property name="file">length_stats_GUI</property>
         <property name="first_id">1000</property>
         <property name="help_provider">none</property>
         <property name="internationalize">0</property>
@@ -42,12 +42,12 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">LenghtStatsGUI</property>
+            <property name="name">LengthStatsGUI</property>
             <property name="pos"></property>
             <property name="size">353,478</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; forward_declare</property>
-            <property name="title">Lenght stats</property>
+            <property name="title">Length stats</property>
             <property name="tooltip"></property>
             <property name="window_extra_style"></property>
             <property name="window_name"></property>

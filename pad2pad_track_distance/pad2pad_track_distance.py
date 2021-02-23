@@ -83,7 +83,7 @@ class Distance:
     def get_length(self):
         # current point and layer
 
-        lenght = self.get_new_endpoints(self.start_point, self.start_layer, 0, self.tracks_on_net, 0, ["pad1"])
+        length = self.get_new_endpoints(self.start_point, self.start_layer, 0, self.tracks_on_net, 0, ["pad1"])
 
         length_alt = []
         resistance = []
@@ -107,7 +107,7 @@ class Distance:
         index = length_alt.index(min_length)
 
         # go through the list and find minimum
-        min_length = min(lenght)
+        min_length = min(length)
 
         return min_length, min_res
 
