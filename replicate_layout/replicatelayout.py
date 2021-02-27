@@ -28,7 +28,7 @@ import logging
 import itertools
 import re
 import math
-import sexp_parser
+from . import sexp_parser
 
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
