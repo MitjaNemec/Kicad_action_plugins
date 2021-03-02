@@ -364,13 +364,13 @@ class Replicator():
 
     def get_modules_bounding_box(self, modules):
         # get the source bounding box
-        bounding_box = modules[0].mod.GetFootprintRect()
+        bounding_box = modules[0].mod.GetBoundingBox()
         top = bounding_box.GetTop()
         bottom = bounding_box.GetBottom()
         left = bounding_box.GetLeft()
         right = bounding_box.GetRight()
         for mod in modules:
-            mod_box = mod.mod.GetFootprintRect()
+            mod_box = mod.mod.GetBoundingBox()
             top = min(top, mod_box.GetTop())
             bottom = max(bottom, mod_box.GetBottom())
             left = min(left, mod_box.GetLeft())
