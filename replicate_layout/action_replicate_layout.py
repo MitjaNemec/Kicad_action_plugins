@@ -314,8 +314,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         stderr_logger = logging.getLogger('STDERR')
         sl_err = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl_err
-        # TODO: using the window title is a hack, the string is translatable in the KiCad source code
-        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().endswith('pcb editor')][0]
+        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetName() == 'PcbFrame'][0]
 
         # check if there is exactly one module selected
         selected_modules = [x for x in pcbnew.GetBoard().GetFootprints() if x.IsSelected()]

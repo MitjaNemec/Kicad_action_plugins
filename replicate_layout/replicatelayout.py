@@ -433,16 +433,23 @@ class Replicator():
     def get_drawings(self, bounding_box, containing):
         # get all drawings in source bounding box
         all_drawings = []
-        # for drawing in self.board.GetDrawings():
-        #     if not isinstance(drawing, pcbnew.DRAWSEGMENT):
-        #         continue
-        #     dwg_bb = drawing.GetBoundingBox()
-        #     if containing:
-        #         if bounding_box.Contains(dwg_bb):
-        #             all_drawings.append(drawing)
-        #     else:
-        #         if bounding_box.Intersects(dwg_bb):
-        #             all_drawings.append(drawing)
+        # Drawings are:
+        #   Shapes (line, arc, circle, rect, polygon), dimensions, text, layer align target.
+        # For Drawings typenames see KICAD_T in include/core/typeinfo.h in KiCad source
+        # and m_drawings in pcbnew/board.cpp.
+        # If SHAPE type needs to be differentiated:
+        #   pcbnew.PCB_SHAPE_TYPE_T_asString(someshapeobject.Type()) (see include/board_item.h)
+        for drawing in self.board.GetDrawings():
+             if isinstance(drawing, pcbnew.PCB_TEXT):
+                 # text items are handled separately
+                 continue
+             dwg_bb = drawing.GetBoundingBox()
+             if containing:
+                 if bounding_box.Contains(dwg_bb):
+                     all_drawings.append(drawing)
+             else:
+                 if bounding_box.Intersects(dwg_bb):
+                     all_drawings.append(drawing)
         return all_drawings
 
     def get_sheet_anchor_module(self, sheet):
