@@ -28,9 +28,9 @@ import sys
 import timeit
 
 if __name__ == '__main__':
-    import lenght_stats_GUI
+    import length_stats_GUI
 else:
-    from . import lenght_stats_GUI
+    from . import length_stats_GUI
 
 SCALE = 1000000.0
 
@@ -46,7 +46,7 @@ else:
     BUILD_VERSION = "Unknown"
 
 
-class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
+class LengthStatsDialog(length_stats_GUI.LengthStatsGUI):
     # hack for new wxFormBuilder generating code incompatible with old wxPython
     # noinspection PyMethodOverriding
     def SetSizeHints(self, sz1, sz2):
@@ -55,10 +55,10 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             self.SetSizeHintsSz(sz1, sz2)
         except TypeError:
             # wxPython 4
-            super(LenghtStatsDialog, self).SetSizeHints(sz1, sz2)
+            super(LengthStatsDialog, self).SetSizeHints(sz1, sz2)
 
     def __init__(self,  parent, board, nets, logger):
-        lenght_stats_GUI.LenghtStatsGUI.__init__(self, parent)
+        length_stats_GUI.LengthStatsGUI.__init__(self, parent)
 
         self.net_list.InsertColumn(0, 'Net', width=100) 
         self.net_list.InsertColumn(1, 'Length')
@@ -92,7 +92,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
         self.Bind(wx.EVT_TIMER, self.on_update, self.timer)
 
-        self.logger.info("Lenght stats gui initialized")
+        self.logger.info("Length stats gui initialized")
         self.logger.info("Nets for stats are;\n" + repr(self.nets))
 
     def cont_refresh_toggle(self, event):
@@ -138,7 +138,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
             netcode = self.board.GetNetcodeFromNetname(net)
             tracks_on_net = self.board.TracksInNet(netcode)
 
-            # sum their lenght
+            # sum their length
             length = 0
             for t in tracks_on_net:
                 length = length + t.GetLength()/SCALE
@@ -269,7 +269,7 @@ class LenghtStatsDialog(lenght_stats_GUI.LenghtStatsGUI):
 
 class LengthStats(pcbnew.ActionPlugin):
     """
-    A plugin to show track lenght of all selected nets
+    A plugin to show track length of all selected nets
     How to use:
     - move to GAL
     - select track segment or pad for net you wish to find the length
@@ -278,8 +278,8 @@ class LengthStats(pcbnew.ActionPlugin):
 
     def defaults(self):
         self.name = "Length stats"
-        self.category = "Get tracks lenght"
-        self.description = "Obtains and refreshes lenght of all tracks on selected nets"
+        self.category = "Get tracks length"
+        self.description = "Obtains and refreshes length of all tracks on selected nets"
         self.icon_file_name = os.path.join(
                 os.path.dirname(__file__), 'ps_diff_pair_tune_length-length_stats.svg.png')
                 
@@ -327,7 +327,7 @@ class LengthStats(pcbnew.ActionPlugin):
             pads = mod.Pads()
             nets.update([pad.GetNetname() for pad in pads if pad.IsSelected()])
 
-        dlg = LenghtStatsDialog(_pcbnew_frame, board, list(nets), logger)
+        dlg = LengthStatsDialog(_pcbnew_frame, board, list(nets), logger)
         dlg.Show()
 
 
