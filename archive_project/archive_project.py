@@ -29,7 +29,7 @@ if hasattr(pcbnew, 'GetBuildVersion'):
     BUILD_VERSION = pcbnew.GetBuildVersion()
 else:
     BUILD_VERSION = "Unknown"
-    
+
 
 def balanced_braces(args):
     if isinstance(args, str):
@@ -380,7 +380,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
     logger.info("found all subsheets")
     # go through each .sch file
     out_files = {}
-    symbols_form_missing_libraries = set()
+    symbols_from_missing_libraries = set()
     for filename in all_sch_files:
         out_files[filename] = []
         with open(filename, 'rb') as f:
@@ -410,7 +410,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
             for sym_loc in symbol_locations:
                 if (sym_loc[0] < index) and (index < sym_loc[1]):
                     break
-            # if line begins with L it is the library reference                    
+            # if line begins with L it is the library reference
             if line_contents[0] == "L":
                 libraryname = line_contents[1].split(":")[0]
                 symbolname = line_contents[1].split(":")[1]
@@ -430,11 +430,11 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                         "Symbol \"" + new_name + "\" is not present in archive libray. Archive library is incomplete")
                 # join line back again
                 new_line = ' '.join(line_contents)
-                sch_file_out.append(new_line + "\n")
+                sch_file_out.append(new_line)
 
                 # symbol is not from the library present on the system markit for the potential errormessage
                 if libraryname not in nicknames:
-                    symbols_form_missing_libraries.add(symbolname)
+                    symbols_from_missing_libraries.add(symbolname)
             # if it begins with F3 it might be a data sheet entry
             elif line_contents[0] == "F" and line_contents[1] == "3" and archive_documentation is True:
                 link = line_contents[2].lower()
@@ -520,18 +520,24 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
                             sch_file_out.append(line)
                 else:
                     sch_file_out.append(line)
-            # othrerwise, just copy the line
+            # otherwise, just copy the line
             else:
                 sch_file_out.append(line)
+
+            # add line break at end of line
+            sch_file_out.append('\n')
+            # end immediately if end of schematic is reached
+            if line == "$EndSCHEMATC":
+                break
         # prepare for writing
         out_files[filename] = sch_file_out
 
-    if symbols_form_missing_libraries:
+    if symbols_from_missing_libraries:
         if not allow_missing_libraries:
             logger.info("Schematics includes symbols from the libraries not present on the system\n"
-                        "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
+                        "Did Not Find:\n" + "\n".join(symbols_from_missing_libraries))
             raise NameError("Schematics includes symbols from the libraries not present on the system\n"
-                            "Did Not Find:\n" + "\n".join(symbols_form_missing_libraries))
+                            "Did Not Find:\n" + "\n".join(symbols_from_missing_libraries))
 
     # if no exceptions has been raised write files
     logger.info("Writing schematics file(s)")
