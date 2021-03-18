@@ -26,9 +26,7 @@ import os
 import sys
 import logging
 import itertools
-import re
 import math
-from . import sexp_parser
 
 parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
 if __name__ == '__main__' or parent_module.__name__ == '__main__':
@@ -37,23 +35,6 @@ if __name__ == '__main__' or parent_module.__name__ == '__main__':
 else:
     from . import compare_boards
     from . import remove_duplicates
-
-
-# V5.1.x backward compatibility for module ID
-def get_path(module):
-    path = module.GetPath()
-    if hasattr(path, 'AsString'):
-        path_raw = path.AsString()
-        path = "/".join(map(lambda x: x[-8:].upper(), path_raw.split('/')))
-    return path
-
-
-# V5.99 forward compatibility
-def flip_module(module, position):
-    if module.Flip.__doc__ == "Flip(FOOTPRINT self, wxPoint aCentre, bool aFlipLeftRight)":
-        module.Flip(position, False)
-    else:
-        module.Flip(position)
 
 
 Module = namedtuple('Module', ['ref', 'mod', 'mod_id', 'sheet_id', 'filename'])
@@ -115,100 +96,20 @@ def get_module_text_items(module):
 
 class Replicator():
     @staticmethod
-    def extract_subsheets(filename):
-        with open(filename, 'rb') as f:
-            file_folder = os.path.dirname(os.path.abspath(filename))
-            file_lines = f.read().decode('utf-8')
+    def get_path(module):
+        path = module.GetPath()
+        path = path.AsString().upper().replace('00000000-0000-0000-0000-0000', '')
+        return path
 
-        pcbnew_version = float(pcbnew.GetMajorMinorVersion())
-
-        if pcbnew_version == 5.99 or  pcbnew_version > 6:
-            for sheet in [s for s in sexp_parser.parseSexp(file_lines) if type(s) != int and s[1] == 'sheet']:
-                for tag in sheet:
-                    if type(tag) != int and tag[1] == 'uuid':
-                       subsheet_id = tag[2][-8:].lower()
-                    if type(tag) != int and tag[2] == '"Sheet name"':
-                       subsheet_name = tag[3].replace('"','')
-                    if type(tag) != int and tag[2] == '"Sheet file"':
-                        #TODO variable name decoding
-                        subsheet_path = tag[3].replace('"','')
-                        if not os.path.isabs(subsheet_path):
-                            subsheet_path = os.path.join(file_folder, subsheet_path)
-                        subsheet_path = os.path.normpath(subsheet_path)
-                        file_path = os.path.abspath(subsheet_path)
-                yield file_path, subsheet_id, subsheet_name
-
-
-        else:
-            # alternative solution
-            # extract all sheet references
-            sheet_indices = [m.start() for m in re.finditer('\$Sheet', file_lines)]
-            endsheet_indices = [m.start() for m in re.finditer('\$EndSheet', file_lines)]
-
-            if len(sheet_indices) != len(endsheet_indices):
-                raise LookupError("Schematic page contains errors")
-
-            sheet_locations = zip(sheet_indices, endsheet_indices)
-            for sheet_location in sheet_locations:
-                sheet_reference = file_lines[sheet_location[0]:sheet_location[1]].split('\n')
-                # parse the sheed description
-                for line in sheet_reference:
-                    # found sheet ID
-                    if line.startswith('U '):
-                        subsheet_id = line.split()[1]
-                    # found sheet name
-                    if line.startswith('F0 '):
-                        # remove the first field ("F0 ")
-                        partial_line = line.lstrip("F0 ")
-                        partial_line = " ".join(partial_line.split()[:-1])
-                        # remove the last field (text size)
-                        subsheet_name = partial_line.rstrip("\"").lstrip("\"")
-                    # found sheet filename
-                    if line.startswith('F1 '):
-                        subsheet_path = re.findall("\s\"(.*.sch)\"\s", line)[0]
-                        subsheet_line = file_lines.split("\n").index(line)
-                        if not os.path.isabs(subsheet_path):
-                            # check if path is encoded with variables
-                            if "${" in subsheet_path:
-                                start_index = subsheet_path.find("${") + 2
-                                end_index = subsheet_path.find("}")
-                                env_var = subsheet_path[start_index:end_index]
-                                path = os.getenv(env_var)
-                                # if variable is not defined rasie an exception
-                                if path is None:
-                                    raise LookupError("Can not find subsheet: " + subsheet_path)
-                                # replace variable with full path
-                                subsheet_path = subsheet_path.replace("${", "") \
-                                    .replace("}", "") \
-                                    .replace("env_var", path)
-
-                        # if path is still not absolute, then it is relative to project
-                        if not os.path.isabs(subsheet_path):
-                            subsheet_path = os.path.join(file_folder, subsheet_path)
-
-                        subsheet_path = os.path.normpath(subsheet_path)
-                        # found subsheet reference go for the next one, no need to parse further
-                        break
-
-                file_path = os.path.abspath(subsheet_path)
-                yield file_path, subsheet_id, subsheet_name
-
-    def find_all_sch_files(self, filename, dict_of_sheets):
-        for file_path, subsheet_id, subsheet_name in self.extract_subsheets(filename):
-            dict_of_sheets[subsheet_id] = [subsheet_name, file_path]
-            dict_of_sheets = self.find_all_sch_files(file_path, dict_of_sheets)
-        return dict_of_sheets
-
-    @staticmethod
-    def get_module_id(module):
+    def get_module_id(self, module):
         """ get module id """
-        module_path = get_path(module).split('/')
+        module_path = self.get_path(module).split('/')
         module_id = "/".join(module_path[-1:])
         return module_id
 
     def get_sheet_id(self, module):
         """ get sheet id """
-        module_path = get_path(module).split('/')
+        module_path = self.get_path(module).split('/')
         sheet_id = module_path[0:-1]
         sheet_names = [self.dict_of_sheets[x.lower()][0] for x in sheet_id if x]
         sheet_files = [self.dict_of_sheets[x.lower()][1] for x in sheet_id if x]
@@ -230,23 +131,21 @@ class Replicator():
         self.sch_filename = self.pcb_filename.replace(".kicad_pcb", ".kicad_sch")
         self.project_folder = os.path.dirname(self.pcb_filename)
 
-        # test if sch file exist
-        if not os.path.isfile(self.sch_filename):
-            raise LookupError("Schematics file " + self.sch_filename + " does not exist!")
-
-        # get relation between sheetname and it's id
-        logger.info('getting project hierarchy from schematics')
-        self.dict_of_sheets = self.find_all_sch_files(self.sch_filename, {})
-        logger.info("Project hierarchy looks like:\n%s" % repr(self.dict_of_sheets))
-
-        # make all paths relative
-        for x in self.dict_of_sheets.keys():
-            path = self.dict_of_sheets[x][1]
-            self.dict_of_sheets[x] = [self.dict_of_sheets[x][0], os.path.relpath(path, self.project_folder)]
-
-        # construct a list of modules with all pertinent data 
+        # construct a list of modules with all pertinent data
         logger.info('getting a list of all footprints on board') 
         bmod = board.GetFootprints()
+        # get dict_of_sheets from layout data only
+        self.dict_of_sheets = {}
+        for fp in bmod:
+            mod_path = fp.GetPath()
+            s = mod_path.size()
+            mod_id = mod_path.__getitem__(s-1).AsString().strip('00000000-0000-0000-0000-0000')
+            sheet_id = mod_path.__getitem__(s-2).AsString().strip('00000000-0000-0000-0000-0000')
+            sheet_file = fp.GetProperty('Sheetfile')
+            sheet_name = fp.GetProperty('Sheetname')
+            if sheet_name:
+                self.dict_of_sheets[sheet_id] = [sheet_name, sheet_file]
+
         self.modules = []
         for module in bmod:
             mod_named_tuple = Module(mod=module,
@@ -284,7 +183,7 @@ class Replicator():
         logger.debug("Footprints on the sheets:\n" + repr([x.ref for x in list_of_modules]))
 
         # log all modules sheet id
-        logger.debug("Footprints raw sheet ids:\n" + repr([get_path(x.mod) for x in list_of_modules]))
+        logger.debug("Footprints raw sheet ids:\n" + repr([self.get_path(x.mod) for x in list_of_modules]))
 
         # if hierarchy is deeper, match only the sheets with same hierarchy from root to -1
         all_sheets = []
@@ -695,7 +594,7 @@ class Replicator():
 
                     src_mod_flipped = src_mod.mod.IsFlipped()
                     if dst_mod.mod.IsFlipped() != src_mod_flipped:
-                        flip_module(dst_mod.mod, dst_mod.mod.GetPosition())
+                        dst_mod.mod.Flip(dst_mod.mod.GetPosition(), False)
                         # dst_mod.mod.Flip(dst_mod.mod.GetPosition())
                     dst_mod.mod.SetOrientationDegrees(new_orientation)
 
