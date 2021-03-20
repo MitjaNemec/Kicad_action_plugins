@@ -143,8 +143,10 @@ class Replicator():
             sheet_id = mod_path.__getitem__(s-2).AsString().strip('00000000-0000-0000-0000-0000')
             sheet_file = fp.GetProperty('Sheetfile')
             sheet_name = fp.GetProperty('Sheetname')
-            if sheet_name:
+            if sheet_file:
                 self.dict_of_sheets[sheet_id] = [sheet_name, sheet_file]
+            else:
+                raise LookupError("Footprint " + str(fp.GetReference()) + " doesn't have Sheetfile and Sheetname properties. You need to update the layout from schematics")
 
         self.modules = []
         for module in bmod:
