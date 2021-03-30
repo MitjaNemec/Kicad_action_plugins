@@ -173,6 +173,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 dlg.ShowModal()
                 dlg.Destroy()
                 logger.debug("Action plugin exiting due to error in schematics archiving part")
+                return
             except NameError as error:
                 caption = 'Archive project'
                 message = str(error) + "\nContinue?"
@@ -194,7 +195,7 @@ class ArchiveProject(pcbnew.ActionPlugin):
                 caption = 'Archive project'
                 message = "Fatal error when archiveing schematics.\n"\
                         + "You can raise an issue on GiHub page.\n" \
-                        + "Please attach the net2et_distance.log which you should find in the project folder."
+                        + "Please attach the archive_project.log which you should find in the project folder."
                 dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
                 dlg.ShowModal()
                 dlg.Destroy()

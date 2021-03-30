@@ -389,6 +389,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
             logger.info("Archiving file: " + filename)
 
         # go throught the symbols only
+        logger.info("Checking file integrity")
         def_indices = []
         enddef_indices = []
         for index, line in enumerate(sch_file):
@@ -403,6 +404,7 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
 
         sch_file_out = []
         # find line starting with L and next word until colon mathes library nickname
+        logger.info("Go through all symbols within the file")
         for index, line in enumerate(sch_file):
 
             line_contents = line.split()
@@ -527,7 +529,8 @@ def archive_symbols(board, allow_missing_libraries=False, alt_files=False, archi
             # add line break at end of line
             sch_file_out.append('\n')
             # end immediately if end of schematic is reached
-            if line == "$EndSCHEMATC":
+            if "$EndSCHEMATC" in line:
+                logger.info("Reached end of file")
                 break
         # prepare for writing
         out_files[filename] = sch_file_out
