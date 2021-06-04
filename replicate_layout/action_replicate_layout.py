@@ -87,6 +87,10 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         self.list_levels.Clear()
         self.list_levels.AppendItems(self.levels)
 
+        # if only one level, select it by default
+        if self.list_levels.GetCount() == 1:
+            self.list_levels.SetSelection(0)
+
         self.src_modules = []
 
     def level_changed(self, event):
@@ -101,7 +105,7 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
 
         # get anchor modules
         anchor_modules = self.replicator.get_list_of_modules_with_same_id(self.src_anchor_module.mod_id)
-        # find matching anchors to maching sheets
+        # find matching anchors to matching sheets
         ref_list = []
         for sheet in list_sheetsChoices:
             for mod in anchor_modules:
@@ -131,11 +135,6 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         event.Skip()
 
     def OnOk(self, event):
-        selected_items = self.list_sheets.GetSelections()
-        slected_names = []
-        for item in selected_items:
-            slected_names.append(self.list_sheets.GetString(item))
-
         # grab checkboxes
         replicate_containing_only = not self.chkbox_intersecting.GetValue()
         remove_existing_nets_zones = self.chkbox_remove.GetValue()
@@ -146,13 +145,18 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         remove_duplicates = self.chkbox_remove_duplicates.GetValue()
         rep_locked = self.chkbox_locked.GetValue()
 
-        # failsafe somtimes on my machine wx does not generate a listbox event
+        # failsafe sometimes on my machine wx does not generate a listbox event
         level = self.list_levels.GetSelection()
         selection_indeces = self.list_sheets.GetSelections()
         sheets_on_a_level = self.replicator.get_sheets_to_replicate(self.src_anchor_module, self.src_anchor_module.sheet_id[level])
         dst_sheets = [sheets_on_a_level[i] for i in selection_indeces]
 
-        # check if all the destination anchor footprints are on the same layer as source anchorfootprint
+        # if list is empty user did not select any destination sheets
+        if not dst_sheets:
+            event.Skip()
+            return
+
+        # check if all the destination anchor footprints are on the same layer as source anchor footprint
         # first get all the anchor footprints
         all_dst_modules = []
         for sheet in dst_sheets:
@@ -315,7 +319,11 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         sl_err = StreamToLogger(stderr_logger, logging.ERROR)
         sys.stderr = sl_err
         
-        _pcbnew_frame = [x for x in wx.GetTopLevelWindows() if x.GetTitle().lower().startswith('pcbnew')][0]
+        # more verbose for debugging purposes only
+        tw = wx.GetTopLevelWindows()
+        tw_titles = [x.GetTitle().lower() for x in tw]
+        logger.info("All top level windows titles are:\n" + "\n".join(tw_titles))
+        _pcbnew_frame = [x for x in tw if 'pcbnew' in x.GetTitle().lower()][0]
 
         # check if there is exactly one module selected
         selected_modules = [x for x in pcbnew.GetBoard().GetModules() if x.IsSelected()]
@@ -373,7 +381,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         list_of_modules = replicator.get_list_of_modules_with_same_id(src_anchor_module.mod_id)
         if not list_of_modules:
             caption = 'Replicate Layout'
-            message = "Selected footprint is uniqe in the pcb (only one footprint with this ID)"
+            message = "Selected footprint is unique in the pcb (only one footprint with this ID)"
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
