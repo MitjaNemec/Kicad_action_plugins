@@ -323,6 +323,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
         tw = wx.GetTopLevelWindows()
         tw_titles = [x.GetTitle().lower() for x in tw]
         logger.info("All top level windows titles are:\n" + "\n".join(tw_titles))
+        logger.info("All top level windows objects are:\n " + "\n".join([repr(x) for x in tw]))
         _pcbnew_frame = [x for x in tw if 'pcbnew' in x.GetTitle().lower()][0]
 
         # check if there is exactly one module selected
