@@ -87,11 +87,12 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
         self.list_levels.Clear()
         self.list_levels.AppendItems(self.levels)
 
+        self.src_modules = []
+
         # if only one level, select it by default
         if self.list_levels.GetCount() == 1:
             self.list_levels.SetSelection(0)
-
-        self.src_modules = []
+            self.level_changed(wx.EVT_LISTBOX)
 
     def level_changed(self, event):
 
@@ -132,7 +133,8 @@ class ReplicateLayoutDialog(replicate_layout_GUI.ReplicateLayoutGUI):
             set_highlight_on_module(mod)
         pcbnew.Refresh()
 
-        event.Skip()
+        if event != wx.EVT_LISTBOX:
+            event.Skip()
 
     def OnOk(self, event):
         # grab checkboxes
