@@ -139,8 +139,8 @@ class Replicator():
         for fp in bmod:
             mod_path = fp.GetPath()
             s = mod_path.size()
-            mod_id = mod_path.__getitem__(s-1).AsString().strip('00000000-0000-0000-0000-0000')
-            sheet_id = mod_path.__getitem__(s-2).AsString().strip('00000000-0000-0000-0000-0000')
+            mod_id = mod_path.__getitem__(s-1).AsString()
+            sheet_id = mod_path.__getitem__(s-2).AsString()
             sheet_file = fp.GetProperty('Sheetfile')
             sheet_name = fp.GetProperty('Sheetname')
             if sheet_file:
