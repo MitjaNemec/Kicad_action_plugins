@@ -1,26 +1,73 @@
-# KiCad Action Plugin(s)
+# KiCad Action Plugins
 
-This repository contains KiCad pcbnew Action Plugins()
+This repository contains KiCad pcbnew Action Plugins.
 
-All plugins have been tested on Kicad 5.1.x on Windows7/Windows10. You need to have KICAD_SCRIPTING_WXPYTHON enabled. They should also work on GNU/Linux distributions and MacOS even with Python3.
+__All plugins have been tested on Kicad 5.1.x__ on Windows 7 / Windows 10. You need to have `KICAD_SCRIPTING_WXPYTHON` enabled. They should also work on GNU/Linux distributions and MacOS, even with Python3.
 
-The plugins don't work with 5.99! Non supported version of Replicate_layout plugin working with 5.99 is available under [5.99 branch](https://github.com/MitjaNemec/Kicad_action_plugins/tree/5.99_test). Kindly supplied by [Albertas Mickėnas](https://github.com/Miceuz).
+__The plugins don't work with 5.99!__ An unsupported version of the __Replicate layout__ plugin that works with KiCad 5.99 is available under the [5.99 branch](https://github.com/MitjaNemec/Kicad_action_plugins/tree/5.99_test), kindly supplied by [Albertas Mickėnas](https://github.com/Miceuz).
 
 The plugins have been developed as a complex plugin according the [Python Plugin Development for Pcbnew](https://github.com/KiCad/kicad-source-mirror/blob/master/Documentation/development/pcbnew-plugins.md) guide.
 
-To install the plugin copy relevant folder into 'scripting/plugins' subfolder of the KiCad configuration folder:
-on Windows:
+## Installation
+
+The following instructions are for KiCad 5.1.x
+
+### Windows 7/Windows 10
+
+Install the plugins in:
     `%APPDATA%\scripting\plugins` (which most commonly translates to `C:\Users\username\AppData\Roaming\kicad\scripting\plugins`)
 
-on GNU/linux: 
+### GNU/Linux
+
+Install the plugins in:
     `~/.kicad/scripting/plugins` or
     `~/.kicad_plugins`
 
-on MacOS:
-    `~/Library/Application Support/kicad/scripting/plugins` or on newer versions
+If you have no other action plugins, you can use this script:
+
+```
+ SPDIR=~/.kicad_plugins
+ mkdir -pv `dirname ${SPDIR}` 2>/dev/null
+ cd `dirname ${SPDIR}` && git clone --depth 1 git@github.com:MitjaNemec/Kicad_action_plugins.git && \
+  ln -s Kicad_action_plugins `basename {$SPDIR}` && cd ${SPDIR} && echo && \
+  echo "Installed action plugins:" && find . -d 1 -type d |grep -v '.git' |sed 's/^\.\// * /'
+```
+
+To update your action plugins from this repository in future:
+
+```
+ SPDIR=~/.kicad_plugins
+ cd ${SPDIR} && git pull
+```
+
+
+### Mac
+
+Install the plugins in:
+    `~/Library/Application Support/kicad/scripting/plugins` or on newer versions (eg. 5.1.10)
     `~/Library/Preferences/kicad/scripting/plugins`
-  
-## Replicate layout
+
+If you have no other action plugins, you can use this script:
+
+```
+ SPDIR=~/Library/Preferences/kicad/scripting/plugins
+ mkdir -pv `dirname ${SPDIR}` 2>/dev/null
+ cd `dirname ${SPDIR}` && git clone --depth 1 git@github.com:MitjaNemec/Kicad_action_plugins.git && \
+  ln -s Kicad_action_plugins `basename ${SPDIR}` && cd ${SPDIR} && echo && \
+  echo "Installed action plugins:" && find . -d 1 -type d |grep -v '.git' |sed 's/^\.\// * /'
+```
+
+To update your action plugins from this repository in future:
+
+```
+ SPDIR=~/Library/Preferences/kicad/scripting/plugins
+ cd ${SPDIR} && git pull
+```
+
+ 
+## Plugins
+ 
+### Replicate layout
 
 The purpose of this plugin is to replicate layout sections. The replication is based upon hierarchical sheets in eeschema.
 The basic requirement for replication is that the section to be replicated (source) is completely contained within a single hierarchical sheet, and replicated sections (destination) are just copies of the same sheet. Complex hierarchies are supported therefore replicated sheet can contain subsheets. The plugin replicates footprints, zones, tracks, text adn drawings.
@@ -42,7 +89,7 @@ Example replication of a complex hierarchical project. Replicating inner sheet f
 
 ![Replication](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/replicate.gif)
 
-## Place footprints
+### Place footprints
 
 This plugin will place footprints in:
 - in line
@@ -75,7 +122,7 @@ Example of place by reference number
 Example of place by sheet ID
 ![Place by sheet ID](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/place_by_sheet.gif)
 
-## Delete Selected
+### Delete Selected
 
 This plugin deletes selected items. Items can be: zones and/or tracks and/or footprints. The main intention is to delete selected tracks in order to redo parts of the layout.
 
@@ -87,7 +134,7 @@ To run the plugin:
 
 ![Delete selected tracks and zones](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Delete_selected_anim.gif)
 
-## pad2pad track distance
+### pad2pad track distance
 
 This plugin calculates the shortest distance between two pads. Use with caution because the result is not always correct as the algorithm follows the track layout. Also, the Via distance is not accounted for. The following picture shows an example where the distance is not correct. Here, the algorithm calculates the distance from the first pad to pin #4 and then to the other pad. It does not consider the connection between the two tracks at the encircled area where they actually branch off making the measured distance longer than it actually is.
 ![Track layout which confuses the algorithm](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Distance_example.gif)
@@ -102,11 +149,11 @@ To run the plugin:
 
 ![Measure pad to pad distance](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/pad2pad_animation.gif)
 
-## net2net min distance
+### net2net min distance
 
 This plugin calculates the shortest distance between two tracks on different nets. To use, select one pad on first net and one pad on second net and run the plugin.
 
-## Archive project
+### Archive project
 
 This plugin archives the project thus making it portable.
 
@@ -121,7 +168,7 @@ The plugin is run from pcbnew. When the plugin is run, eeschema has to be closed
 
 If the project is modified later it should be archived again in order to stay portable. If a symbol of a unit has to be replaced, all units with the same symbol have to be deleted.
 
-## Swap pins
+### Swap pins
 
 This plugin swaps two pads (in layout) and their corresponding pins (in schematics). The pins in the schematics have to be connected to a local or global label or hierarchical label either directly or through a short wire segment. The plugin also works across multi-unit parts and/or across different hierarchical levels.
 
@@ -130,7 +177,7 @@ Only one pin can be connected. Currently "no connection" flags are not supported
 Example of pin swapping
 ![swapping of pins on local labels](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_pins_animation.gif)
 
-## Swap units
+### Swap units
 
 This plugin swaps two units (in layout) and r units (in schematics). Eeschema has to be closed when the plugin is executed in pcbnew. Unit swapping work across hierarchical pages.  Note that using undo will only undo the change in the layout, but not the change in the schematics. To reverse the operation, you can run the plugin again.
 
@@ -138,7 +185,7 @@ Example of unit swapping
 
 ![swapping units in different hierarchical pages](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/Swap_units_animation.gif)
 
-## Length stats
+### Length stats
 
 This plugin displays length of all tracks on selected nets. This can be used for length matching.
 
@@ -151,7 +198,7 @@ Workflow:
 Example:
 ![length stats](https://raw.githubusercontent.com/MitjaNemec/Kicad_action_plugins/master/screenshots/length_stats_ff.gif)
 
-## Save/Restore Layout
+### Save/Restore Layout
 
 This plugin saves the partial layout of a selected pcb (only specific hierarchical level is saved). This layout can be imported into another pcb, if it is based upon the same hierarchical subsheets. The equality is tested and checked.
 
