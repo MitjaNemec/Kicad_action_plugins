@@ -342,6 +342,7 @@ class ReplicateLayout(pcbnew.ActionPlugin):
             replicator = replicatelayout.Replicator(board)
         except LookupError as exception:
             caption = 'Replicate Layout'
+            logger.exception("Fatal error when making an instance of replicator")
             message = str(exception)
             dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
