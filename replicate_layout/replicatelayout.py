@@ -98,7 +98,7 @@ class Replicator():
     @staticmethod
     def get_path(module):
         path = module.GetPath()
-        path = path.AsString().upper().replace('00000000-0000-0000-0000-0000', '')
+        path = path.AsString().replace('00000000-0000-0000-0000-0000', '')
         return path
 
     def get_module_id(self, module):
@@ -111,8 +111,8 @@ class Replicator():
         """ get sheet id """
         module_path = self.get_path(module).split('/')
         sheet_id = module_path[0:-1]
-        sheet_names = [self.dict_of_sheets[x.lower()][0] for x in sheet_id if x]
-        sheet_files = [self.dict_of_sheets[x.lower()][1] for x in sheet_id if x]
+        sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
+        sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
         sheet_id = [sheet_names, sheet_files]
         return sheet_id
 
@@ -138,6 +138,10 @@ class Replicator():
         self.dict_of_sheets = {}
         for fp in bmod:
             mod_path = fp.GetPath()
+            # these three lines need a proper comment, as I don't know anymore why they are here
+            # I seem to recall that this is come compatibility fix for 5.1 projects opened in 5.99
+            # but I am not sure
+            # might want to replace them with a simple call to fp.get_path() and fp.get_sheet_id()
             s = mod_path.size()
             mod_id = mod_path.__getitem__(s-1).AsString().strip('00000000-0000-0000-0000-0000')
             sheet_id = mod_path.__getitem__(s-2).AsString().strip('00000000-0000-0000-0000-0000')
