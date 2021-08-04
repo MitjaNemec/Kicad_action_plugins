@@ -98,6 +98,7 @@ class Replicator():
     @staticmethod
     def get_path(module):
         path = module.GetPath()
+        # back compatibility if 5.1 PCB is opened with 5.99/6.0
         path = path.AsString().replace('00000000-0000-0000-0000-0000', '')
         return path
 
@@ -107,13 +108,18 @@ class Replicator():
         module_id = "/".join(module_path[-1:])
         return module_id
 
-    def get_sheet_id(self, module):
+    def get_sheet_path(self, module):
         """ get sheet id """
         module_path = self.get_path(module).split('/')
         sheet_id = module_path[0:-1]
         sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
         sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
-        sheet_id = [sheet_names, sheet_files]
+        sheet_path = [sheet_names, sheet_files]
+        return sheet_path
+
+    def get_sheet_id_alt(self, module):
+        """ get sheet id """
+        sheet_id = self.get_path(module).split("/")[-2]
         return sheet_id
 
     def get_mod_by_ref(self, ref):
@@ -134,17 +140,11 @@ class Replicator():
         # construct a list of modules with all pertinent data
         logger.info('getting a list of all footprints on board') 
         bmod = board.GetFootprints()
-        # get dict_of_sheets from layout data only
+        # get dict_of_sheets from layout data only (through footprints)
+        # TODO check if there is a bug, if there is no footprint on the sheet
         self.dict_of_sheets = {}
         for fp in bmod:
-            mod_path = fp.GetPath()
-            # these three lines need a proper comment, as I don't know anymore why they are here
-            # I seem to recall that this is come compatibility fix for 5.1 projects opened in 5.99
-            # but I am not sure
-            # might want to replace them with a simple call to fp.get_path() and fp.get_sheet_id()
-            s = mod_path.size()
-            mod_id = mod_path.__getitem__(s-1).AsString().strip('00000000-0000-0000-0000-0000')
-            sheet_id = mod_path.__getitem__(s-2).AsString().strip('00000000-0000-0000-0000-0000')
+            sheet_id = self.get_sheet_id_alt(fp)
             sheet_file = fp.GetProperty('Sheetfile')
             sheet_name = fp.GetProperty('Sheetname')
             if sheet_file:
@@ -156,8 +156,8 @@ class Replicator():
         for module in bmod:
             mod_named_tuple = Module(mod=module,
                                      mod_id=self.get_module_id(module),
-                                     sheet_id=self.get_sheet_id(module)[0],
-                                     filename=self.get_sheet_id(module)[1], 
+                                     sheet_id=self.get_sheet_path(module)[0],
+                                     filename=self.get_sheet_path(module)[1],
                                      ref=module.GetReference())
             self.modules.append(mod_named_tuple)
         logger.info('total modules:' + str(len(self.modules))) 
@@ -1045,7 +1045,55 @@ def test_file(in_filename, out_filename, src_anchor_module_reference, level, she
     return compare_boards.compare_boards(out_filename, test_filename)
 
 
+def test_issue_file(in_filename, src_anchor_module_reference, level, sheets, containing, remove):
+    board = pcbnew.LoadBoard(in_filename)
+    # get board information
+    replicator = Replicator(board)
+    # get source module info
+    src_anchor_module = replicator.get_mod_by_ref(src_anchor_module_reference)
+    # have the user select replication level
+    levels = src_anchor_module.filename
+    # get the level index from user
+    index = levels.index(levels[level])
+    # get list of sheets
+    sheet_list = replicator.get_sheets_to_replicate(src_anchor_module, src_anchor_module.sheet_id[index])
+
+    # get anchor modules
+    anchor_modules = replicator.get_list_of_modules_with_same_id(src_anchor_module.mod_id)
+    # find matching anchors to matching sheets
+    ref_list = []
+    for sheet in sheet_list:
+        for mod in anchor_modules:
+            if mod.sheet_id == sheet:
+                ref_list.append(mod.ref)
+                break
+
+    # get the list selection from user
+    dst_sheets = [sheet_list[i] for i in sheets]
+
+    # first get all the anchor footprints
+    all_sheet_footprints = []
+    for sheet in dst_sheets:
+        all_sheet_footprints.extend(replicator.get_modules_on_sheet(sheet))
+    anchor_fp = [x for x in all_sheet_footprints if x.mod_id == src_anchor_module.mod_id]
+    if all(src_anchor_module.mod.IsFlipped() == dst_mod.mod.IsFlipped() for dst_mod in anchor_fp):
+        a = 2
+    else:
+        assert(2==3), "Destination anchor footprints are not on the same layer as source anchor footprint"
+
+    # now we are ready for replication
+    replicator.update_progress = update_progress
+    replicator.replicate_layout(src_anchor_module, src_anchor_module.sheet_id[0:index+1], dst_sheets,
+                                containing=containing, remove=remove, rm_duplicates=True,
+                                tracks=True, zones=True, text=True, drawings=True, rep_locked=True)
+
+
 def main():
+    """
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "issue-sqrtmo"))
+    input_file = 'blueboard.kicad_pcb'
+    test_issue_file(input_file, 'J1', level=0, sheets=(0, ), containing=False, remove=True)
+    """
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
     
     logger.info("Testing multiple hierarchy - inner levels")
