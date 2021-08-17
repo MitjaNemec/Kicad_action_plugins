@@ -112,8 +112,8 @@ class Replicator():
         """ get sheet id """
         module_path = self.get_path(module).split('/')
         sheet_id = module_path[0:-1]
-        sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x]
-        sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x]
+        sheet_names = [self.dict_of_sheets[x][0] for x in sheet_id if x in self.dict_of_sheets]
+        sheet_files = [self.dict_of_sheets[x][1] for x in sheet_id if x in self.dict_of_sheets]
         sheet_path = [sheet_names, sheet_files]
         return sheet_path
 
@@ -141,7 +141,6 @@ class Replicator():
         logger.info('getting a list of all footprints on board') 
         bmod = board.GetFootprints()
         # get dict_of_sheets from layout data only (through footprints)
-        # TODO check if there is a bug, if there is no footprint on the sheet
         self.dict_of_sheets = {}
         for fp in bmod:
             sheet_id = self.get_sheet_id_alt(fp)
@@ -1090,9 +1089,9 @@ def test_issue_file(in_filename, src_anchor_module_reference, level, sheets, con
 
 def main():
     """
-    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "issue-sqrtmo"))
-    input_file = 'blueboard.kicad_pcb'
-    test_issue_file(input_file, 'J1', level=0, sheets=(0, ), containing=False, remove=True)
+    os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "RepTest"))
+    input_file = 'RepTest.kicad_pcb'
+    test_issue_file(input_file, 'U2', level=1, sheets=(0, ), containing=False, remove=True)
     """
     os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "multiple_hierarchy"))
     
