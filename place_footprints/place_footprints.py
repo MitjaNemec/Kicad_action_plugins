@@ -213,12 +213,6 @@ class Placer():
         logger.info('getting project hierarchy from schematics')
         self.dict_of_sheets = self.find_all_sch_files(self.sch_filename, {})
 
-        # check if sheet files dict contains only one item or is empty
-        # Most likely cause is that user did not save the schematics file when the plugin was run
-        if len(self.dict_of_sheets) <= 1:
-            logger.info('getting project hierarchy from schematics')
-            raise LookupError("Schematic hierarchy too shallow. You most likely forgot to save the schematcs before running the plugin")
-
         # make all paths relative
         for x in self.dict_of_sheets.keys():
             path = self.dict_of_sheets[x][1]

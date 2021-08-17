@@ -625,6 +625,18 @@ class PlaceFootprints(pcbnew.ActionPlugin):
             pcbnew.Refresh()
         # by sheet
         else:
+            # check if sheet files dict contains only one item or is empty
+            # Most likely cause is that user did not save the schematics file when the plugin was run
+            if len(placer.dict_of_sheets) <= 1:
+                logger.info('getting project hierarchy from schematics')
+                caption = 'Place footprints'
+                message = "Schematic hierarchy too shallow. You most likely forgot to save the schematcs before running the plugin"
+                dlg = wx.MessageDialog(_pcbnew_frame, message, caption, wx.OK | wx.ICON_ERROR)
+                dlg.ShowModal()
+                dlg.Destroy()
+                logging.shutdown()
+                return
+
             # get list of all modules with same ID
             list_of_modules = placer.get_list_of_modules_with_same_id(pivot_module.mod_id)
             # display dialog
