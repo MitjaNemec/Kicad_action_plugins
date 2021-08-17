@@ -864,7 +864,7 @@ class Replicator():
                 new_text.Rotate(dst_anchor_module_position, -anchor_delta_angle * 10)
                 self.board.Add(new_text)
 
-    def replicate_drawings(self):
+    def replicate_drawings(self, edge_cuts):
         logger.info("Replicating drawings")
         nr_sheets = len(self.dst_sheets)
         for st_index in range(nr_sheets):
@@ -890,11 +890,19 @@ class Replicator():
                 progress = progress + (1/nr_sheets)*(1/nr_drawings)
                 self.update_progress(self.stage, progress, None)
 
-                new_drawing = drawing.Duplicate()
-                new_drawing.Move(anchor_delta_pos)
-                new_drawing.Rotate(dst_anchor_module_position, -anchor_delta_angle * 10)
-
-                self.board.Add(new_drawing)
+                # replicate all the drawings
+                if drawing.GetLayer() != pcbnew.Edge_Cuts:
+                    new_drawing = drawing.Duplicate()
+                    new_drawing.Move(anchor_delta_pos)
+                    new_drawing.Rotate(dst_anchor_module_position, -anchor_delta_angle * 10)
+                    self.board.Add(new_drawing)
+                # but the one on Edge_cuts layer. These are replicated only if user requires it
+                else:
+                    if edge_cuts:
+                        new_drawing = drawing.Duplicate()
+                        new_drawing.Move(anchor_delta_pos)
+                        new_drawing.Rotate(dst_anchor_module_position, -anchor_delta_angle * 10)
+                        self.board.Add(new_drawing)
 
     def remove_zones_tracks(self, containing):
         for index in range(len(self.dst_sheets)):
@@ -987,7 +995,7 @@ class Replicator():
         remove_duplicates.remove_duplicates(self.board)
 
     def replicate_layout(self, src_anchor_module, level, dst_sheets,
-                         containing, remove, tracks, zones, text, drawings, rm_duplicates, rep_locked):
+                         containing, remove, tracks, zones, text, drawings, rm_duplicates, rep_locked, edge_cuts):
         logger.info( "Starting replication of sheets: " + repr(dst_sheets)
                      +"\non level: " + repr(level)
                      +"\nwith tracks=" + repr(tracks) +", zone=" + repr(zones) +", text=" + repr(text)
@@ -1046,7 +1054,7 @@ class Replicator():
         if drawings:
             self.stage = 8
             self.update_progress(self.stage, 0.0, "Replicating drawings")
-            self.replicate_drawings()
+            self.replicate_drawings(edge_cuts)
         if rm_duplicates:
             self.stage = 9
             self.update_progress(self.stage, 0.0, "Removing duplicates")

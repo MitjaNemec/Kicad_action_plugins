@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version Oct 26 2018)
+## Python code generated with wxFormBuilder (version 3.9.0 Feb 19 2021)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -17,7 +17,7 @@ import wx.xrc
 class ReplicateLayoutGUI ( wx.Dialog ):
 
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 313,492 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Replicate layout", pos = wx.DefaultPosition, size = wx.Size( 313,540 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 
 		self.SetSizeHints( wx.Size( 313,409 ), wx.DefaultSize )
 
@@ -32,6 +32,8 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 
 		list_levelsChoices = []
 		self.list_levels = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_levelsChoices, 0 )
+		self.list_levels.SetMinSize( wx.Size( -1,30 ) )
+
 		bSizer18.Add( self.list_levels, 1, wx.ALL|wx.EXPAND, 5 )
 
 
@@ -46,6 +48,8 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 
 		list_sheetsChoices = []
 		self.list_sheets = wx.ListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 230,-1 ), list_sheetsChoices, wx.LB_MULTIPLE|wx.LB_NEEDED_SB )
+		self.list_sheets.SetMinSize( wx.Size( -1,30 ) )
+
 		bSizer16.Add( self.list_sheets, 1, wx.ALL|wx.EXPAND, 5 )
 
 
@@ -78,6 +82,9 @@ class ReplicateLayoutGUI ( wx.Dialog ):
 
 		self.chkbox_remove_duplicates = wx.CheckBox( self, wx.ID_ANY, u"Remove duplicates (might take some time)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer14.Add( self.chkbox_remove_duplicates, 0, wx.ALL, 5 )
+
+		self.chkbox_edge_cuts = wx.CheckBox( self, wx.ID_ANY, u"Replicate Edge cuts", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer14.Add( self.chkbox_edge_cuts, 0, wx.ALL, 5 )
 
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 
