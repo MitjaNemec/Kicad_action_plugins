@@ -631,6 +631,8 @@ class Replicator():
                     newposition = [int(x) for x in newposition]
                     dst_mod_text_items[index].SetPosition(pcbnew.wxPoint(*newposition))
 
+                    # set layer
+                    dst_mod_text_items[index].SetLayer(src_text.GetLayer())
                     # set orientation
                     dst_mod_text_items[index].SetTextAngle(src_text.GetTextAngle())
                     # thickness
