@@ -4,7 +4,7 @@ This repository contains KiCad pcbnew Action Plugins.
 
 __All plugins have been tested on Kicad 5.1.x__ on Windows 7 / Windows 10. You need to have `KICAD_SCRIPTING_WXPYTHON` enabled. They should also work on GNU/Linux distributions and MacOS, even with Python3.
 
-**KiCad V5 info**
+**KiCad V6 info**
 
 Plugins for KiCad V6 will be avialible in KiCads __Plugin and Content Manager__ as they are ported. Some of them will not be ported.
 
