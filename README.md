@@ -29,7 +29,7 @@ If you have no other action plugins, you can use this script:
  SPDIR=~/.kicad_plugins
  mkdir -pv `dirname ${SPDIR}` 2>/dev/null
  cd `dirname ${SPDIR}` && git clone --depth 1 git@github.com:MitjaNemec/Kicad_action_plugins.git && \
-  ln -s Kicad_action_plugins `basename {$SPDIR}` && cd ${SPDIR} && echo && \
+  ln -s Kicad_action_plugins `basename ${SPDIR}` && cd ${SPDIR} && echo && \
   echo "Installed action plugins:" && find . -d 1 -type d |grep -v '.git' |sed 's/^\.\// * /'
 ```
 
