@@ -1,3 +1,15 @@
+## NOTICE ##
+
+These plugins work only on old KiCad version (5.1.x).
+
+The plugins that work under newer versions (V5, V6, ...) should be available under the KiCad's built in Plugin and Content Manager (PCM).
+
+Currently (2023) there are four plugins available:
+- Replicate Layout plugin (https://github.com/MitjaNemec/ReplicateLayout)
+- Place Footprints plugin (https://github.com/MitjaNemec/PlaceFootprints)
+- Save/Restore layout plugin (https://github.com/MitjaNemec/SaveRestoreLayout)
+- Archive 3D models plugin (https://github.com/MitjaNemec/Archive3DModels)
+
 # KiCad Action Plugins
 
 This repository contains KiCad pcbnew Action Plugins.
